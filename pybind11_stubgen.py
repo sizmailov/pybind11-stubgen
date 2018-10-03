@@ -197,7 +197,36 @@ class AttributeStubsGenerator(StubsGenerator):
     def parse(self):
         pass
 
+    def is_safe_to_use_repr(self, value):
+        if isinstance(value,(int,str)):
+            return True
+        if isinstance(value, (float,complex)):
+            try:
+                eval(repr(value))
+                return True
+            except (SyntaxError, NameError):
+                return False
+        if isinstance(value,(list,tuple,set)):
+            for x in value:
+                if not self.is_safe_to_use_repr(x):
+                    return False
+            return True
+        if isinstance(value,dict):
+            for k,v in value.items():
+                if not self.is_safe_to_use_repr(k) or not self.is_safe_to_use_repr(v):
+                    return False
+            return True
+        return False
+
     def to_lines(self) -> List[str]:
+        if self.is_safe_to_use_repr(self.attr):
+            return [
+                "{name} = {repr}".format(
+                    name=self.name,
+                    repr=repr(self.attr)
+                )
+            ]
+
         value_lines = repr(self.attr).split("\n")
         if len(value_lines)==1:
             value = value_lines[0]
