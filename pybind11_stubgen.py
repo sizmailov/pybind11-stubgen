@@ -156,16 +156,16 @@ class StubsGenerator(object):
         setter_args = "None"
 
         strip_module_name = module_name is not None
+        if hasattr(prop,"fget") and prop.fget is not None and hasattr(prop.fget,"__doc__") and  prop.fget.__doc__ is not None:
+            for line in prop.fget.__doc__.split("\n"):
+                if strip_module_name:
+                    line = line.replace(module_name + ".", "")
+                m = re.match(r"\s*\((?P<args>[^\(\)]*)\)\s*->\s*(?P<rtype>[^\(\)]+)\s*", line)
+                if m:
+                    getter_rtype = m.group("rtype")
+                    break
 
-        for line in prop.fget.__doc__.split("\n"):
-            if strip_module_name:
-                line = line.replace(module_name + ".", "")
-            m = re.match(r"\s*\((?P<args>[^\(\)]*)\)\s*->\s*(?P<rtype>[^\(\)]+)\s*", line)
-            if m:
-                getter_rtype = m.group("rtype")
-                break
-
-        if prop.fset is not None:
+        if hasattr(prop, "fset") and prop.fset is not None and hasattr(prop.fset,"__doc__") and prop.fset.__doc__ is not None:
             for line in prop.fset.__doc__.split("\n"):
                 if strip_module_name:
                     line = line.replace(module_name + ".", "")
