@@ -532,7 +532,14 @@ class ModuleStubsGenerator(StubsGenerator):
         for a in self.attributes:
             all.append(a.name)
 
-        result.append("__all__  = [\n"+",\n".join(map(lambda s: '"%s"'%s,all))+"\n]" )
+        all_is_defined = False
+
+        for attr in self.attributes:
+            if attr.name=="__all__":
+                all_is_defined=True
+
+        if not all_is_defined:
+            result.append("__all__  = [\n"+",\n".join(map(lambda s: '"%s"'%s,all))+"\n]" )
 
 
         for x in itertools.chain(self.classes,
