@@ -7,6 +7,7 @@ import logging
 import sys
 import os
 import re
+from argparse import ArgumentParser
 
 
 class DirectoryWalkerGuard(object):
@@ -396,7 +397,6 @@ class ClassStubsGenerator(StubsGenerator):
             regex = r"{}\.(\w+)".format(module_name.replace(".", r"\."))
             return re.sub(regex, r"\g<1>", obj)
 
-
         base_classes_list = [
             strip_current_module_name(self.fully_qualified_name(b),self.klass.__module__)
             for b in self.base_classes
@@ -555,24 +555,45 @@ class ModuleStubsGenerator(StubsGenerator):
             for m in self.submodules:
                 m.write()
 
-stderr_handler = logging.StreamHandler(sys.stderr)
-handlers = [stderr_handler]
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-    handlers=handlers
-)
+def recursive_mkdir_walker(subdirs: List[str], callback):
+    if len(subdirs)==0:
+        callback()
+    else:
+        if not os.path.exists(subdirs[0]):
+            os.mkdir(subdirs[0])
+        with DirectoryWalkerGuard(subdirs[0]):
+            recursive_mkdir_walker(subdirs[1:],callback)
 
-logger = logging.getLogger(__name__)
+if __name__ == "__main__":
 
-output_path = "./stubs"
+    parser = ArgumentParser(description="Generates stubs for specified modules")
+    parser.add_argument("-o", "--output-dir", dest="output_dir",
+                      help="the root directory for output stubs", default="./stubs")
+    parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str,help="modules names")
 
-if not os.path.exists(output_path):
-    os.mkdir(output_path)
+    args = parser.parse_args()
 
-with DirectoryWalkerGuard(output_path):
-    m = ModuleStubsGenerator("pyxmolpp2")
-    m.parse()
-    m.write()
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    handlers = [stderr_handler]
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+        handlers=handlers
+    )
+
+    logger = logging.getLogger(__name__)
+
+    output_path = args.output_dir
+
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
+    with DirectoryWalkerGuard(output_path):
+        for module_name in args.module_names:
+            m = ModuleStubsGenerator(module_name)
+            m.parse()
+            recursive_mkdir_walker(module_name.split(".")[:-1], lambda:m.write())
+
 
