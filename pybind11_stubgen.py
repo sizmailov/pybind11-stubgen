@@ -464,6 +464,8 @@ class ModuleStubsGenerator(StubsGenerator):
         self.free_functions = []  # type: List[FreeFunctionStubsGenerator]
         self.submodules = []  # type: List[ModuleStubsGenerator]
         self.attributes = []  # type: List[AttributeStubsGenerator]
+        self.stub_suffix = ""
+        self.write_setup_py = False
 
         self.attributes_blacklist = attributes_blacklist
 
@@ -582,14 +584,43 @@ class ModuleStubsGenerator(StubsGenerator):
         return self.module.__name__.split(".")[-1]
 
     def write(self):
-        if not os.path.exists(self.short_name):
-            os.mkdir(self.short_name)
+        if not os.path.exists(self.short_name + self.stub_suffix):
+            logger.info("mkdir `%s`"%(self.short_name + self.stub_suffix))
+            os.mkdir(self.short_name + self.stub_suffix)
 
-        with DirectoryWalkerGuard(self.short_name):
+        with DirectoryWalkerGuard(self.short_name + self.stub_suffix):
             with open("__init__.pyi", "w") as init_pyi:
                 init_pyi.write("\n".join(self.to_lines()))
             for m in self.submodules:
                 m.write()
+
+            if self.write_setup_py:
+                with open("setup.py","w") as setuppy:
+                    setuppy.write("""from setuptools import setup
+import os
+
+
+def find_stubs(package):
+    stubs = []
+    for root, dirs, files in os.walk(package):
+        for file in files:
+            path = os.path.join(root, file).replace(package + os.sep, '', 1)
+            stubs.append(path)
+    return dict(package=stubs)
+
+
+setup(
+    name='{package_name}-stubs',
+    maintainer="{package_name} Developers",
+    maintainer_email="example@python.org",
+    description="PEP 561 type stubs for {package_name}",
+    version='1.0',
+    packages=['{package_name}-stubs'],
+    # PEP 561 requires these
+    install_requires=['{package_name}'],
+    package_data=find_stubs('{package_name}-stubs'),
+)""".format(package_name=self.short_name))
+
 
 
 def recursive_mkdir_walker(subdirs: List[str], callback):
@@ -606,6 +637,9 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Generates stubs for specified modules")
     parser.add_argument("-o", "--output-dir", dest="output_dir",
                       help="the root directory for output stubs", default="./stubs")
+    parser.add_argument("--root_module_suffix", type=str, default="-stubs", help="optional suffix to disambiguate from the "
+                                                                         "original package")
+    parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str,help="modules names")
 
     args = parser.parse_args()
@@ -630,6 +664,8 @@ if __name__ == "__main__":
         for module_name in args.module_names:
             m = ModuleStubsGenerator(module_name)
             m.parse()
+            m.stub_suffix = args.root_module_suffix
+            m.write_setup_py = not args.no_setup_py
             recursive_mkdir_walker(module_name.split(".")[:-1], lambda:m.write())
 
 
