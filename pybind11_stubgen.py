@@ -93,11 +93,11 @@ class StubsGenerator(object):
     def parse(self):
         raise NotImplementedError
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         raise NotImplementedError
 
     @staticmethod
-    def indent(line:str) -> str:
+    def indent(line): # type: (str) -> str
         return StubsGenerator.INDENT + line
 
     @staticmethod
@@ -113,13 +113,13 @@ class StubsGenerator(object):
                 klass=class_name)
 
     @staticmethod
-    def apply_classname_replacements(s: str):
+    def apply_classname_replacements(s): # type: (str) -> Any
         for k, v in StubsGenerator.GLOBAL_CLASSNAME_REPLACEMENTS.items():
             s = k.sub(v,s)
         return s
 
     @staticmethod
-    def function_signatures_from_docstring(func, module_name) -> List[FunctionSignature]:
+    def function_signatures_from_docstring(func, module_name): # type: (Any, str) -> List[FunctionSignature]
         name = func.__name__
         try:
             signature_regex = r"(\s*(?P<overload_number>\d+).)?\s*{name}\s*\((?P<args>[^\(\)]*)\)\s*->\s*(?P<rtype>[^\(\)]+)\s*".format(
@@ -150,7 +150,7 @@ class StubsGenerator(object):
             return []
 
     @staticmethod
-    def property_signature_from_docstring(prop, module_name) -> PropertySignature:
+    def property_signature_from_docstring(prop, module_name): # type:  (Any, str)-> PropertySignature
 
         getter_rtype = "None"
         setter_args = "None"
@@ -180,7 +180,7 @@ class StubsGenerator(object):
         return PropertySignature(getter_rtype, setter_args)
 
     @staticmethod
-    def remove_signatures(docstring: str) -> str:
+    def remove_signatures(docstring): # type: (str) ->str
         if docstring is None: return ""
         signature_regex = r"(\s*(?P<overload_number>\d+).\s*)?{name}\s*\((?P<args>[^\(\)]*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name="\w+")
         lines = docstring.split("\n")
@@ -190,7 +190,7 @@ class StubsGenerator(object):
 
 
 class AttributeStubsGenerator(StubsGenerator):
-    def __init__(self, name:str, attribute: Any):
+    def __init__(self, name, attribute):  # type: (str, Any)-> None
         self.name = name
         self.attr = attribute
 
@@ -218,7 +218,7 @@ class AttributeStubsGenerator(StubsGenerator):
             return True
         return False
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         if self.is_safe_to_use_repr(self.attr):
             return [
                 "{name} = {repr}".format(
@@ -256,7 +256,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
     def parse(self):
         self.signatures = self.function_signatures_from_docstring(self.member, self.module_name)
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         result = []
         docstring = self.remove_signatures(self.member.__doc__)
         for sig in self.signatures:
@@ -282,7 +282,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
         return result
 
-    def get_involved_modules_names(self) -> Set[str]:
+    def get_involved_modules_names(self): # type: () -> Set[str]
         involved_modules_names = set()
         for s in self.signatures:  # type: FunctionSignature
             for t in s.get_all_involved_types():  # type: str
@@ -296,9 +296,9 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
 class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
     def __init__(self, free_function, module_name):
-        super().__init__(free_function, module_name)
+        super(ClassMemberStubsGenerator, self).__init__(free_function, module_name)
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         result = []
         docstring = self.remove_signatures(self.member.__doc__)
         for sig in self.signatures:
@@ -339,7 +339,7 @@ class PropertyStubsGenerator(StubsGenerator):
     def parse(self):
         self.signature = self.property_signature_from_docstring(self.prop, self.module_name)
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         result = []
         result.append("@property")
         result.append("def {field_name}(self) -> {rtype}:".format(field_name=self.name,rtype=self.signature.rtype))
@@ -420,7 +420,7 @@ class ClassStubsGenerator(StubsGenerator):
 
 
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
 
         def strip_current_module_name(obj,module_name):
             regex = r"{}\.(\w+)".format(module_name.replace(".", r"\."))
@@ -493,7 +493,7 @@ class ModuleStubsGenerator(StubsGenerator):
                                  self.attributes):
             x.parse()
 
-        def class_ordering(a:ClassStubsGenerator, b:ClassStubsGenerator)->int:
+        def class_ordering(a, b):  # type: (ClassStubsGenerator, ClassStubsGenerator) -> int
             if a.klass is b.klass:
                 return 0
             if issubclass(a.klass, b.klass):
@@ -523,7 +523,7 @@ class ModuleStubsGenerator(StubsGenerator):
 
         return set(itertools.chain(*( C.involved_modules_names for C in self.classes)))-set(["builtins",self.module.__name__])
 
-    def to_lines(self) -> List[str]:
+    def to_lines(self): # type: () -> List[str]
         result = []
 
         if self.doc_string:
@@ -623,7 +623,7 @@ setup(
 
 
 
-def recursive_mkdir_walker(subdirs: List[str], callback):
+def recursive_mkdir_walker(subdirs, callback): # type: (List[str], Callable) -> None
     if len(subdirs)==0:
         callback()
     else:
