@@ -315,10 +315,12 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 args = ",".join(["self"] + sig.split_arguments()[1:])
             if len(self.signatures)>1:
                 result.append("@overload")
-            result.append("def {name}({args}) -> {rtype}:".format(
+
+            result.append("def {name}({args}) -> {rtype}: {ellipsis}".format(
                 name=sig.name,
                 args=args,
-                rtype=sig.rtype
+                rtype=sig.rtype,
+                ellipsis="" if docstring else "..."
             ))
             if docstring:
                 # don't print space-only docstrings
@@ -330,8 +332,6 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 else:
                     result.append(self.INDENT + '"""{}"""'.format(docstring))
                 docstring = None  # don't print docstring for other overloads
-            else:
-                result.append(self.INDENT + "pass")
         return result
 
 
@@ -349,10 +349,9 @@ class PropertyStubsGenerator(StubsGenerator):
         result.append("@property")
         result.append("def {field_name}(self) -> {rtype}:".format(field_name=self.name,rtype=self.signature.rtype))
         docstring = self.remove_signatures(self.prop.__doc__)
-        if docstring:
-            result.append(self.indent('"""{}"""'.format(docstring)))
-        else:
-            result.append(self.indent("pass"))
+        docstring += "\n:type: {rtype}".format(rtype=self.signature.rtype)
+
+        result.append(self.indent('"""{}"""'.format(docstring)))
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
