@@ -82,12 +82,17 @@ class PropertySignature(object):
         self.setter_args = setter_args
 
 
+def replace_numpy_array(match_obj):
+    result = r"numpy.ndarray[{type}, _Shape[{shape}]]".format(type=match_obj.group("type"),
+                                                           shape=match_obj.group("shape"))
+    return result
+
 class StubsGenerator(object):
 
     INDENT = " "*4
 
     GLOBAL_CLASSNAME_REPLACEMENTS = {
-        re.compile(r"numpy.ndarray\[([^\[\]])+\]"): r"numpy.ndarray"
+        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])\]"): replace_numpy_array
     }
 
     def parse(self):
@@ -537,6 +542,11 @@ class ModuleStubsGenerator(StubsGenerator):
         result += [
             "from typing import Iterable as iterable",
             "from typing import Iterator as iterator",
+        ]
+
+        result += [
+            "from numpy import float64",
+            "_Shape = Tuple[int, ...]"
         ]
 
         # import used packages
