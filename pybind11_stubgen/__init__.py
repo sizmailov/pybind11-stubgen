@@ -534,12 +534,14 @@ class ModuleStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
 
-        result = [
-            "import {}".format(self.module.__name__)
-        ]
+        result = []
 
         if self.doc_string:
             result += ['"""' + self.doc_string.replace('"""', r'\"\"\"') + '"""']
+
+        result += [
+            "import {}".format(self.module.__name__)
+        ]
 
         # import everything from typing
         result += [
