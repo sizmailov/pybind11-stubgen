@@ -13,6 +13,11 @@ Usage
 =====
 
 
-.. code:: bash
+.. code-block:: bash
 
-    pybind11_stubgen/__init__.py [-h] [-o OUTPUT_DIR] MODULE_NAME [MODULE_NAME ...]
+    pybind11_stubgen/__init__.py [-h] \
+            [-o OUTPUT_DIR] \
+            [--root_module_suffix ROOT_MODULE_SUFFIX] \
+            [--no-setup-py] \
+            MODULE_NAME [MODULE_NAME ...]
+
