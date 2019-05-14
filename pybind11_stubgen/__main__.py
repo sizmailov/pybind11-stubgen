@@ -1,18 +1,7 @@
-
 import logging, sys, os
 from argparse import ArgumentParser
 from pybind11_stubgen import DirectoryWalkerGuard, ModuleStubsGenerator, recursive_mkdir_walker
 
-_LOG_LEVEL_MAP = {"CRITICAL" : logging.CRITICAL,
-                  "ERROR" : logging.ERROR,
-                  "WARNING" : logging.WARNING,
-                  "INFO" : logging.INFO,
-                  "DEBUG" : logging.DEBUG}
-
-def _log_level_from_string(string):
-    if not string in _LOG_LEVEL_MAP:
-        raise argparse.ArgumentTypeError("Invalid log level choice, available choices are: {}".format(list(_LOG_LEVEL_MAP.keys())))
-    return _LOG_LEVEL_MAP[string]
 
 def main():
     parser = ArgumentParser(description="Generates stubs for specified modules")
@@ -32,7 +21,7 @@ def main():
     handlers = [stderr_handler]
 
     logging.basicConfig(
-        level=_log_level_from_string(sys_args.log_level),
+        level=logging.getLevelName(sys_args.log_level),
         format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=handlers
     )
@@ -49,6 +38,7 @@ def main():
             _module.stub_suffix = sys_args.root_module_suffix
             _module.write_setup_py = not sys_args.no_setup_py
             recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
+
 
 if __name__ == "__main__":
     main()
