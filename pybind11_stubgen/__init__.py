@@ -651,7 +651,7 @@ def recursive_mkdir_walker(subdirs, callback):  # type: (List[str], Callable) ->
 
 
 def main():
-    parser = ArgumentParser(description="Generates stubs for specified modules")
+    parser = ArgumentParser(prog='pybind11-stubgen', description="Generates stubs for specified modules")
     parser.add_argument("-o", "--output-dir", help="the root directory for output stubs", default="./stubs")
     parser.add_argument("--root_module_suffix", type=str, default="-stubs",
                         help="optional suffix to disambiguate from the "
