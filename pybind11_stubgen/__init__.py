@@ -650,16 +650,15 @@ def recursive_mkdir_walker(subdirs, callback):  # type: (List[str], Callable) ->
             recursive_mkdir_walker(subdirs[1:], callback)
 
 
-if __name__ == "__main__":
-
+def main():
     parser = ArgumentParser(description="Generates stubs for specified modules")
-    parser.add_argument("-o", "--output-dir", dest="output_dir",
-                        help="the root directory for output stubs", default="./stubs")
+    parser.add_argument("-o", "--output-dir", help="the root directory for output stubs", default="./stubs")
     parser.add_argument("--root_module_suffix", type=str, default="-stubs",
                         help="optional suffix to disambiguate from the "
                              "original package")
     parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
+    parser.add_argument("--log-level", default="WARNING", help="Set output log level")
 
     sys_args = parser.parse_args()
 
@@ -667,12 +666,10 @@ if __name__ == "__main__":
     handlers = [stderr_handler]
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.getLevelName(sys_args.log_level),
         format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=handlers
     )
-
-    logger = logging.getLogger(__name__)
 
     output_path = sys_args.output_dir
 
@@ -686,3 +683,7 @@ if __name__ == "__main__":
             _module.stub_suffix = sys_args.root_module_suffix
             _module.write_setup_py = not sys_args.no_setup_py
             recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
+
+
+if __name__ == "__main__":
+    main()
