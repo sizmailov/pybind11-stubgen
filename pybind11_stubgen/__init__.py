@@ -9,6 +9,8 @@ import os
 import re
 from argparse import ArgumentParser
 
+logger = logging.getLogger(__name__)
+
 
 class DirectoryWalkerGuard(object):
 
