@@ -443,9 +443,10 @@ class ClassStubsGenerator(StubsGenerator):
             for b in self.base_classes
         ]
         result = [
-            "class {class_name}({base_classes_list}):".format(
+            "class {class_name}({base_classes_list}):{doc_string}".format(
                 class_name=self.klass.__name__,
-                base_classes_list=", ".join(base_classes_list)
+                base_classes_list=", ".join(base_classes_list),
+                doc_string='\n' + self.INDENT + '"""{}"""'.format(self.doc_string) if self.doc_string else "",
             ),
         ]
         for f in self.methods:
