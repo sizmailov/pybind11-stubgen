@@ -80,9 +80,15 @@ class FunctionSignature(object):
 
 class PropertySignature(object):
 
-    def __init__(self, rtype, setter_args):
+    NONE = 0
+    READ_ONLY = 1
+    WRITE_ONLY = 2
+    READ_WRITE = READ_ONLY | WRITE_ONLY
+
+    def __init__(self, rtype, setter_args, access_type):
         self.rtype = rtype
         self.setter_args = setter_args
+        self.access_type = access_type
 
 
 def replace_numpy_array(match_obj):
@@ -168,32 +174,36 @@ class StubsGenerator(object):
 
         getter_rtype = "None"
         setter_args = "None"
+        access_type = PropertySignature.NONE
 
         strip_module_name = module_name is not None
-        if hasattr(prop, "fget") and prop.fget is not None and hasattr(prop.fget,
-                                                                       "__doc__") and prop.fget.__doc__ is not None:
-            for line in prop.fget.__doc__.split("\n"):
-                if strip_module_name:
-                    line = line.replace(module_name + ".", "")
-                m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
-                if m:
-                    getter_rtype = m.group("rtype")
-                    break
 
-        if hasattr(prop, "fset") and prop.fset is not None and hasattr(prop.fset,
-                                                                       "__doc__") and prop.fset.__doc__ is not None:
-            for line in prop.fset.__doc__.split("\n"):
-                if strip_module_name:
-                    line = line.replace(module_name + ".", "")
-                m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
-                if m:
-                    args = m.group("args")
-                    # replace first argument with self
-                    setter_args = ",".join(["self"] + args.split(",")[1:])
-                    break
+        if hasattr(prop, "fget") and prop.fget is not None:
+            access_type |= PropertySignature.READ_ONLY
+            if hasattr(prop.fget, "__doc__") and prop.fget.__doc__ is not None:
+                for line in prop.fget.__doc__.split("\n"):
+                    if strip_module_name:
+                        line = line.replace(module_name + ".", "")
+                    m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
+                    if m:
+                        getter_rtype = m.group("rtype")
+                        break
+
+        if hasattr(prop, "fset") and prop.fset is not None:
+            access_type |= PropertySignature.WRITE_ONLY
+            if hasattr(prop.fset, "__doc__") and prop.fset.__doc__ is not None:
+                for line in prop.fset.__doc__.split("\n"):
+                    if strip_module_name:
+                        line = line.replace(module_name + ".", "")
+                    m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
+                    if m:
+                        args = m.group("args")
+                        # replace first argument with self
+                        setter_args = ",".join(["self"] + args.split(",")[1:])
+                        break
         getter_rtype = StubsGenerator.apply_classname_replacements(getter_rtype)
         setter_args = StubsGenerator.apply_classname_replacements(setter_args)
-        return PropertySignature(getter_rtype, setter_args)
+        return PropertySignature(getter_rtype, setter_args, access_type)
 
     @staticmethod
     def remove_signatures(docstring):  # type: (str) ->str
@@ -356,7 +366,7 @@ class PropertyStubsGenerator(StubsGenerator):
         self.name = name
         self.prop = prop
         self.module_name = module_name
-        self.signature = None
+        self.signature = None  # type: PropertySignature
 
     def parse(self):
         self.signature = self.property_signature_from_docstring(self.prop, self.module_name)
