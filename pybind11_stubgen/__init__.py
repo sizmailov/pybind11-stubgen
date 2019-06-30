@@ -130,8 +130,15 @@ class StubsGenerator(object):
     def function_signatures_from_docstring(func, module_name):  # type: (Any, str) -> List[FunctionSignature]
         name = func.__name__
         try:
+            no_parentheses = r"[^()]*"
+            parentheses_one_fold = r"({nopar}(\({nopar}\))?)*".format(nopar=no_parentheses)
+            parentheses_two_fold = r"({nopar}(\({par1}\))?)*".format(par1=parentheses_one_fold, nopar=no_parentheses)
+            parentheses_three_fold = r"({nopar}(\({par2}\))?)*".format(par2=parentheses_two_fold, nopar=no_parentheses)
             signature_regex = r"(\s*(?P<overload_number>\d+).)" \
-                              r"?\s*{name}\s*\((?P<args>[^\(\)]*)\)\s*->\s*(?P<rtype>[^\(\)]+)\s*".format(name=name)
+                              r"?\s*{name}\s*\((?P<args>{balanced_parentheses})\)" \
+                              r"\s*->\s*" \
+                              r"(?P<rtype>[^\(\)]+)\s*".format(name=name,
+                                                               balanced_parentheses=parentheses_three_fold)
             doc_lines = func.__doc__
             signatures = []
             for line in doc_lines.split("\n"):
