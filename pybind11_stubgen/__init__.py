@@ -90,6 +90,10 @@ class PropertySignature(object):
         self.setter_args = setter_args
         self.access_type = access_type
 
+    @property
+    def setter_arg_type(self):
+        return FunctionSignature.argument_type(FunctionSignature('name',self.setter_args).split_arguments()[1])
+
 
 def replace_numpy_array(match_obj):
     result = r"numpy.ndarray[{type}, _Shape[{shape}]]".format(type=match_obj.group("type"),
