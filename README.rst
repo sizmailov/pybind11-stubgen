@@ -1,3 +1,8 @@
+
+.. image:: https://badge.fury.io/py/pybind11-stubgen.svg
+    :target: https://pypi.org/project/pybind11-stubgen/
+
+
 About
 =====
 
