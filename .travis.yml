@@ -29,12 +29,12 @@ matrix:
         apt:
           packages:
             - g++-7
-            - python3.5
-            - python3.5-dev
+            - python3.6
+            - python3.6-dev
           sources:
             - deadsnakes
             - ubuntu-toolchain-r-test
-      python: 3.5
+      python: 3.6
 
 
 before_install:
