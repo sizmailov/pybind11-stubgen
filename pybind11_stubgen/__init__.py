@@ -79,7 +79,6 @@ class FunctionSignature(object):
 
 
 class PropertySignature(object):
-
     NONE = 0
     READ_ONLY = 1
     WRITE_ONLY = 2
@@ -92,7 +91,7 @@ class PropertySignature(object):
 
     @property
     def setter_arg_type(self):
-        return FunctionSignature.argument_type(FunctionSignature('name',self.setter_args).split_arguments()[1])
+        return FunctionSignature.argument_type(FunctionSignature('name', self.setter_args).split_arguments()[1])
 
 
 def replace_numpy_array(match_obj):
@@ -137,8 +136,7 @@ class StubsGenerator(object):
         return s
 
     @staticmethod
-    def function_signatures_from_docstring(func, module_name):  # type: (Any, str) -> List[FunctionSignature]
-        name = func.__name__
+    def function_signatures_from_docstring(name, func, module_name):  # type: (Any, str) -> List[FunctionSignature]
         try:
             no_parentheses = r"[^()]*"
             parentheses_one_fold = r"({nopar}(\({nopar}\))?)*".format(nopar=no_parentheses)
@@ -283,13 +281,14 @@ class AttributeStubsGenerator(StubsGenerator):
 
 
 class FreeFunctionStubsGenerator(StubsGenerator):
-    def __init__(self, free_function, module_name):
+    def __init__(self, name, free_function, module_name):
+        self.name = name
         self.member = free_function
         self.module_name = module_name
         self.signatures = []  # type:  List[FunctionSignature]
 
     def parse(self):
-        self.signatures = self.function_signatures_from_docstring(self.member, self.module_name)
+        self.signatures = self.function_signatures_from_docstring(self.name, self.member, self.module_name)
 
     def to_lines(self):  # type: () -> List[str]
         result = []
@@ -330,8 +329,8 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
 
 class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
-    def __init__(self, free_function, module_name):
-        super(ClassMemberStubsGenerator, self).__init__(free_function, module_name)
+    def __init__(self, name, free_function, module_name):
+        super(ClassMemberStubsGenerator, self).__init__(name, free_function, module_name)
 
     def to_lines(self):  # type: () -> List[str]
         result = []
@@ -430,12 +429,13 @@ class ClassStubsGenerator(StubsGenerator):
     def parse(self):
         for name, member in inspect.getmembers(self.klass):
             if inspect.isroutine(member):
-                self.methods.append(ClassMemberStubsGenerator(member, self.klass.__module__))
+                self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif isinstance(member, property):
                 self.properties.append(PropertyStubsGenerator(name, member, self.klass.__module__))
             elif name == "__doc__":
                 self.doc_string = member
             elif name not in self.attributes_blacklist:
+                self.fields.append(AttributeStubsGenerator(name, member))
                 logger.warning("Unknown member %s type : `%s` " % (name, str(type(member))))
 
         for x in itertools.chain(self.methods,
@@ -471,10 +471,13 @@ class ClassStubsGenerator(StubsGenerator):
             ),
         ]
         for f in self.methods:
-            if f.member.__name__ not in self.methods_blacklist:
+            if f.name not in self.methods_blacklist:
                 result.extend(map(self.indent, f.to_lines()))
 
         for p in self.properties:
+            result.extend(map(self.indent, p.to_lines()))
+
+        for p in self.fields:
             result.extend(map(self.indent, p.to_lines()))
 
         result.append(self.INDENT + "pass")
@@ -512,7 +515,7 @@ class ModuleStubsGenerator(StubsGenerator):
                 else:
                     logger.debug("Skip '%s' module while parsing '%s' " % (m.module.__name__, self.module.__name__))
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
-                self.free_functions.append(FreeFunctionStubsGenerator(member, self.module.__name__))
+                self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
             elif inspect.isclass(member) or inspect.isclass(member):
                 self.classes.append(ClassStubsGenerator(member))
             elif name == "__doc__":
@@ -596,7 +599,7 @@ class ModuleStubsGenerator(StubsGenerator):
             _all_.append(c.klass.__name__)
 
         for f in self.free_functions:
-            _all_.append(f.member.__name__)
+            _all_.append(f.name)
 
         for m in self.submodules:
             _all_.append(m.short_name)
