@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -e
+
 if [ ! -d pybind11-project-example ]
 then
-    git clone git@github.com:sizmailov/pybind11-project-example.git
+    git clone https://github.com/sizmailov/pybind11-project-example.git
 else
     (cd pybind11-project-example; git pull origin)
 fi
