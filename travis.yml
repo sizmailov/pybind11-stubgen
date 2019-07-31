@@ -1,0 +1,49 @@
+language: python
+
+sudo: false
+
+os: linux
+dist: trusty
+
+# whitelist
+branches:
+  only:
+    - master
+    - dev
+
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps
+
+git:
+    submodules: false
+
+matrix:
+  include:
+    - env:
+      - COMPILER=g++-7
+      - BUILD_TYPE=Release
+      - RUN_CTESTS=false
+      addons: &gcc7
+        apt:
+          packages:
+            - g++-7
+            - python3.5
+            - python3.5-dev
+          sources:
+            - deadsnakes
+            - ubuntu-toolchain-r-test
+      python: 3.5
+
+
+before_install:
+    - export CXX=$COMPILER
+    - $COMPILER --version
+    - python --version
+
+install:
+#    - python -m pip install pytest numpy
+    - python setup.py install
+
+script:
+    - (cd test ; bash run_tests.sh)
