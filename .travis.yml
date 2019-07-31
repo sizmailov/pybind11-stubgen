@@ -10,6 +10,7 @@ branches:
   only:
     - master
     - dev
+    - add_ci
 
 cache:
   directories:
@@ -46,4 +47,4 @@ install:
     - python setup.py install
 
 script:
-    - (cd test ; bash run_tests.sh)
+    - (cd test ; bash run_test.sh)
