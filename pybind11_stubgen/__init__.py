@@ -279,6 +279,9 @@ class AttributeStubsGenerator(StubsGenerator):
                    + [l.replace('"""', r'\"\"\"') for l in value_lines] \
                    + ['"""']
 
+    def get_involved_modules_names(self):  # type: () -> Set[str]
+        return set((self.attr.__class__.__module__,) )
+
 
 class FreeFunctionStubsGenerator(StubsGenerator):
     def __init__(self, name, free_function, module_name):
@@ -499,6 +502,7 @@ class ModuleStubsGenerator(StubsGenerator):
         self.classes = []  # type: List[ClassStubsGenerator]
         self.free_functions = []  # type: List[FreeFunctionStubsGenerator]
         self.submodules = []  # type: List[ModuleStubsGenerator]
+        self.imported_modules = []  # type: List[str]
         self.attributes = []  # type: List[AttributeStubsGenerator]
         self.stub_suffix = ""
         self.write_setup_py = False
@@ -513,6 +517,7 @@ class ModuleStubsGenerator(StubsGenerator):
                 if m.module.__name__.startswith(self.module.__name__):
                     self.submodules.append(m)
                 else:
+                    self.imported_modules = m.module.__name__
                     logger.debug("Skip '%s' module while parsing '%s' " % (m.module.__name__, self.module.__name__))
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
@@ -549,15 +554,18 @@ class ModuleStubsGenerator(StubsGenerator):
         # print( [ k.klass.__name__ for k in self.classes ] )
 
     def get_involved_modules_names(self):
-        result = set()
+        result = set(self.imported_modules)
+
+        for attr in self.attributes:
+            result |= attr.get_involved_modules_names()
+
         for C in self.classes:  # type: ClassStubsGenerator
             result |= C.get_involved_modules_names()
 
         for f in self.free_functions:  # type: FreeFunctionStubsGenerator
             result |= f.get_involved_modules_names()
 
-        return set(itertools.chain(*(C.involved_modules_names for C in self.classes))) - {"builtins",
-                                                                                          self.module.__name__}
+        return set(result) - {"builtins", self.module.__name__}
 
     def to_lines(self):  # type: () -> List[str]
 
