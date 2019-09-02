@@ -436,7 +436,7 @@ class ClassStubsGenerator(StubsGenerator):
                 self.doc_string = member
             elif name not in self.attributes_blacklist:
                 self.fields.append(AttributeStubsGenerator(name, member))
-                logger.warning("Unknown member %s type : `%s` " % (name, str(type(member))))
+                # logger.warning("Unknown member %s type : `%s` " % (name, str(type(member))))
 
         for x in itertools.chain(self.methods,
                                  self.properties,
