@@ -1,31 +1,19 @@
 language: python
-
 sudo: false
-
 os: linux
 dist: trusty
-
-# whitelist
 branches:
   only:
     - master
-    - dev
-    - add_ci
-
-cache:
-  directories:
-    - ${TRAVIS_BUILD_DIR}/deps
-
 git:
-    submodules: false
-
+  submodules: false
 matrix:
   include:
     - env:
-      - COMPILER=g++-7
-      - BUILD_TYPE=Release
-      - RUN_CTESTS=false
-      addons: &gcc7
+        - COMPILER=g++-7
+        - BUILD_TYPE=Release
+        - RUN_CTESTS=false
+      addons:
         apt:
           packages:
             - g++-7
@@ -35,16 +23,22 @@ matrix:
             - deadsnakes
             - ubuntu-toolchain-r-test
       python: 3.6
-
-
 before_install:
-    - export CXX=$COMPILER
-    - $COMPILER --version
-    - python --version
-
+  - export CXX=$COMPILER
+  - "$COMPILER --version"
+  - python --version
+  - python -m pip install codecov
 install:
-#    - python -m pip install pytest numpy
-    - python setup.py install
-
+  - python setup.py install
 script:
-    - (cd test ; bash run_test.sh)
+  - (cd test ; bash run_test.sh)
+after_success:
+  - (cd test ; codecov)
+deploy:
+  - provider: pypi
+    user: __token__
+    password:
+      secure: V4AHpUCPgy0SBypPHxsppsr3BBE7JAH1zt6sHBemCRqPQPP/NKObNAS/2iAcAzDlnKpITNJ6Q7m8YNT6yhFCTeMlMj1ZRH8I6oHFgpYpM+gmidsxa5bNjLePerpUXTELy2R2RzQwu6/D0SkL7QB2ejtrhPcODuHlXxlKajOOMVYBvCzZlSATg2H/ujs+z6mrGAJjgqKxlbGyQjeXwAx/ODtsTimKpMeYpQzXANW28b7hxz0wZs11qHrWijf+j45KZoR4f03HDwIUDIqtnJB4aBz/0XY55GonRKrtbQhS6kSj/H2x9OTZHyoIHkLzmzlckiiuCv5Jd97OBGOTbVFF2pCj6Q2fKo4fl5nDZuZaMpkhUkHofJWabJ1C3md8DtQ5xmxxJf7cATztvdsmqtXC9ciPvITA/Fk/02TCdOZpivnhGg+6AuR+xNzA7YRo8aw2r0UNVtBFT8CjPFfxth/6fQ9OuWanoi/d49BbxCJjo0KJe4KFeESpNkqZgw7Aj5HKreSajlLgTq6YvPu0M2lxjcuvnLpgcI2Of16w2cFZvk+PtohzEghYpdtnk91gZNgL9vee5ghRja8DROYbqS17AEJx3ilmXp7jiv6zWXHwnVKLbRtY+fpWRmSHLbt2AWwniirhkgiJrz88JqduhzSxrhAYTOkL/0j3zVVfiA88U2M=
+    skip_existing: true
+    on:
+      branch: master

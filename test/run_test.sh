@@ -14,7 +14,8 @@ fi
 
 
 rm -rf "./stubs/generated"
-pybind11-stubgen cpp_library_bindings \
+
+coverage run -m pybind11_stubgen cpp_library_bindings \
            --output-dir="./stubs/generated" \
            --root_module_suffix="" \
            --no-setup-py \
