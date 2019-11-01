@@ -264,14 +264,14 @@ class AttributeStubsGenerator(StubsGenerator):
         if len(value_lines) == 1:
             value = value_lines[0]
             return [
-                "{name} = None # type: {typename} # value = {value}".format(
+                "{name}: {typename} # value = {value}".format(
                     name=self.name,
                     typename=self.fully_qualified_name(type(self.attr)),
                     value=value)
             ]
         else:
             return [
-                       "{name} = None # type: {typename} # value = ".format(
+                       "{name}: {typename} # value = ".format(
                            name=self.name,
                            typename=str(type(self.attr)))
                    ] \
