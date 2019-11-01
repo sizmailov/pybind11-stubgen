@@ -1,6 +1,14 @@
+.. image:: https://img.shields.io/travis/com/sizmailov/pybind11-stubgen/master.svg?logo=travis
+    :alt: master status
+    :target: https://travis-ci.com/sizmailov/pybind11-stubgen
 
-.. image:: https://badge.fury.io/py/pybind11-stubgen.svg
+.. image:: https://img.shields.io/pypi/v/pybind11-stubgen.svg?logo=PyPI&logoColor=white
+    :alt: pypi package
     :target: https://pypi.org/project/pybind11-stubgen/
+
+.. image:: https://codecov.io/gh/sizmailov/pybind11-stubgen/branch/master/graph/badge.svg
+  :alt: coverage
+  :target: https://codecov.io/gh/sizmailov/pybind11-stubgen
 
 
 About
