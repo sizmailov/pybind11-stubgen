@@ -5,8 +5,6 @@ dist: trusty
 branches:
   only:
     - master
-    - dev
-    - add_ci
 cache:
   directories:
     - "${TRAVIS_BUILD_DIR}/deps"
