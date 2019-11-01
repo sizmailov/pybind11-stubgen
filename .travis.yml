@@ -5,9 +5,6 @@ dist: trusty
 branches:
   only:
     - master
-cache:
-  directories:
-    - "${TRAVIS_BUILD_DIR}/deps"
 git:
   submodules: false
 matrix:
