@@ -31,9 +31,9 @@ before_install:
 install:
   - python setup.py install
 script:
-  - "(cd test ; bash run_test.sh)"
+  - (cd test ; bash run_test.sh)
 after_success:
-  - codecov
+  - (cd test ; codecov)
 deploy:
   - provider: pypi
     user: __token__
