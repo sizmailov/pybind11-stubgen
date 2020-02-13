@@ -18,7 +18,7 @@ Generates stubs for python modules
 
 There are several tweaks to target specifically modules compiled using `pybind11 <https://github.com/pybind/pybind11>`_
 
-Currently supports only python3
+Package targets python3 only. (In fact, it's compatible with python2 but it's not officially supported)
 
 Issues/PR are welcome
 
