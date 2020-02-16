@@ -356,7 +356,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
             ))
             if docstring:
                 # don't print space-only docstrings
-                if re.match(r"^\s$", docstring):
+                if re.match(r"^\s$", docstring, re.MULTILINE):
                     result.append(self.INDENT + "pass")
                     # warn about empty docstrings for all functions except __???__
                     if not (sig.name.startswith("__") and sig.name.endswith("__")):
