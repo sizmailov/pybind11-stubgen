@@ -338,6 +338,12 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
     def to_lines(self):  # type: () -> List[str]
         result = []
         docstring = self.remove_signatures(self.member.__doc__)
+        # don't print space-only docstrings
+        if docstring and re.match(r"^\s*$", docstring):
+            # warn about empty docstrings for all functions except __???__
+            if not (self.name.startswith("__") and self.name.endswith("__")):
+                logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
+            docstring = None
         for sig in self.signatures:
             args = sig.args
             if not args.strip().startswith("self"):
@@ -355,14 +361,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
-                # don't print space-only docstrings
-                if re.match(r"^\s*$", docstring):
-                    result.append(self.INDENT + "pass")
-                    # warn about empty docstrings for all functions except __???__
-                    if not (sig.name.startswith("__") and sig.name.endswith("__")):
-                        logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
-                else:
-                    result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.INDENT + '"""{}"""'.format(docstring))
                 docstring = None  # don't print docstring for other overloads
         return result
 
