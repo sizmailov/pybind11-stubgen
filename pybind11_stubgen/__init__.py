@@ -221,6 +221,17 @@ class StubsGenerator(object):
 
         return "\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
 
+    @staticmethod
+    def filter_docstring(docstring):  # type: (str) ->str
+        docstring_new = StubsGenerator.remove_signatures(docstring)
+
+        # Reduce the double empty line to a single empty line
+        docstring_new = re.sub(r"\n\s*\n", "\n\n", docstring_new)
+        if docstring_new and re.match(r"^\s*$", docstring_new):
+            docstring_new = ""
+
+        return docstring_new
+
 
 class AttributeStubsGenerator(StubsGenerator):
     def __init__(self, name, attribute):  # type: (str, Any)-> None
@@ -295,7 +306,9 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.remove_signatures(self.member.__doc__)
+        docstring = self.filter_docstring(self.member.__doc__)
+        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+            logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             if len(self.signatures) > 1:
                 result.append("@overload")
@@ -305,14 +318,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 rtype=sig.rtype
             ))
             if docstring:
-                # don't print space-only docstrings
-                if re.match(r"^\s*$", docstring):
-                    result.append(self.INDENT + "pass")
-                    # warn about empty docstrings for all functions except __???__
-                    if not (sig.name.startswith("__") and sig.name.endswith("__")):
-                        logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
-                else:
-                    result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.INDENT + '"""{}"""'.format(docstring))
                 docstring = None  # don't print docstring for other overloads
             else:
                 result.append(self.INDENT + "pass")
@@ -337,13 +343,9 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.remove_signatures(self.member.__doc__)
-        # don't print space-only docstrings
-        if docstring and re.match(r"^\s*$", docstring):
-            # warn about empty docstrings for all functions except __???__
-            if not (self.name.startswith("__") and self.name.endswith("__")):
-                logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
-            docstring = None
+        docstring = self.filter_docstring(self.member.__doc__)
+        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+            logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             args = sig.args
             if not args.strip().startswith("self"):
@@ -378,18 +380,17 @@ class PropertyStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
 
-        docstring = self.remove_signatures(self.prop.__doc__)
-        docstring += "\n:type: {rtype}".format(rtype=self.signature.rtype)
+        docstring = self.filter_docstring(self.prop.__doc__)
+        docstring_prop = "\n".join([docstring, ":type: {rtype}".format(rtype=self.signature.rtype)])
 
         result = ["@property",
                   "def {field_name}(self) -> {rtype}:".format(field_name=self.name, rtype=self.signature.rtype),
-                  self.indent('"""{}"""'.format(docstring))]
+                  self.indent('"""{}"""'.format(docstring_prop))]
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
             result.append(
                 "def {field_name}({args}) -> None:".format(field_name=self.name, args=self.signature.setter_args))
-            docstring = self.remove_signatures(self.prop.__doc__)
             if docstring:
                 result.append(self.indent('"""{}"""'.format(docstring)))
             else:
