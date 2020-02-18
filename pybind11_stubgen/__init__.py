@@ -118,6 +118,16 @@ class StubsGenerator(object):
         return StubsGenerator.INDENT + line
 
     @staticmethod
+    def indent_lines(lines):
+        if isinstance(lines, str):
+            lines = lines.split("\n")
+        elif not isinstance(lines, list):
+            raise TypeError("lines type should be either str of list, not: '{}'".format(type(lines)))
+
+        lines = [StubsGenerator.indent(line) for line in lines]
+        return "\n".join(lines)
+
+    @staticmethod
     def fully_qualified_name(klass):
         module_name = klass.__module__
         class_name = klass.__name__
@@ -318,10 +328,10 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 rtype=sig.rtype
             ))
             if docstring:
-                result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
                 docstring = None  # don't print docstring for other overloads
             else:
-                result.append(self.INDENT + "pass")
+                result.append(self.indent("pass"))
 
         return result
 
@@ -363,7 +373,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
-                result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
                 docstring = None  # don't print docstring for other overloads
         return result
 
@@ -381,18 +391,18 @@ class PropertyStubsGenerator(StubsGenerator):
     def to_lines(self):  # type: () -> List[str]
 
         docstring = self.filter_docstring(self.prop.__doc__)
-        docstring_prop = "\n".join([docstring, ":type: {rtype}".format(rtype=self.signature.rtype)])
+        docstring_prop = "\n\n".join([docstring, ":type: {rtype}".format(rtype=self.signature.rtype)])
 
         result = ["@property",
                   "def {field_name}(self) -> {rtype}:".format(field_name=self.name, rtype=self.signature.rtype),
-                  self.indent('"""{}"""'.format(docstring_prop))]
+                  self.indent_lines('"""\n{}\n"""'.format(docstring_prop.strip("\n")))]
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
             result.append(
                 "def {field_name}({args}) -> None:".format(field_name=self.name, args=self.signature.setter_args))
             if docstring:
-                result.append(self.indent('"""{}"""'.format(docstring)))
+                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
             else:
                 result.append(self.indent("pass"))
 
@@ -470,20 +480,21 @@ class ClassStubsGenerator(StubsGenerator):
             "class {class_name}({base_classes_list}):{doc_string}".format(
                 class_name=self.klass.__name__,
                 base_classes_list=", ".join(base_classes_list),
-                doc_string='\n' + self.INDENT + '"""{}"""'.format(self.doc_string) if self.doc_string else "",
+                doc_string='\n' + self.indent_lines('"""\n{}\n"""'.format(self.doc_string.strip("\n")))
+                            if self.doc_string else "",
             ),
         ]
         for f in self.methods:
             if f.name not in self.methods_blacklist:
-                result.extend(map(self.indent, f.to_lines()))
+                result.extend(map(self.indent_lines, f.to_lines()))
 
         for p in self.properties:
-            result.extend(map(self.indent, p.to_lines()))
+            result.extend(map(self.indent_lines, p.to_lines()))
 
         for p in self.fields:
-            result.extend(map(self.indent, p.to_lines()))
+            result.extend(map(self.indent_lines, p.to_lines()))
 
-        result.append(self.INDENT + "pass")
+        result.append(self.indent("pass"))
         return result
 
 
