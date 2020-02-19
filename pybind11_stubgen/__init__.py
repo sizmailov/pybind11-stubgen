@@ -114,17 +114,13 @@ class StubsGenerator(object):
         raise NotImplementedError
 
     @staticmethod
-    def indent(line):  # type: (str) -> str
+    def _indent(line):  # type: (str) -> str
         return StubsGenerator.INDENT + line
 
     @staticmethod
-    def indent_lines(lines):
-        if isinstance(lines, str):
-            lines = lines.split("\n")
-        elif not isinstance(lines, list):
-            raise TypeError("lines type should be either str of list, not: '{}'".format(type(lines)))
-
-        lines = [StubsGenerator.indent(line) for line in lines]
+    def indent(lines):  # type: (str) -> str
+        lines = lines.split("\n")
+        lines = [StubsGenerator._indent(l) if l else l for l in lines]
         return "\n".join(lines)
 
     @staticmethod
@@ -232,15 +228,24 @@ class StubsGenerator(object):
         return "\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
 
     @staticmethod
-    def sanitize_docstring(docstring):  # type: (str) ->str
-        docstring_new = StubsGenerator.remove_signatures(docstring)
-
+    def remove_repeated_empty_lines(docstring):
         # Reduce the double empty line to a single empty line
-        docstring_new = re.sub(r"\n\s*\n", "\n\n", docstring_new)
-        if docstring_new and re.match(r"^\s*$", docstring_new):
-            docstring_new = ""
+        return re.sub(r"\n\s*\n", "\n\n", docstring)
 
-        return docstring_new
+    @staticmethod
+    def sanitize_docstring(docstring):  # type: (str) ->str
+        docstring = StubsGenerator.remove_signatures(docstring)
+        docstring = StubsGenerator.remove_repeated_empty_lines(docstring)
+        docstring = docstring.rstrip("\n")
+
+        if docstring and re.match(r"^\s*$", docstring):
+            docstring = ""
+
+        return docstring
+
+    @staticmethod
+    def generate_styled_docstring(docstring):
+        return StubsGenerator.indent('"""\n{}\n"""'.format(docstring.strip("\n")))
 
 
 class AttributeStubsGenerator(StubsGenerator):
@@ -328,7 +333,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 rtype=sig.rtype
             ))
             if docstring:
-                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
+                result.append(self.generate_styled_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
             else:
                 result.append(self.indent("pass"))
@@ -373,7 +378,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
-                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
+                result.append(self.generate_styled_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
         return result
 
@@ -395,14 +400,14 @@ class PropertyStubsGenerator(StubsGenerator):
 
         result = ["@property",
                   "def {field_name}(self) -> {rtype}:".format(field_name=self.name, rtype=self.signature.rtype),
-                  self.indent_lines('"""\n{}\n"""'.format(docstring_prop.strip("\n")))]
+                  self.generate_styled_docstring(docstring_prop)]
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
             result.append(
                 "def {field_name}({args}) -> None:".format(field_name=self.name, args=self.signature.setter_args))
             if docstring:
-                result.append(self.indent_lines('"""\n{}\n"""'.format(docstring.strip("\n"))))
+                result.append(self.generate_styled_docstring(docstring))
             else:
                 result.append(self.indent("pass"))
 
@@ -480,19 +485,19 @@ class ClassStubsGenerator(StubsGenerator):
             "class {class_name}({base_classes_list}):{doc_string}".format(
                 class_name=self.klass.__name__,
                 base_classes_list=", ".join(base_classes_list),
-                doc_string='\n' + self.indent_lines('"""\n{}\n"""'.format(self.doc_string.strip("\n")))
+                doc_string='\n' + self.generate_styled_docstring(self.doc_string)
                             if self.doc_string else "",
             ),
         ]
         for f in self.methods:
             if f.name not in self.methods_blacklist:
-                result.extend(map(self.indent_lines, f.to_lines()))
+                result.extend(map(self.indent, f.to_lines()))
 
         for p in self.properties:
-            result.extend(map(self.indent_lines, p.to_lines()))
+            result.extend(map(self.indent, p.to_lines()))
 
         for p in self.fields:
-            result.extend(map(self.indent_lines, p.to_lines()))
+            result.extend(map(self.indent, p.to_lines()))
 
         result.append(self.indent("pass"))
         return result
