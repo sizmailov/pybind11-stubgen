@@ -232,7 +232,7 @@ class StubsGenerator(object):
         return "\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
 
     @staticmethod
-    def filter_docstring(docstring):  # type: (str) ->str
+    def sanitize_docstring(docstring):  # type: (str) ->str
         docstring_new = StubsGenerator.remove_signatures(docstring)
 
         # Reduce the double empty line to a single empty line
@@ -316,7 +316,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.filter_docstring(self.member.__doc__)
+        docstring = self.sanitize_docstring(self.member.__doc__)
         if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
             logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
@@ -353,7 +353,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.filter_docstring(self.member.__doc__)
+        docstring = self.sanitize_docstring(self.member.__doc__)
         if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
             logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
@@ -390,7 +390,7 @@ class PropertyStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
 
-        docstring = self.filter_docstring(self.prop.__doc__)
+        docstring = self.sanitize_docstring(self.prop.__doc__)
         docstring_prop = "\n\n".join([docstring, ":type: {rtype}".format(rtype=self.signature.rtype)])
 
         result = ["@property",
