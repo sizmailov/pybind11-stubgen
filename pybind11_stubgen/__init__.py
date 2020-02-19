@@ -644,6 +644,7 @@ class ModuleStubsGenerator(StubsGenerator):
                                  self.free_functions,
                                  self.attributes):
             result.extend(x.to_lines())
+        result.append("")  # Newline at EOF
         return result
 
     @property
