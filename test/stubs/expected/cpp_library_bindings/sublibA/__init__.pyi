@@ -14,22 +14,26 @@ __all__  = [
 "Yellow"
 ]
 class ConsoleBackgroundColor():
-    """Members:
+    """
+    Members:
 
-  Green
+      Green
 
-  Yellow
+      Yellow
 
-  Blue
+      Blue
 
-  Magenta"""
+      Magenta
+    """
     def __init__(self, arg0: int) -> None: ...
     def __int__(self) -> int: ...
     @property
     def name(self) -> str:
-        """(self: handle) -> str
+        """
+        (self: handle) -> str
 
-:type: str"""
+        :type: str
+        """
     Blue: cpp_library_bindings.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Blue
     Green: cpp_library_bindings.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Green
     Magenta: cpp_library_bindings.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Magenta
@@ -38,22 +42,26 @@ class ConsoleBackgroundColor():
     __members__: dict # value = {'Green': ConsoleBackgroundColor.Green, 'Yellow': ConsoleBackgroundColor.Yellow, 'Blue': ConsoleBackgroundColor.Blue, 'Magenta': ConsoleBackgroundColor.Magenta}
     pass
 class ConsoleForegroundColor():
-    """Members:
+    """
+    Members:
 
-  Green
+      Green
 
-  Yellow
+      Yellow
 
-  Blue
+      Blue
 
-  Magenta"""
+      Magenta
+    """
     def __init__(self, arg0: int) -> None: ...
     def __int__(self) -> int: ...
     @property
     def name(self) -> str:
-        """(self: handle) -> str
+        """
+        (self: handle) -> str
 
-:type: str"""
+        :type: str
+        """
     Blue: cpp_library_bindings.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Blue
     Green: cpp_library_bindings.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Green
     Magenta: cpp_library_bindings.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Magenta
