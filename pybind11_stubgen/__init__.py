@@ -114,8 +114,14 @@ class StubsGenerator(object):
         raise NotImplementedError
 
     @staticmethod
-    def indent(line):  # type: (str) -> str
+    def _indent(line):  # type: (str) -> str
         return StubsGenerator.INDENT + line
+
+    @staticmethod
+    def indent(lines):  # type: (str) -> str
+        lines = lines.split("\n")
+        lines = [StubsGenerator._indent(l) if l else l for l in lines]
+        return "\n".join(lines)
 
     @staticmethod
     def fully_qualified_name(klass):
@@ -216,10 +222,24 @@ class StubsGenerator(object):
         signature_regex = r"(\s*(?P<overload_number>\d+).\s*)" \
                           r"?{name}\s*\((?P<args>[^\(\)]*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name=r"\w+")
 
-        lines = docstring.split("\n")
+        lines = docstring.split("\n\n")
         lines = filter(lambda line: line != "Overloaded function.", lines)
 
-        return "\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
+        return "\n\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
+
+    @staticmethod
+    def sanitize_docstring(docstring):  # type: (str) ->str
+        docstring = StubsGenerator.remove_signatures(docstring)
+        docstring = docstring.rstrip("\n")
+
+        if docstring and re.match(r"^\s*$", docstring):
+            docstring = ""
+
+        return docstring
+
+    @staticmethod
+    def format_docstring(docstring):
+        return StubsGenerator.indent('"""\n{}\n"""'.format(docstring.strip("\n")))
 
 
 class AttributeStubsGenerator(StubsGenerator):
@@ -295,7 +315,9 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.remove_signatures(self.member.__doc__)
+        docstring = self.sanitize_docstring(self.member.__doc__)
+        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+            logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             if len(self.signatures) > 1:
                 result.append("@overload")
@@ -305,17 +327,10 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 rtype=sig.rtype
             ))
             if docstring:
-                # don't print space-only docstrings
-                if re.match(r"^\s*$", docstring):
-                    result.append(self.INDENT + "pass")
-                    # warn about empty docstrings for all functions except __???__
-                    if not (sig.name.startswith("__") and sig.name.endswith("__")):
-                        logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
-                else:
-                    result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.format_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
             else:
-                result.append(self.INDENT + "pass")
+                result.append(self.indent("pass"))
 
         return result
 
@@ -337,7 +352,9 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.remove_signatures(self.member.__doc__)
+        docstring = self.sanitize_docstring(self.member.__doc__)
+        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+            logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             args = sig.args
             if not args.strip().startswith("self"):
@@ -355,14 +372,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
-                # don't print space-only docstrings
-                if re.match(r"^\s$", docstring, re.MULTILINE):
-                    result.append(self.INDENT + "pass")
-                    # warn about empty docstrings for all functions except __???__
-                    if not (sig.name.startswith("__") and sig.name.endswith("__")):
-                        logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
-                else:
-                    result.append(self.INDENT + '"""{}"""'.format(docstring))
+                result.append(self.format_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
         return result
 
@@ -379,20 +389,19 @@ class PropertyStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
 
-        docstring = self.remove_signatures(self.prop.__doc__)
-        docstring += "\n:type: {rtype}".format(rtype=self.signature.rtype)
+        docstring = self.sanitize_docstring(self.prop.__doc__)
+        docstring_prop = "\n\n".join([docstring, ":type: {rtype}".format(rtype=self.signature.rtype)])
 
         result = ["@property",
                   "def {field_name}(self) -> {rtype}:".format(field_name=self.name, rtype=self.signature.rtype),
-                  self.indent('"""{}"""'.format(docstring))]
+                  self.format_docstring(docstring_prop)]
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
             result.append(
                 "def {field_name}({args}) -> None:".format(field_name=self.name, args=self.signature.setter_args))
-            docstring = self.remove_signatures(self.prop.__doc__)
             if docstring:
-                result.append(self.indent('"""{}"""'.format(docstring)))
+                result.append(self.format_docstring(docstring))
             else:
                 result.append(self.indent("pass"))
 
@@ -470,7 +479,8 @@ class ClassStubsGenerator(StubsGenerator):
             "class {class_name}({base_classes_list}):{doc_string}".format(
                 class_name=self.klass.__name__,
                 base_classes_list=", ".join(base_classes_list),
-                doc_string='\n' + self.INDENT + '"""{}"""'.format(self.doc_string) if self.doc_string else "",
+                doc_string='\n' + self.format_docstring(self.doc_string)
+                            if self.doc_string else "",
             ),
         ]
         for f in self.methods:
@@ -483,7 +493,7 @@ class ClassStubsGenerator(StubsGenerator):
         for p in self.fields:
             result.extend(map(self.indent, p.to_lines()))
 
-        result.append(self.INDENT + "pass")
+        result.append(self.indent("pass"))
         return result
 
 
@@ -628,6 +638,7 @@ class ModuleStubsGenerator(StubsGenerator):
                                  self.free_functions,
                                  self.attributes):
             result.extend(x.to_lines())
+        result.append("")  # Newline at EOF
         return result
 
     @property
