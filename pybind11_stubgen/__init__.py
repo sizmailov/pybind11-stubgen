@@ -238,7 +238,7 @@ class StubsGenerator(object):
         return docstring
 
     @staticmethod
-    def generate_styled_docstring(docstring):
+    def format_docstring(docstring):
         return StubsGenerator.indent('"""\n{}\n"""'.format(docstring.strip("\n")))
 
 
@@ -327,7 +327,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 rtype=sig.rtype
             ))
             if docstring:
-                result.append(self.generate_styled_docstring(docstring))
+                result.append(self.format_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
             else:
                 result.append(self.indent("pass"))
@@ -372,7 +372,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
-                result.append(self.generate_styled_docstring(docstring))
+                result.append(self.format_docstring(docstring))
                 docstring = None  # don't print docstring for other overloads
         return result
 
@@ -394,14 +394,14 @@ class PropertyStubsGenerator(StubsGenerator):
 
         result = ["@property",
                   "def {field_name}(self) -> {rtype}:".format(field_name=self.name, rtype=self.signature.rtype),
-                  self.generate_styled_docstring(docstring_prop)]
+                  self.format_docstring(docstring_prop)]
 
         if self.signature.setter_args != "None":
             result.append("@{field_name}.setter".format(field_name=self.name))
             result.append(
                 "def {field_name}({args}) -> None:".format(field_name=self.name, args=self.signature.setter_args))
             if docstring:
-                result.append(self.generate_styled_docstring(docstring))
+                result.append(self.format_docstring(docstring))
             else:
                 result.append(self.indent("pass"))
 
@@ -479,7 +479,7 @@ class ClassStubsGenerator(StubsGenerator):
             "class {class_name}({base_classes_list}):{doc_string}".format(
                 class_name=self.klass.__name__,
                 base_classes_list=", ".join(base_classes_list),
-                doc_string='\n' + self.generate_styled_docstring(self.doc_string)
+                doc_string='\n' + self.format_docstring(self.doc_string)
                             if self.doc_string else "",
             ),
         ]
