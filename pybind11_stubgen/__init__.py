@@ -222,20 +222,14 @@ class StubsGenerator(object):
         signature_regex = r"(\s*(?P<overload_number>\d+).\s*)" \
                           r"?{name}\s*\((?P<args>[^\(\)]*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name=r"\w+")
 
-        lines = docstring.split("\n")
+        lines = docstring.split("\n\n")
         lines = filter(lambda line: line != "Overloaded function.", lines)
 
-        return "\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
-
-    @staticmethod
-    def remove_repeated_empty_lines(docstring):
-        # Reduce the double empty line to a single empty line
-        return re.sub(r"\n\s*\n", "\n\n", docstring)
+        return "\n\n".join(filter(lambda line: not re.match(signature_regex, line), lines))
 
     @staticmethod
     def sanitize_docstring(docstring):  # type: (str) ->str
         docstring = StubsGenerator.remove_signatures(docstring)
-        docstring = StubsGenerator.remove_repeated_empty_lines(docstring)
         docstring = docstring.rstrip("\n")
 
         if docstring and re.match(r"^\s*$", docstring):
