@@ -25,6 +25,12 @@ Issues/PR are welcome
 Install
 =======
 
+**From PYPI:**
+
+.. code-block:: bash
+
+   python -m pip install pybind11-stubgen
+
 **From github:**
 
 .. code-block:: bash
