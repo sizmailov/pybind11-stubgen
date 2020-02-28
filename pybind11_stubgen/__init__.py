@@ -1,5 +1,6 @@
 from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any
 from functools import cmp_to_key
+import warnings
 import importlib
 import itertools
 import inspect
@@ -300,7 +301,7 @@ class AttributeStubsGenerator(StubsGenerator):
                    + ['"""']
 
     def get_involved_modules_names(self):  # type: () -> Set[str]
-        return set((self.attr.__class__.__module__,) )
+        return set((self.attr.__class__.__module__,))
 
 
 class FreeFunctionStubsGenerator(StubsGenerator):
@@ -316,7 +317,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
     def to_lines(self):  # type: () -> List[str]
         result = []
         docstring = self.sanitize_docstring(self.member.__doc__)
-        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+        if not docstring and not (self.name.startswith("__") and self.name.endswith("__")):
             logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             if len(self.signatures) > 1:
@@ -353,7 +354,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
     def to_lines(self):  # type: () -> List[str]
         result = []
         docstring = self.sanitize_docstring(self.member.__doc__)
-        if not docstring and  not (self.name.startswith("__") and self.name.endswith("__")):
+        if not docstring and not (self.name.startswith("__") and self.name.endswith("__")):
             logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             args = sig.args
@@ -480,7 +481,7 @@ class ClassStubsGenerator(StubsGenerator):
                 class_name=self.klass.__name__,
                 base_classes_list=", ".join(base_classes_list),
                 doc_string='\n' + self.format_docstring(self.doc_string)
-                            if self.doc_string else "",
+                if self.doc_string else "",
             ),
         ]
         for f in self.methods:
@@ -697,14 +698,19 @@ def recursive_mkdir_walker(subdirs, callback):  # type: (List[str], Callable) ->
 def main():
     parser = ArgumentParser(prog='pybind11-stubgen', description="Generates stubs for specified modules")
     parser.add_argument("-o", "--output-dir", help="the root directory for output stubs", default="./stubs")
-    parser.add_argument("--root_module_suffix", type=str, default="-stubs",
+    parser.add_argument("--root-module-suffix", type=str, default="-stubs", dest='root_module_suffix',
                         help="optional suffix to disambiguate from the "
                              "original package")
+    parser.add_argument("--root_module_suffix", type=str, default=None, dest='root_module_suffix_deprecated',
+                        help="Deprecated.  Use `--root-module-suffix`")
     parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="WARNING", help="Set output log level")
 
     sys_args = parser.parse_args()
+    if sys_args.root_module_suffix_deprecated is not None:
+        sys_args.root_module_suffix = sys_args.root_module_suffix_deprecated
+        warnings.warn("`--root_module_suffix` is deprecated in favor of `--root-module-suffix`", FutureWarning)
 
     stderr_handler = logging.StreamHandler(sys.stderr)
     handlers = [stderr_handler]

@@ -46,7 +46,7 @@ Usage
 .. code-block:: bash
 
    pybind11-stubgen [-h] [-o OUTPUT_DIR] \
-                    [--root_module_suffix ROOT_MODULE_SUFFIX] \
+                    [--root-module-suffix ROOT_MODULE_SUFFIX] \
                     [--no-setup-py] \
                     [--log-level LOG_LEVEL] \
                     MODULE_NAME [MODULE_NAME ...] \
