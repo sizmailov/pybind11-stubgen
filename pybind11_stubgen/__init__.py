@@ -423,18 +423,21 @@ class ClassStubsGenerator(StubsGenerator):
     ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__")
     METHODS_BLACKLIST = ("__dir__", "__sizeof__")
     BASE_CLASS_BLACKLIST = ("pybind11_object", "object")
+    CLASS_NAME_BLACKLIST = ("pybind11_type",)
 
     def __init__(self,
                  klass,
                  attributes_blacklist=ATTRIBUTES_BLACKLIST,
                  base_class_blacklist=BASE_CLASS_BLACKLIST,
-                 methods_blacklist=METHODS_BLACKLIST
+                 methods_blacklist=METHODS_BLACKLIST,
+                 class_name_blacklist=CLASS_NAME_BLACKLIST
                  ):
         self.klass = klass
         assert inspect.isclass(klass)
 
         self.doc_string = None  # type: Optional[str]
 
+        self.classes = []  # type: List[ClassStubsGenerator]
         self.fields = []  # type: List[AttributeStubsGenerator]
         self.properties = []  # type: List[PropertyStubsGenerator]
         self.methods = []  # type: List[ClassMemberStubsGenerator]
@@ -445,6 +448,7 @@ class ClassStubsGenerator(StubsGenerator):
         self.attributes_blacklist = attributes_blacklist
         self.base_class_blacklist = base_class_blacklist
         self.methods_blacklist = methods_blacklist
+        self.class_name_blacklist = class_name_blacklist
 
     def get_involved_modules_names(self):
         return self.involved_modules_names
@@ -457,6 +461,9 @@ class ClassStubsGenerator(StubsGenerator):
         for name, member in inspect.getmembers(self.klass):
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
+            elif inspect.isclass(member):
+                if member.__name__ not in self.class_name_blacklist:
+                    self.classes.append(ClassStubsGenerator(member))
             elif isinstance(member, property):
                 self.properties.append(PropertyStubsGenerator(name, member, self.klass.__module__))
             elif name == "__doc__":
@@ -465,7 +472,8 @@ class ClassStubsGenerator(StubsGenerator):
                 self.fields.append(AttributeStubsGenerator(name, member))
                 # logger.warning("Unknown member %s type : `%s` " % (name, str(type(member))))
 
-        for x in itertools.chain(self.methods,
+        for x in itertools.chain(self.classes,
+                                 self.methods,
                                  self.properties,
                                  self.fields):
             x.parse()
@@ -498,6 +506,9 @@ class ClassStubsGenerator(StubsGenerator):
                 if self.doc_string else "",
             ),
         ]
+        for cl in self.classes:
+            result.extend(map(self.indent, cl.to_lines()))
+
         for f in self.methods:
             if f.name not in self.methods_blacklist:
                 result.extend(map(self.indent, f.to_lines()))
@@ -513,10 +524,14 @@ class ClassStubsGenerator(StubsGenerator):
 
 
 class ModuleStubsGenerator(StubsGenerator):
+    CLASS_NAME_BLACKLIST = ClassStubsGenerator.CLASS_NAME_BLACKLIST
     ATTRIBUTES_BLACKLIST = ("__file__", "__loader__", "__name__", "__package__",
                             "__spec__", "__path__", "__cached__", "__builtins__")
 
-    def __init__(self, module_or_module_name, attributes_blacklist=ATTRIBUTES_BLACKLIST):
+    def __init__(self, module_or_module_name,
+                 attributes_blacklist=ATTRIBUTES_BLACKLIST,
+                 class_name_blacklist=CLASS_NAME_BLACKLIST
+                 ):
         if isinstance(module_or_module_name, str):
             self.module = importlib.import_module(module_or_module_name)
         else:
@@ -533,6 +548,7 @@ class ModuleStubsGenerator(StubsGenerator):
         self.write_setup_py = False
 
         self.attributes_blacklist = attributes_blacklist
+        self.class_name_blacklist = class_name_blacklist
 
     def parse(self):
         if self.module in _visited_objects:
@@ -549,8 +565,9 @@ class ModuleStubsGenerator(StubsGenerator):
                     logger.debug("Skip '%s' module while parsing '%s' " % (m.module.__name__, self.module.__name__))
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
-            elif inspect.isclass(member) or inspect.isclass(member):
-                self.classes.append(ClassStubsGenerator(member))
+            elif inspect.isclass(member):
+                if member.__name__ not in self.class_name_blacklist:
+                    self.classes.append(ClassStubsGenerator(member))
             elif name == "__doc__":
                 self.doc_string = member
             elif name not in self.attributes_blacklist:
