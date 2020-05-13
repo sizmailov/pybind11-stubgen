@@ -12,6 +12,8 @@ from argparse import ArgumentParser
 
 logger = logging.getLogger(__name__)
 
+_visited_objects = []
+
 
 class DirectoryWalkerGuard(object):
 
@@ -249,7 +251,9 @@ class AttributeStubsGenerator(StubsGenerator):
         self.attr = attribute
 
     def parse(self):
-        pass
+        if self in _visited_objects:
+            return
+        _visited_objects.append(self)
 
     def is_safe_to_use_repr(self, value):
         if isinstance(value, (int, str)):
@@ -312,6 +316,9 @@ class FreeFunctionStubsGenerator(StubsGenerator):
         self.signatures = []  # type:  List[FunctionSignature]
 
     def parse(self):
+        if self.member in _visited_objects:
+            return
+        _visited_objects.append(self.member)
         self.signatures = self.function_signatures_from_docstring(self.name, self.member, self.module_name)
 
     def to_lines(self):  # type: () -> List[str]
@@ -386,6 +393,9 @@ class PropertyStubsGenerator(StubsGenerator):
         self.signature = None  # type: PropertySignature
 
     def parse(self):
+        if self.prop in _visited_objects:
+            return
+        _visited_objects.append(self.prop)
         self.signature = self.property_signature_from_docstring(self.prop, self.module_name)
 
     def to_lines(self):  # type: () -> List[str]
@@ -440,6 +450,10 @@ class ClassStubsGenerator(StubsGenerator):
         return self.involved_modules_names
 
     def parse(self):
+        if self.klass in _visited_objects:
+            return
+        _visited_objects.append(self.klass)
+
         for name, member in inspect.getmembers(self.klass):
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
@@ -521,6 +535,9 @@ class ModuleStubsGenerator(StubsGenerator):
         self.attributes_blacklist = attributes_blacklist
 
     def parse(self):
+        if self.module in _visited_objects:
+            return
+        _visited_objects.append(self.module)
         logger.info("Parsing '%s' module" % self.module.__name__)
         for name, member in inspect.getmembers(self.module):
             if inspect.ismodule(member):
