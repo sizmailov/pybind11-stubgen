@@ -316,9 +316,6 @@ class FreeFunctionStubsGenerator(StubsGenerator):
         self.signatures = []  # type:  List[FunctionSignature]
 
     def parse(self):
-        if self.member in _visited_objects:
-            return
-        _visited_objects.append(self.member)
         self.signatures = self.function_signatures_from_docstring(self.name, self.member, self.module_name)
 
     def to_lines(self):  # type: () -> List[str]
@@ -393,9 +390,6 @@ class PropertyStubsGenerator(StubsGenerator):
         self.signature = None  # type: PropertySignature
 
     def parse(self):
-        if self.prop in _visited_objects:
-            return
-        _visited_objects.append(self.prop)
         self.signature = self.property_signature_from_docstring(self.prop, self.module_name)
 
     def to_lines(self):  # type: () -> List[str]
