@@ -1,5 +1,6 @@
 from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any
 from functools import cmp_to_key
+from parser import expr
 import warnings
 import importlib
 import itertools
@@ -13,6 +14,97 @@ from argparse import ArgumentParser
 logger = logging.getLogger(__name__)
 
 _visited_objects = []
+
+
+def sanitize_type(t):
+    
+    try:
+        expr(t)
+    except SyntaxError:
+        t = "Any"
+        
+    return t
+
+def sanitize_name(t):
+    
+    try:
+        expr(t)
+    except SyntaxError:
+        t += "_"
+        
+    return t
+
+def sanitize_args(args):
+    
+    from pyparsing import (Suppress,Word,srange,ZeroOrMore,Literal,Optional,Group,
+                           Forward,Regex,oneOf,quotedString,unicodeString, delimitedList,
+                           OneOrMore)
+
+
+    def toAny(s, loc, tokens):
+        
+        return 'Any'
+    
+    def toStr(s, loc, tokens):
+        
+        return ''.join(tokens)
+    
+    comma = Suppress(',')
+    
+    integer = Regex(r"[+-]?\d+")
+    real = Regex(r"[+-]?\d+[.]?\d*([Ee][+-]?[0-9]+)?")
+    boolLiteral = oneOf("True False")
+    noneLiteral = Literal("None")
+    
+    addr = Regex(r"0x[a-f0-9]+")
+    
+    name = Word(srange("[a-zA-Z_]"), srange("[a-zA-Z0-9_]"))
+    
+    python_name = name + ZeroOrMore(Literal('.')+name)
+        
+    python_type = Forward()
+    python_type << python_name+Optional(Literal('[') + delimitedList(python_type) +Literal(']'))
+    
+    python_type.setParseAction(toStr)
+    
+    python_value = real|integer|quotedString|unicodeString|boolLiteral|noneLiteral|python_type
+    python_default_value = python_value ^ (Suppress('<') + python_type + Suppress('object at') + Suppress(addr) + Suppress('>'))
+    
+    cpp_ns = name + Literal('::')
+    cpp_type = Optional('unsigned')+ZeroOrMore(cpp_ns)+name
+    
+    cpp_template  = Forward()
+    cpp_template << cpp_type + Optional(Group(Suppress('<')+(cpp_template^integer)+ZeroOrMore(Suppress(',')+(cpp_template^integer)) + Suppress('>'))) + Optional('const') + Optional('*') + Optional('&')
+
+    cpp_func = cpp_template ^ (cpp_template + Suppress('(') + Optional(cpp_template) + ZeroOrMore(Suppress(',')+cpp_template)+Suppress(')') )
+    cpp_func.setParseAction(toAny)
+    
+    arg_name = Optional(OneOrMore(name), default="arg").setResultsName('name')
+    arg_name.setParseAction(toStr)
+    
+    arg = Group(
+           arg_name + 
+           Suppress(':') + 
+           (python_type ^ cpp_func).setResultsName('type') +
+           Optional(Suppress('=') + python_default_value).setResultsName('default')
+    ).setResultsName('arg',True)
+    
+    self = Literal('self').setResultsName('self')
+    signature = (Optional(self) ^ Optional(arg)) + ZeroOrMore(comma+arg)
+    
+    rv = []
+    
+    for i,el in enumerate(signature.parseString(args,True)):
+        
+        if el=='self':
+            rv.append(el)
+            continue
+        
+        name,t,default = el['name'], el['type'][0],el.get('default')
+        
+        rv.append(f"{sanitize_name(name) if name != 'arg' else 'arg'+str(i)} : {t}"+(f"={default[0]}" if default else ""))
+        
+    return ','.join(rv)
 
 
 class DirectoryWalkerGuard(object):
@@ -70,8 +162,14 @@ class FunctionSignature(object):
 
     @staticmethod
     def argument_type(arg):
-        return arg.split(":")[-1].strip()
-
+        rv = arg.split(":")[-1].strip()
+        try:
+            expr(rv)
+        except SyntaxError:
+            rv = "Any"
+            
+        return rv
+        
     def get_all_involved_types(self):
         types = []
         for t in [self.rtype] + self.split_arguments():
@@ -130,6 +228,9 @@ class StubsGenerator(object):
     def fully_qualified_name(klass):
         module_name = klass.__module__ if hasattr(klass,'__module__') else None
         class_name = klass.__name__
+
+        if not hasattr(klass,'__module__'):
+            pass#import pdb; pdb.set_trace()
 
         if module_name == "builtins":
             return class_name
@@ -328,7 +429,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                 result.append("@overload")
             result.append("def {name}({args}) -> {rtype}:".format(
                 name=sig.name,
-                args=sig.args,
+                args=sanitize_args(sig.args),
                 rtype=sig.rtype
             ))
             if docstring:
@@ -350,7 +451,6 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                     pass
         return involved_modules_names
 
-
 class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
     def __init__(self, name, free_function, module_name):
         super(ClassMemberStubsGenerator, self).__init__(name, free_function, module_name)
@@ -369,11 +469,11 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 args = ",".join(["self"] + sig.split_arguments()[1:])
             if len(self.signatures) > 1:
                 result.append("@overload")
-
+            
             result.append("def {name}({args}) -> {rtype}: {ellipsis}".format(
                 name=sig.name,
-                args=args,
-                rtype=sig.rtype,
+                args=sanitize_args(args),
+                rtype=sanitize_type(sig.rtype),
                 ellipsis="" if docstring else "..."
             ))
             if docstring:
