@@ -176,7 +176,8 @@ class StubsGenerator(object):
                 sig.args = StubsGenerator.apply_classname_replacements(sig.args)
                 sig.rtype = StubsGenerator.apply_classname_replacements(sig.rtype)
 
-            return list(set(signatures))
+            return sorted(list(set(signatures)),
+                          key=lambda fs: fs.args)
         except AttributeError:
             return []
 
@@ -633,7 +634,7 @@ class ModuleStubsGenerator(StubsGenerator):
         ]
 
         # import used packages
-        used_modules = self.get_involved_modules_names()
+        used_modules = sorted(self.get_involved_modules_names())
         if used_modules:
             # result.append("if TYPE_CHECKING:")
             # result.extend(map(self.indent, map(lambda m: "import {}".format(m), used_modules)))
