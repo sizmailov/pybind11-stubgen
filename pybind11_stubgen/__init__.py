@@ -456,7 +456,12 @@ class ClassStubsGenerator(StubsGenerator):
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif inspect.isclass(member):
-                if member.__name__ not in self.class_name_blacklist:
+                # we may discover a nested class here that is not actually
+                # defined in this class but inherited from a superclass.
+                # in that case we want to associate it only with the
+                # superclass, not the (first) subclass.
+                proper_nested_class = member.__qualname__.startswith(self.klass.__qualname__ + ".")
+                if proper_nested_class and member.__name__ not in self.class_name_blacklist:
                     self.classes.append(ClassStubsGenerator(member))
             elif isinstance(member, property):
                 self.properties.append(PropertyStubsGenerator(name, member, self.klass.__module__))
