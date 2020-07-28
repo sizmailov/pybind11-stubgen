@@ -455,7 +455,7 @@ class ClassStubsGenerator(StubsGenerator):
         for name, member in inspect.getmembers(self.klass):
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
-            elif inspect.isclass(member):
+            elif name != '__class__' and inspect.isclass(member):
                 if member.__name__ not in self.class_name_blacklist:
                     self.classes.append(ClassStubsGenerator(member))
             elif isinstance(member, property):
