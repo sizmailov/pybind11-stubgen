@@ -415,7 +415,7 @@ class PropertyStubsGenerator(StubsGenerator):
 
 
 class ClassStubsGenerator(StubsGenerator):
-    ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__")
+    ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__", "__dict__", "__weakref__", "__annotations__")
     METHODS_BLACKLIST = ("__dir__", "__sizeof__")
     BASE_CLASS_BLACKLIST = ("pybind11_object", "object")
     CLASS_NAME_BLACKLIST = ("pybind11_type",)
