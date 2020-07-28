@@ -128,7 +128,7 @@ class StubsGenerator(object):
 
     @staticmethod
     def fully_qualified_name(klass):
-        module_name = klass.__module__ if hasattr(klass,'__module__') else None
+        module_name = klass.__module__ if hasattr(klass, '__module__') else None
         class_name = klass.__qualname__
 
         if module_name == "builtins":
@@ -453,7 +453,18 @@ class ClassStubsGenerator(StubsGenerator):
             return
         _visited_objects.append(self.klass)
 
+        bases = inspect.getmro(self.klass)[1:]
+
+        def is_base_member(name, member):
+            for base in bases:
+                if hasattr(base, name) and getattr(base, name) is member:
+                    return True
+            return False
+
         for name, member in inspect.getmembers(self.klass):
+            # check if attribute is in __dict__ (fast path) before slower search in base classes
+            if name not in self.klass.__dict__ and is_base_member(name, member):
+                continue
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif name != '__class__' and inspect.isclass(member):
@@ -472,8 +483,6 @@ class ClassStubsGenerator(StubsGenerator):
                                  self.properties,
                                  self.fields):
             x.parse()
-
-        bases = inspect.getmro(self.klass)[1:]
 
         for B in bases:
             if B.__name__ != self.klass.__name__ and B.__name__ not in self.base_class_blacklist:
