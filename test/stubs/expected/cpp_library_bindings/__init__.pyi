@@ -5,19 +5,36 @@ from typing import Iterator as iterator
 from numpy import float64
 _Shape = Tuple[int, ...]
 __all__  = [
+"Base",
 "CppException",
+"Derived",
 "Foo",
 "Outer",
 "sublibA"
 ]
+class Base():
+    class Inner():
+        pass
+    @property
+    def name(self) -> str:
+        """
+        :type: str
+        """
+    @name.setter
+    def name(self, arg0: str) -> None:
+        pass
+    pass
 class CppException(Exception, BaseException):
-    __cause__: getset_descriptor # value = <attribute '__cause__' of 'BaseException' objects>
-    __context__: getset_descriptor # value = <attribute '__context__' of 'BaseException' objects>
-    __dict__: mappingproxy # value = mappingproxy({'__module__': 'cpp_library_bindings', '__weakref__': <attribute '__weakref__' of 'CppException' objects>, '__doc__': None})
-    __suppress_context__: member_descriptor # value = <member '__suppress_context__' of 'BaseException' objects>
-    __traceback__: getset_descriptor # value = <attribute '__traceback__' of 'BaseException' objects>
-    __weakref__: getset_descriptor # value = <attribute '__weakref__' of 'CppException' objects>
-    args: getset_descriptor # value = <attribute 'args' of 'BaseException' objects>
+    pass
+class Derived(Base):
+    @property
+    def count(self) -> int:
+        """
+        :type: int
+        """
+    @count.setter
+    def count(self, arg0: int) -> None:
+        pass
     pass
 class Foo():
     class FooChild():
