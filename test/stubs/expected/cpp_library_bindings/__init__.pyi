@@ -10,7 +10,9 @@ __all__  = [
 "Derived",
 "Foo",
 "Outer",
-"sublibA"
+"sublibA",
+"foolist",
+"foovar"
 ]
 class Base():
     class Inner():
@@ -86,3 +88,5 @@ class Outer():
     def inner(self, arg0: Outer.Inner) -> None:
         pass
     pass
+foolist: list # value = [<cpp_library_bindings.Foo object>, <cpp_library_bindings.Foo object>]
+foovar: cpp_library_bindings.Foo
