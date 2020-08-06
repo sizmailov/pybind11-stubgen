@@ -554,7 +554,7 @@ class ModuleStubsGenerator(StubsGenerator):
         self.free_functions = []  # type: List[FreeFunctionStubsGenerator]
         self.submodules = []  # type: List[ModuleStubsGenerator]
         self.imported_modules = []  # type: List[str]
-        self.imported_classes = {}  # type: Dict[str, str]
+        self.imported_classes = {}  # type: Dict[str, type]
         self.attributes = []  # type: List[AttributeStubsGenerator]
         self.stub_suffix = ""
         self.write_setup_py = False
@@ -570,7 +570,7 @@ class ModuleStubsGenerator(StubsGenerator):
         for name, member in inspect.getmembers(self.module):
             if inspect.ismodule(member):
                 m = ModuleStubsGenerator(member)
-                if m.module.__name__.startswith(self.module.__name__):
+                if m.module.__name__.split('.')[:-1] == self.module.__name__.split('.'):
                     self.submodules.append(m)
                 else:
                     self.imported_modules += [m.module.__name__]

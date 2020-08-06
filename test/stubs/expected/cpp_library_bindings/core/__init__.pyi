@@ -1,4 +1,4 @@
-import cpp_library_bindings
+import cpp_library_bindings.core
 from typing import *
 from typing import Iterable as iterable
 from typing import Iterator as iterator
@@ -17,12 +17,8 @@ __all__  = [
 "Derived",
 "Foo",
 "Outer",
-"_core",
-"core",
 "foolist",
-"foovar",
-"version"
+"foovar"
 ]
 foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo
-version = '0.0.0'

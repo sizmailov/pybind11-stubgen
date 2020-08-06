@@ -3,7 +3,7 @@
 set -e
 
 (cd pybind11-project-example; git submodule update --init --recursive)
-(cd pybind11-project-example; python setup.py install)
+(cd pybind11-project-example; python -m pip install -U . )
 
 rm -rf "./stubs/generated"
 
