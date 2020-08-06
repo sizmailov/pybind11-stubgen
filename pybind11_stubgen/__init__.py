@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any
+from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any, Dict
 from functools import cmp_to_key
 import warnings
 import importlib
@@ -554,6 +554,7 @@ class ModuleStubsGenerator(StubsGenerator):
         self.free_functions = []  # type: List[FreeFunctionStubsGenerator]
         self.submodules = []  # type: List[ModuleStubsGenerator]
         self.imported_modules = []  # type: List[str]
+        self.imported_classes = {}  # type: Dict[str, str]
         self.attributes = []  # type: List[AttributeStubsGenerator]
         self.stub_suffix = ""
         self.write_setup_py = False
@@ -577,8 +578,11 @@ class ModuleStubsGenerator(StubsGenerator):
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
             elif inspect.isclass(member):
-                if member.__name__ not in self.class_name_blacklist:
-                    self.classes.append(ClassStubsGenerator(member))
+                if member.__module__ == self.module.__name__:
+                    if member.__name__ not in self.class_name_blacklist:
+                        self.classes.append(ClassStubsGenerator(member))
+                else:
+                    self.imported_classes[name] = member
             elif name == "__doc__":
                 self.doc_string = member
             elif name not in self.attributes_blacklist:
@@ -649,6 +653,16 @@ class ModuleStubsGenerator(StubsGenerator):
             "_Shape = Tuple[int, ...]"
         ]
 
+        for name, class_ in self.imported_classes.items():
+            class_name = getattr(class_, "__qualname__", class_.__name__)
+            if name == class_name:
+                suffix = ""
+            else:
+                suffix = " as {}".format(name)
+            result += [
+                'from {} import {}{}'.format(class_.__module__, class_name, suffix)
+            ]
+
         # import used packages
         used_modules = sorted(self.get_involved_modules_names())
         if used_modules:
@@ -659,6 +673,9 @@ class ModuleStubsGenerator(StubsGenerator):
         # define __all__
 
         _all_ = []
+        for name in self.imported_classes.keys():
+            _all_.append(name)
+
         for c in self.classes:
             _all_.append(c.klass.__name__)
 
