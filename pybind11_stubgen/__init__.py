@@ -129,7 +129,7 @@ class StubsGenerator(object):
     @staticmethod
     def fully_qualified_name(klass):
         module_name = klass.__module__ if hasattr(klass, '__module__') else None
-        class_name = klass.__qualname__
+        class_name = getattr(klass, "__qualname__", klass.__name__)
 
         if module_name == "builtins":
             return class_name
