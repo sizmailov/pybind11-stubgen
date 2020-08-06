@@ -572,7 +572,7 @@ class ModuleStubsGenerator(StubsGenerator):
                 if m.module.__name__.startswith(self.module.__name__):
                     self.submodules.append(m)
                 else:
-                    self.imported_modules = m.module.__name__
+                    self.imported_modules += [m.module.__name__]
                     logger.debug("Skip '%s' module while parsing '%s' " % (m.module.__name__, self.module.__name__))
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
