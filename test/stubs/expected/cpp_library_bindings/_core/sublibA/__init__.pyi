@@ -1,7 +1,5 @@
 import cpp_library_bindings._core.sublibA
-from typing import *
-from typing import Iterable as iterable
-from typing import Iterator as iterator
+import typing
 __all__  = [
 "ConsoleBackgroundColor",
 "ConsoleForegroundColor",

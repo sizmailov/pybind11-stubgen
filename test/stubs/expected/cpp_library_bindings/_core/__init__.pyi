@@ -1,15 +1,15 @@
 import cpp_library_bindings._core
-from typing import *
-from typing import Iterable as iterable
-from typing import Iterator as iterator
+import typing
 __all__  = [
 "Base",
 "CppException",
 "Derived",
 "Foo",
 "Outer",
+"copy_types",
 "eigen",
 "numeric",
+"opaque_types",
 "sublibA",
 "foolist",
 "foovar"

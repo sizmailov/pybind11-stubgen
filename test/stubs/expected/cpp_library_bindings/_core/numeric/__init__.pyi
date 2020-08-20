@@ -1,9 +1,7 @@
 import cpp_library_bindings._core.numeric
-from typing import *
-from typing import Iterable as iterable
-from typing import Iterator as iterator
+import typing
 import numpy
-_Shape = Tuple[int, ...]
+_Shape = typing.Tuple[int, ...]
 __all__  = [
 "accept_ndarray_float64",
 "accept_ndarray_int",

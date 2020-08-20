@@ -115,11 +115,17 @@ def replace_numpy_array(match_obj):
     return result
 
 
+def replace_typing_types(match):
+    # pybind used to have iterator/iterable in place of Iterator/Iterable
+    return "typing." + match.group('type').capitalize()
+
+
 class StubsGenerator(object):
     INDENT = " " * 4
 
     GLOBAL_CLASSNAME_REPLACEMENTS = {
-        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?\]"): replace_numpy_array
+        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?\]"): replace_numpy_array,
+        re.compile(r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union')(?!\w)"): replace_typing_types
     }
 
     def parse(self):
@@ -345,7 +351,7 @@ class FreeFunctionStubsGenerator(StubsGenerator):
             logger.debug("Docstring is empty for '%s'" % self.fully_qualified_name(self.member))
         for sig in self.signatures:
             if len(self.signatures) > 1:
-                result.append("@overload")
+                result.append("@typing.overload")
             result.append("def {name}({args}) -> {rtype}:".format(
                 name=sig.name,
                 args=sig.args,
@@ -388,7 +394,7 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
                 # remove type of self
                 args = ",".join(["self"] + sig.split_arguments()[1:])
             if len(self.signatures) > 1:
-                result.append("@overload")
+                result.append("@typing.overload")
 
             result.append("def {name}({args}) -> {rtype}: {ellipsis}".format(
                 name=sig.name,
@@ -637,7 +643,7 @@ class ModuleStubsGenerator(StubsGenerator):
         for f in self.free_functions:  # type: FreeFunctionStubsGenerator
             result |= f.get_involved_modules_names()
 
-        return set(result) - {"builtins", self.module.__name__}
+        return set(result) - {"builtins", 'typing', self.module.__name__}
 
     def to_lines(self):  # type: () -> List[str]
 
@@ -652,12 +658,7 @@ class ModuleStubsGenerator(StubsGenerator):
 
         # import everything from typing
         result += [
-            "from typing import *"
-        ]
-        # pybind11 has some lower-cased prototypes from typing
-        result += [
-            "from typing import Iterable as iterable",
-            "from typing import Iterator as iterator",
+            "import typing"
         ]
 
         for name, class_ in self.imported_classes.items():
@@ -679,7 +680,7 @@ class ModuleStubsGenerator(StubsGenerator):
 
         if "numpy" in used_modules:
             result += [
-                "_Shape = Tuple[int, ...]"
+                "_Shape = typing.Tuple[int, ...]"
             ]
 
         # define __all__
