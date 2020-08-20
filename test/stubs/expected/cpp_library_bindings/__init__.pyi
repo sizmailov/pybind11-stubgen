@@ -2,14 +2,14 @@ import cpp_library_bindings
 from typing import *
 from typing import Iterable as iterable
 from typing import Iterator as iterator
-from numpy import float64
-_Shape = Tuple[int, ...]
 from cpp_library_bindings._core import Base
 from cpp_library_bindings._core import CppException
 from cpp_library_bindings._core import Derived
 from cpp_library_bindings._core import Foo
 from cpp_library_bindings._core import Outer
 import cpp_library_bindings._core
+import cpp_library_bindings._core.eigen
+import cpp_library_bindings._core.numeric
 import cpp_library_bindings._core.sublibA
 __all__  = [
 "Base",

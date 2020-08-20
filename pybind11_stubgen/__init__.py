@@ -98,8 +98,20 @@ class PropertySignature(object):
 
 
 def replace_numpy_array(match_obj):
-    result = r"numpy.ndarray[{type}, _Shape[{shape}]]".format(type=match_obj.group("type"),
-                                                              shape=match_obj.group("shape"))
+    numpy_type = match_obj.group("type")
+    # pybind always append size of data type
+    if numpy_type in ['int8', 'int16', 'int32', 'int64',
+                      'float16', 'float32', 'float64',
+                      'complex32', 'complex64', 'longcomplex'
+                      ]:
+        numpy_type = "numpy." + numpy_type
+
+    shape = match_obj.group("shape")
+    if shape:
+        shape = ", _Shape[{}]".format(shape)
+    else:
+        shape = ""
+    result = r"numpy.ndarray[{type}{shape}]".format(type=numpy_type, shape=shape)
     return result
 
 
@@ -107,7 +119,7 @@ class StubsGenerator(object):
     INDENT = " " * 4
 
     GLOBAL_CLASSNAME_REPLACEMENTS = {
-        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])\]"): replace_numpy_array
+        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?\]"): replace_numpy_array
     }
 
     def parse(self):
@@ -648,11 +660,6 @@ class ModuleStubsGenerator(StubsGenerator):
             "from typing import Iterator as iterator",
         ]
 
-        result += [
-            "from numpy import float64",
-            "_Shape = Tuple[int, ...]"
-        ]
-
         for name, class_ in self.imported_classes.items():
             class_name = getattr(class_, "__qualname__", class_.__name__)
             if name == class_name:
@@ -669,6 +676,11 @@ class ModuleStubsGenerator(StubsGenerator):
             # result.append("if TYPE_CHECKING:")
             # result.extend(map(self.indent, map(lambda m: "import {}".format(m), used_modules)))
             result.extend(map(lambda mod: "import {}".format(mod), used_modules))
+
+        if "numpy" in used_modules:
+            result += [
+                "_Shape = Tuple[int, ...]"
+            ]
 
         # define __all__
 
