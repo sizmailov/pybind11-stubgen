@@ -1,5 +1,6 @@
 from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any, Dict
 from functools import cmp_to_key
+import ast
 import warnings
 import importlib
 import itertools
@@ -13,6 +14,10 @@ from argparse import ArgumentParser
 logger = logging.getLogger(__name__)
 
 _visited_objects = []
+
+
+class InvalidSignatureInDocstring(RuntimeError):
+    pass
 
 
 class DirectoryWalkerGuard(object):
@@ -33,11 +38,33 @@ class DirectoryWalkerGuard(object):
 
 
 class FunctionSignature(object):
+    # When True keeps generation of stubs with invalid signatures found in docstrings
+    # (yes, global variable, blame me)
+    non_stop_mode = False
 
-    def __init__(self, name, args='*args, **kwargs', rtype='None'):
+    # Number of invalid signatures found so far
+    n_invalid_signatures = 0
+
+    def __init__(self, name, args='*args, **kwargs', rtype='None', validate=True):
         self.name = name
         self.args = args
         self.rtype = rtype
+
+        if validate:
+            function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: pass".format(sig=self)
+            try:
+                ast.parse(function_def_str)
+            except SyntaxError as e:
+                FunctionSignature.n_invalid_signatures += 1
+                logger.error("Generated stubs signature is degraded to `(*args, **kwargs) -> Any` for")
+                logger.error(e.text.rstrip())
+                logger.error(" " * (e.offset - 1) + "^-- Invalid syntax")
+                self.name = name
+                self.args = "*args, **kwargs"
+                self.rtype = "Any"
+            if FunctionSignature.n_invalid_signatures > 0 and not FunctionSignature.non_stop_mode:
+                raise InvalidSignatureInDocstring()
+
 
     def __eq__(self, other):
         return isinstance(other, FunctionSignature) and (self.name, self.args, self.rtype) == (
@@ -125,7 +152,8 @@ class StubsGenerator(object):
 
     GLOBAL_CLASSNAME_REPLACEMENTS = {
         re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?\]"): replace_numpy_array,
-        re.compile(r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union')(?!\w)"): replace_typing_types
+        re.compile(
+            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union')(?!\w)"): replace_typing_types
     }
 
     def parse(self):
@@ -779,10 +807,15 @@ def main():
     parser.add_argument("--root_module_suffix", type=str, default=None, dest='root_module_suffix_deprecated',
                         help="Deprecated.  Use `--root-module-suffix`")
     parser.add_argument("--no-setup-py", action='store_true')
+    parser.add_argument("--non-stop", action='store_true', help="Don't stop when encountered invalid signatures")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="WARNING", help="Set output log level")
 
     sys_args = parser.parse_args()
+
+    if sys_args.non_stop:
+        FunctionSignature.non_stop_mode = True
+
     if sys_args.root_module_suffix_deprecated is not None:
         sys_args.root_module_suffix = sys_args.root_module_suffix_deprecated
         warnings.warn("`--root_module_suffix` is deprecated in favor of `--root-module-suffix`", FutureWarning)
@@ -800,14 +833,16 @@ def main():
 
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-
-    with DirectoryWalkerGuard(output_path):
-        for _module_name in sys_args.module_names:
-            _module = ModuleStubsGenerator(_module_name)
-            _module.parse()
-            _module.stub_suffix = sys_args.root_module_suffix
-            _module.write_setup_py = not sys_args.no_setup_py
-            recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
+    try:
+        with DirectoryWalkerGuard(output_path):
+            for _module_name in sys_args.module_names:
+                _module = ModuleStubsGenerator(_module_name)
+                _module.parse()
+                _module.stub_suffix = sys_args.root_module_suffix
+                _module.write_setup_py = not sys_args.no_setup_py
+                recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
+    except InvalidSignatureInDocstring:
+        exit(1)
 
 
 if __name__ == "__main__":

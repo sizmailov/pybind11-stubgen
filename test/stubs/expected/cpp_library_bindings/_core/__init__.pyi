@@ -8,6 +8,7 @@ __all__  = [
 "Outer",
 "copy_types",
 "eigen",
+"invalid_signatures",
 "numeric",
 "opaque_types",
 "sublibA",

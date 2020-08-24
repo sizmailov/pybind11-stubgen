@@ -10,6 +10,7 @@ rm -rf "./stubs/generated"
 coverage run -m pybind11_stubgen cpp_library_bindings \
            --output-dir="./stubs/generated" \
            --root-module-suffix="" \
+           --non-stop \
            --no-setup-py \
            --log-level=ERROR
 

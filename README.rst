@@ -48,6 +48,6 @@ Usage
    pybind11-stubgen [-h] [-o OUTPUT_DIR] \
                     [--root-module-suffix ROOT_MODULE_SUFFIX] \
                     [--no-setup-py] \
+                    [--non-stop] \
                     [--log-level LOG_LEVEL] \
-                    MODULE_NAME [MODULE_NAME ...] \
-
+                    MODULE_NAME [MODULE_NAME ...]

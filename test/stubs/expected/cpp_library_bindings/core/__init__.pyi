@@ -8,6 +8,7 @@ from cpp_library_bindings._core import Outer
 import cpp_library_bindings._core
 import cpp_library_bindings._core.copy_types
 import cpp_library_bindings._core.eigen
+import cpp_library_bindings._core.invalid_signatures
 import cpp_library_bindings._core.numeric
 import cpp_library_bindings._core.opaque_types
 import cpp_library_bindings._core.sublibA
