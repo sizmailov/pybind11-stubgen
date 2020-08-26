@@ -62,9 +62,6 @@ class FunctionSignature(object):
                 self.name = name
                 self.args = "*args, **kwargs"
                 self.rtype = "Any"
-            if FunctionSignature.n_invalid_signatures > 0 and not FunctionSignature.non_stop_mode:
-                raise InvalidSignatureInDocstring()
-
 
     def __eq__(self, other):
         return isinstance(other, FunctionSignature) and (self.name, self.args, self.rtype) == (
@@ -658,6 +655,10 @@ class ModuleStubsGenerator(StubsGenerator):
                     self.classes[i] = self.classes[j]
                     self.classes[j] = t
         # print( [ k.klass.__name__ for k in self.classes ] )
+
+        # Finally, raise an error if there were any invalid signatures
+        if FunctionSignature.n_invalid_signatures > 0 and not FunctionSignature.non_stop_mode:
+            raise InvalidSignatureInDocstring()
 
     def get_involved_modules_names(self):
         result = set(self.imported_modules)
