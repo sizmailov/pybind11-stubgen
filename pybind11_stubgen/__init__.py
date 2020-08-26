@@ -469,6 +469,7 @@ class PropertyStubsGenerator(StubsGenerator):
 
 class ClassStubsGenerator(StubsGenerator):
     ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__", "__dict__", "__weakref__", "__annotations__")
+    PYBIND11_ATTRIBUTES_BLACKLIST = ("__entries", "__members__")
     METHODS_BLACKLIST = ("__dir__", "__sizeof__")
     BASE_CLASS_BLACKLIST = ("pybind11_object", "object")
     CLASS_NAME_BLACKLIST = ("pybind11_type",)
@@ -476,6 +477,7 @@ class ClassStubsGenerator(StubsGenerator):
     def __init__(self,
                  klass,
                  attributes_blacklist=ATTRIBUTES_BLACKLIST,
+                 pybind11_attributes_blacklist=PYBIND11_ATTRIBUTES_BLACKLIST,
                  base_class_blacklist=BASE_CLASS_BLACKLIST,
                  methods_blacklist=METHODS_BLACKLIST,
                  class_name_blacklist=CLASS_NAME_BLACKLIST
@@ -494,6 +496,7 @@ class ClassStubsGenerator(StubsGenerator):
         self.involved_modules_names = set()  # Set[str]
 
         self.attributes_blacklist = attributes_blacklist
+        self.pybind11_attributes_blacklist = pybind11_attributes_blacklist
         self.base_class_blacklist = base_class_blacklist
         self.methods_blacklist = methods_blacklist
         self.class_name_blacklist = class_name_blacklist
@@ -514,6 +517,8 @@ class ClassStubsGenerator(StubsGenerator):
                     return True
             return False
 
+        is_pybind11 = any(base.__name__ == 'pybind11_object' for base in bases)
+
         for name, member in inspect.getmembers(self.klass):
             # check if attribute is in __dict__ (fast path) before slower search in base classes
             if name not in self.klass.__dict__ and is_base_member(name, member):
@@ -527,7 +532,8 @@ class ClassStubsGenerator(StubsGenerator):
                 self.properties.append(PropertyStubsGenerator(name, member, self.klass.__module__))
             elif name == "__doc__":
                 self.doc_string = member
-            elif name not in self.attributes_blacklist:
+            elif not (name in self.attributes_blacklist or
+                      (is_pybind11 and name in self.pybind11_attributes_blacklist)):
                 self.fields.append(AttributeStubsGenerator(name, member))
                 # logger.warning("Unknown member %s type : `%s` " % (name, str(type(member))))
 
