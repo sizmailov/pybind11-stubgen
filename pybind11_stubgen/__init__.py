@@ -16,10 +16,6 @@ logger = logging.getLogger(__name__)
 _visited_objects = []
 
 
-class InvalidSignatureInDocstring(RuntimeError):
-    pass
-
-
 class DirectoryWalkerGuard(object):
 
     def __init__(self, dirname):
@@ -466,7 +462,7 @@ class PropertyStubsGenerator(StubsGenerator):
 
 class ClassStubsGenerator(StubsGenerator):
     ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__", "__dict__", "__weakref__", "__annotations__")
-    PYBIND11_ATTRIBUTES_BLACKLIST = ("__entries", )
+    PYBIND11_ATTRIBUTES_BLACKLIST = ("__entries",)
     METHODS_BLACKLIST = ("__dir__", "__sizeof__")
     BASE_CLASS_BLACKLIST = ("pybind11_object", "object")
     CLASS_NAME_BLACKLIST = ("pybind11_type",)
