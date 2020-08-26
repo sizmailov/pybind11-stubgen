@@ -62,9 +62,6 @@ class FunctionSignature(object):
                 self.name = name
                 self.args = "*args, **kwargs"
                 self.rtype = "Any"
-            if FunctionSignature.n_invalid_signatures > 0 and not FunctionSignature.non_stop_mode:
-                raise InvalidSignatureInDocstring()
-
 
     def __eq__(self, other):
         return isinstance(other, FunctionSignature) and (self.name, self.args, self.rtype) == (
@@ -839,16 +836,18 @@ def main():
 
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-    try:
-        with DirectoryWalkerGuard(output_path):
-            for _module_name in sys_args.module_names:
-                _module = ModuleStubsGenerator(_module_name)
-                _module.parse()
+
+    with DirectoryWalkerGuard(output_path):
+        for _module_name in sys_args.module_names:
+            _module = ModuleStubsGenerator(_module_name)
+            _module.parse()
+            if FunctionSignature.non_stop_mode or FunctionSignature.n_invalid_signatures == 0:
                 _module.stub_suffix = sys_args.root_module_suffix
                 _module.write_setup_py = not sys_args.no_setup_py
                 recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
-    except InvalidSignatureInDocstring:
-        exit(1)
+
+        if FunctionSignature.n_invalid_signatures > 0:
+            exit(1)
 
 
 if __name__ == "__main__":
