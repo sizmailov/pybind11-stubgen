@@ -68,6 +68,7 @@ class Outer():
                 """
             ONE: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = NestedEnum.ONE
             TWO: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = NestedEnum.TWO
+            __members__: dict # value = {'ONE': NestedEnum.ONE, 'TWO': NestedEnum.TWO}
             pass
         @property
         def value(self) -> Outer.Inner.NestedEnum:

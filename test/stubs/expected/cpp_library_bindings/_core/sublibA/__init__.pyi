@@ -34,6 +34,7 @@ class ConsoleBackgroundColor():
     Green: cpp_library_bindings._core.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Green
     Magenta: cpp_library_bindings._core.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Magenta
     Yellow: cpp_library_bindings._core.sublibA.ConsoleBackgroundColor # value = ConsoleBackgroundColor.Yellow
+    __members__: dict # value = {'Green': ConsoleBackgroundColor.Green, 'Yellow': ConsoleBackgroundColor.Yellow, 'Blue': ConsoleBackgroundColor.Blue, 'Magenta': ConsoleBackgroundColor.Magenta}
     pass
 class ConsoleForegroundColor():
     """
@@ -60,6 +61,7 @@ class ConsoleForegroundColor():
     Green: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Green
     Magenta: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Magenta
     Yellow: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = ConsoleForegroundColor.Yellow
+    __members__: dict # value = {'Green': ConsoleForegroundColor.Green, 'Yellow': ConsoleForegroundColor.Yellow, 'Blue': ConsoleForegroundColor.Blue, 'Magenta': ConsoleForegroundColor.Magenta}
     pass
 def add(arg0: int, arg1: int) -> int:
     pass
