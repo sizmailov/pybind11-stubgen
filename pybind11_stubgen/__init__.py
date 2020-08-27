@@ -37,28 +37,33 @@ class FunctionSignature(object):
     # When True keeps generation of stubs with invalid signatures found in docstrings
     # (yes, global variables, blame me)
     non_stop_mode = False
-    skip_signature_downgrade = False
+    signature_downgrade = True
 
     # Number of invalid signatures found so far
     n_invalid_signatures = 0
 
-    def __init__(self, name, args='*args, **kwargs', rtype='None'):
+    def __init__(self, name, args='*args, **kwargs', rtype='None', validate=True):
         self.name = name
         self.args = args
         self.rtype = rtype
 
-        if not FunctionSignature.skip_signature_downgrade:
-            function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: pass".format(sig=self)
+        if validate:
+            function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: ...".format(sig=self)
             try:
                 ast.parse(function_def_str)
             except SyntaxError as e:
                 FunctionSignature.n_invalid_signatures += 1
-                logger.error("Generated stubs signature is degraded to `(*args, **kwargs) -> Any` for")
-                logger.error(e.text.rstrip())
-                logger.error(" " * (e.offset - 1) + "^-- Invalid syntax")
-                self.name = name
-                self.args = "*args, **kwargs"
-                self.rtype = "Any"
+                if FunctionSignature.signature_downgrade:
+                    self.name = name
+                    self.args = "*args, **kwargs"
+                    self.rtype = "Any"
+                    logger.error("Generated stubs signature is degraded to `(*args, **kwargs) -> Any` for")
+                    lvl = logging.ERROR
+                else:
+                    lvl = logging.WARNING
+                    logger.warning("Ignoring invalid signature:")
+                logger.log(lvl, e.text.rstrip())
+                logger.log(lvl, " " * (e.offset - 1) + "^-- Invalid syntax")
 
     def __eq__(self, other):
         return isinstance(other, FunctionSignature) and (self.name, self.args, self.rtype) == (
@@ -819,7 +824,7 @@ def main():
         FunctionSignature.non_stop_mode = True
 
     if sys_args.skip_signature_downgrade:
-        FunctionSignature.skip_signature_downgrade = True
+        FunctionSignature.signature_downgrade = False
 
     if sys_args.root_module_suffix_deprecated is not None:
         sys_args.root_module_suffix = sys_args.root_module_suffix_deprecated
