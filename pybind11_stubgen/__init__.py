@@ -35,18 +35,19 @@ class DirectoryWalkerGuard(object):
 
 class FunctionSignature(object):
     # When True keeps generation of stubs with invalid signatures found in docstrings
-    # (yes, global variable, blame me)
+    # (yes, global variables, blame me)
     non_stop_mode = False
+    skip_signature_downgrade = False
 
     # Number of invalid signatures found so far
     n_invalid_signatures = 0
 
-    def __init__(self, name, args='*args, **kwargs', rtype='None', validate=True):
+    def __init__(self, name, args='*args, **kwargs', rtype='None'):
         self.name = name
         self.args = args
         self.rtype = rtype
 
-        if validate:
+        if not FunctionSignature.skip_signature_downgrade:
             function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: pass".format(sig=self)
             try:
                 ast.parse(function_def_str)
@@ -807,6 +808,8 @@ def main():
                         help="Deprecated.  Use `--root-module-suffix`")
     parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("--non-stop", action='store_true', help="Don't stop when encountered invalid signatures")
+    parser.add_argument("--skip-signature-downgrade", action='store_true',
+                        help="Do not downgrade invalid signatures to *args, **kwargs")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="WARNING", help="Set output log level")
 
@@ -814,6 +817,9 @@ def main():
 
     if sys_args.non_stop:
         FunctionSignature.non_stop_mode = True
+
+    if sys_args.skip_signature_downgrade:
+        FunctionSignature.skip_signature_downgrade = True
 
     if sys_args.root_module_suffix_deprecated is not None:
         sys_args.root_module_suffix = sys_args.root_module_suffix_deprecated
