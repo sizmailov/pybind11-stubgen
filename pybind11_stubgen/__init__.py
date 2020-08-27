@@ -809,7 +809,7 @@ def main():
     parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("--non-stop", action='store_true', help="Don't stop when encountered invalid signatures")
     parser.add_argument("--skip-signature-downgrade", action='store_true',
-                        help="Do not downgrade invalid signatures to *args, **kwargs")
+                        help="Do not downgrade invalid function signatures to func(*args, **kwargs)")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="WARNING", help="Set output log level")
 
