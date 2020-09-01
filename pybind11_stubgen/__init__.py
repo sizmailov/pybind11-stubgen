@@ -854,6 +854,9 @@ def main():
                 recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
 
         if FunctionSignature.n_invalid_signatures > 0:
+            logger.info("Useful link: Avoiding C++ types in docstrings: ")
+            logger.info("      https://pybind11.readthedocs.io/en/master/advanced/misc.html"
+                        "#avoiding-cpp-types-in-docstrings")
             exit(1)
 
 
