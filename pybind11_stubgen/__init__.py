@@ -617,7 +617,7 @@ class ModuleStubsGenerator(StubsGenerator):
         if self.module in _visited_objects:
             return
         _visited_objects.append(self.module)
-        logger.info("Parsing '%s' module" % self.module.__name__)
+        logger.debug("Parsing '%s' module" % self.module.__name__)
         for name, member in inspect.getmembers(self.module):
             if inspect.ismodule(member):
                 m = ModuleStubsGenerator(member)
@@ -756,7 +756,7 @@ class ModuleStubsGenerator(StubsGenerator):
 
     def write(self):
         if not os.path.exists(self.short_name + self.stub_suffix):
-            logger.info("mkdir `%s`" % (self.short_name + self.stub_suffix))
+            logger.debug("mkdir `%s`" % (self.short_name + self.stub_suffix))
             os.mkdir(self.short_name + self.stub_suffix)
 
         with DirectoryWalkerGuard(self.short_name + self.stub_suffix):
@@ -816,7 +816,7 @@ def main():
     parser.add_argument("--skip-signature-downgrade", action='store_true',
                         help="Do not downgrade invalid function signatures to func(*args, **kwargs)")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
-    parser.add_argument("--log-level", default="WARNING", help="Set output log level")
+    parser.add_argument("--log-level", default="INFO", help="Set output log level")
 
     sys_args = parser.parse_args()
 
