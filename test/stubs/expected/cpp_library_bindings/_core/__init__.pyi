@@ -87,6 +87,7 @@ class Outer():
     @inner.setter
     def inner(self, arg0: Outer.Inner) -> None:
         pass
+    linalg = numpy.linalg
     pass
 foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo

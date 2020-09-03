@@ -354,6 +354,16 @@ class AttributeStubsGenerator(StubsGenerator):
                 )
             ]
 
+        # special case for modules
+        # https://github.com/sizmailov/pybind11-stubgen/issues/43
+        if type(self.attr) is type(os) and hasattr(self.attr, "__name__"):
+            return [
+                "{name} = {repr}".format(
+                    name=self.name,
+                    repr=self.attr.__name__
+                )
+            ]
+
         value_lines = repr(self.attr).split("\n")
         if len(value_lines) == 1:
             value = value_lines[0]
