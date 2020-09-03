@@ -66,7 +66,6 @@ class FunctionSignature(object):
         if validate:
             invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
             if invalid_defaults:
-                print(invalid_defaults)
                 FunctionSignature.n_invalid_default_values += 1
                 logger.error("Default argument value(s) replaced with ellipses (...):")
                 for invalid_default in invalid_defaults:
