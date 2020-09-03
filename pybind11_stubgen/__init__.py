@@ -40,7 +40,7 @@ def replace_default_pybind11_repr_with_ellipses(line):
     default_reprs = []
 
     def replacement(m):
-        default_reprs.append(m.groups(0))
+        default_reprs.append(m.group(0))
         return "..."
 
     return default_reprs, _default_pybind11_repr_re.sub(replacement, line)
@@ -66,6 +66,7 @@ class FunctionSignature(object):
         if validate:
             invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
             if invalid_defaults:
+                print(invalid_defaults)
                 FunctionSignature.n_invalid_default_values += 1
                 logger.error("Default argument value(s) replaced with ellipses (...):")
                 for invalid_default in invalid_defaults:
