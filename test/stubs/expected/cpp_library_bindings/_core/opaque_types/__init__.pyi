@@ -1,11 +1,14 @@
 import cpp_library_bindings._core.opaque_types
 import typing
-__all__  = [
-"MapStringComplex",
-"VectorPairStringDouble",
-"get_complex_map",
-"get_vector_of_pairs"
+
+__all__ = [
+    "MapStringComplex",
+    "VectorPairStringDouble",
+    "get_complex_map",
+    "get_vector_of_pairs"
 ]
+
+
 class MapStringComplex():
     def __bool__(self) -> bool: 
         """

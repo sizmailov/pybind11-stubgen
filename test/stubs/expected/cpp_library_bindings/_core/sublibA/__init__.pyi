@@ -1,14 +1,17 @@
 import cpp_library_bindings._core.sublibA
 import typing
-__all__  = [
-"ConsoleBackgroundColor",
-"ConsoleForegroundColor",
-"add",
-"Blue",
-"Green",
-"Magenta",
-"Yellow"
+
+__all__ = [
+    "Blue",
+    "ConsoleBackgroundColor",
+    "ConsoleForegroundColor",
+    "Green",
+    "Magenta",
+    "Yellow",
+    "add"
 ]
+
+
 class ConsoleBackgroundColor():
     """
     Members:

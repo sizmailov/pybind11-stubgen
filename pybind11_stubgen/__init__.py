@@ -749,10 +749,13 @@ class ModuleStubsGenerator(StubsGenerator):
                 "_Shape = typing.Tuple[int, ...]"
             ]
 
+        # add space between imports and rest of module
+        result += [""]
+
         globals_ = {}
         exec("from {} import *".format(self.module.__name__), globals_)
         all_ = set(globals_.keys()) - {"__builtins__"}
-        result.append("__all__  = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]")
+        result.append("__all__ = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]\n\n")
 
         for x in itertools.chain(self.classes,
                                  self.free_functions,

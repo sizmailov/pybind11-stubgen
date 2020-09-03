@@ -12,18 +12,26 @@ import cpp_library_bindings._core.invalid_signatures
 import cpp_library_bindings._core.numeric
 import cpp_library_bindings._core.opaque_types
 import cpp_library_bindings._core.sublibA
-__all__  = [
-"Base",
-"CppException",
-"Derived",
-"Foo",
-"Outer",
-"_core",
-"core",
-"foolist",
-"foovar",
-"version"
+
+__all__ = [
+    "Base",
+    "CppException",
+    "Derived",
+    "Foo",
+    "Outer",
+    "copy_types",
+    "core",
+    "eigen",
+    "foolist",
+    "foovar",
+    "invalid_signatures",
+    "numeric",
+    "opaque_types",
+    "sublibA",
+    "version"
 ]
+
+
 foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo
 version = '0.0.0'
