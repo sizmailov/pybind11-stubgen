@@ -33,11 +33,27 @@ class DirectoryWalkerGuard(object):
         os.chdir(os.path.pardir)
 
 
+_default_pybind11_repr_re = re.compile(r'<\w+(\.\w+)* object at 0x[0-9a-f]+>')
+
+
+def replace_default_pybind11_repr_with_ellipses(line):
+    default_reprs = []
+
+    def replacement(m):
+        default_reprs.append(m.groups(0))
+        return "..."
+
+    return default_reprs, _default_pybind11_repr_re.sub(replacement, line)
+
+
 class FunctionSignature(object):
     # When True keeps generation of stubs with invalid signatures found in docstrings
     # (yes, global variables, blame me)
     non_stop_mode = False
     signature_downgrade = True
+
+    # Number of invalid default values found so far
+    n_invalid_default_values = 0
 
     # Number of invalid signatures found so far
     n_invalid_signatures = 0
@@ -48,6 +64,13 @@ class FunctionSignature(object):
         self.rtype = rtype
 
         if validate:
+            invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
+            if invalid_defaults:
+                FunctionSignature.n_invalid_default_values += 1
+                logger.error("Default argument value(s) replaced with ellipses (...):")
+                for invalid_default in invalid_defaults:
+                    logger.error("    {}".format(invalid_default))
+
             function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: ...".format(sig=self)
             try:
                 ast.parse(function_def_str)
@@ -848,15 +871,23 @@ def main():
         for _module_name in sys_args.module_names:
             _module = ModuleStubsGenerator(_module_name)
             _module.parse()
-            if FunctionSignature.non_stop_mode or FunctionSignature.n_invalid_signatures == 0:
+            if FunctionSignature.non_stop_mode or (FunctionSignature.n_invalid_signatures == 0 and
+                                                   FunctionSignature.n_invalid_default_values == 0):
                 _module.stub_suffix = sys_args.root_module_suffix
                 _module.write_setup_py = not sys_args.no_setup_py
                 recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
 
         if FunctionSignature.n_invalid_signatures > 0:
-            logger.info("Useful link: Avoiding C++ types in docstrings: ")
+            logger.info("Useful link: Avoiding C++ types in docstrings:")
             logger.info("      https://pybind11.readthedocs.io/en/master/advanced/misc.html"
                         "#avoiding-cpp-types-in-docstrings")
+
+        if FunctionSignature.n_invalid_default_values > 0:
+            logger.info("Useful link: Default argument representation:")
+            logger.info("      https://pybind11.readthedocs.io/en/master/advanced/functions.html"
+                        "#default-arguments-revisited")
+
+        if FunctionSignature.n_invalid_signatures > 0 or FunctionSignature.n_invalid_default_values > 0:
             exit(1)
 
 

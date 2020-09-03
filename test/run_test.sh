@@ -11,7 +11,6 @@ rm -rf "./stubs/generated"
            --output-dir="./stubs/generated" \
            --root-module-suffix="" \
            --non-stop \
-           --no-setup-py \
-           --log-level=ERROR || exit 0)
+           --no-setup-py || exit 0)
 
 python compare_walker.py
