@@ -749,32 +749,10 @@ class ModuleStubsGenerator(StubsGenerator):
                 "_Shape = typing.Tuple[int, ...]"
             ]
 
-        # define __all__
-
-        _all_ = []
-        for name in self.imported_classes.keys():
-            _all_.append(name)
-
-        for c in self.classes:
-            _all_.append(c.klass.__name__)
-
-        for f in self.free_functions:
-            _all_.append(f.name)
-
-        for m in self.submodules:
-            _all_.append(m.short_name)
-
-        for a in self.attributes:
-            _all_.append(a.name)
-
-        all_is_defined = False
-
-        for attr in self.attributes:
-            if attr.name == "__all__":
-                all_is_defined = True
-
-        if not all_is_defined:
-            result.append("__all__  = [\n" + ",\n".join(map(lambda s: '"%s"' % s, _all_)) + "\n]")
+        globals_ = {}
+        exec("from {} import *".format(self.module.__name__), globals_)
+        all_ = set(globals_.keys()) - {"__builtins__"}
+        result.append("__all__  = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]")
 
         for x in itertools.chain(self.classes,
                                  self.free_functions,
