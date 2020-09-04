@@ -76,9 +76,10 @@ class FunctionSignature(object):
             invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
             if invalid_defaults:
                 FunctionSignature.n_invalid_default_values += 1
-                logger.error("Default argument value(s) replaced with ellipses (...):")
+                lvl = logging.WARNING if FunctionSignature.ignore_invalid_defaultarg else logging.ERROR
+                logger.log(lvl, "Default argument value(s) replaced with ellipses (...):")
                 for invalid_default in invalid_defaults:
-                    logger.error("    {}".format(invalid_default))
+                    logger.log(lvl, "    {}".format(invalid_default))
 
             function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: ...".format(sig=self)
             try:
@@ -89,8 +90,8 @@ class FunctionSignature(object):
                     self.name = name
                     self.args = "*args, **kwargs"
                     self.rtype = "typing.Any"
-                    logger.error("Generated stubs signature is degraded to `(*args, **kwargs) -> typing.Any` for")
-                    lvl = logging.ERROR
+                    lvl = logging.WARNING if FunctionSignature.ignore_invalid_signature else logging.ERROR
+                    logger.log(lvl, "Generated stubs signature is degraded to `(*args, **kwargs) -> typing.Any` for")
                 else:
                     lvl = logging.WARNING
                     logger.warning("Ignoring invalid signature:")
