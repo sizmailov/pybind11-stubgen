@@ -48,6 +48,7 @@ Usage
    pybind11-stubgen [-h] [-o OUTPUT_DIR] \
                     [--root-module-suffix ROOT_MODULE_SUFFIX] \
                     [--no-setup-py] \
-                    [--non-stop] \
+                    [--ignore-invalid {signature,defaultarg,all} [{signature,defaultarg,all} ...]] \
+                    [--skip-signature-downgrade]
                     [--log-level LOG_LEVEL] \
                     MODULE_NAME [MODULE_NAME ...]
