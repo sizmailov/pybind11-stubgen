@@ -406,7 +406,9 @@ class AttributeStubsGenerator(StubsGenerator):
                    + ['"""']
 
     def get_involved_modules_names(self):  # type: () -> Set[str]
-        return set((self.attr.__class__.__module__,))
+        if type(self.attr) is type(os):
+            return {self.attr.__name__}
+        return {self.attr.__class__.__module__}
 
 
 class FreeFunctionStubsGenerator(StubsGenerator):
@@ -597,6 +599,9 @@ class ClassStubsGenerator(StubsGenerator):
 
         for f in self.methods:  # type: ClassMemberStubsGenerator
             self.involved_modules_names |= f.get_involved_modules_names()
+
+        for attr in self.fields:
+            self.involved_modules_names |= attr.get_involved_modules_names()
 
     def to_lines(self):  # type: () -> List[str]
 
