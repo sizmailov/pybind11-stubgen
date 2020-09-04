@@ -47,9 +47,11 @@ def replace_default_pybind11_repr_with_ellipses(line):
 
 
 class FunctionSignature(object):
-    # When True keeps generation of stubs with invalid signatures found in docstrings
-    # (yes, global variables, blame me)
-    non_stop_mode = False
+    # When True don't raise an error when invalid signatures/defaultargs are
+    # encountered (yes, global variables, blame me)
+    ignore_invalid_signature = False
+    ignore_invalid_defaultarg = False
+
     signature_downgrade = True
 
     # Number of invalid default values found so far
@@ -57,6 +59,13 @@ class FunctionSignature(object):
 
     # Number of invalid signatures found so far
     n_invalid_signatures = 0
+
+    @classmethod
+    def continue_is_ok(cls):
+        return (
+            (cls.ignore_invalid_defaultarg or cls.n_invalid_default_values == 0) and
+            (cls.ignore_invalid_signature or cls.n_invalid_signatures == 0)
+        )
 
     def __init__(self, name, args='*args, **kwargs', rtype='None', validate=True):
         self.name = name
@@ -826,6 +835,7 @@ def main():
                         help="Deprecated.  Use `--root-module-suffix`")
     parser.add_argument("--no-setup-py", action='store_true')
     parser.add_argument("--non-stop", action='store_true', help="Don't stop when encountered invalid signatures")
+    parser.add_argument("--ignore-invalid", type=str, default=None, help="Ignore invalid {signature,defaultarg,all}")
     parser.add_argument("--skip-signature-downgrade", action='store_true',
                         help="Do not downgrade invalid function signatures to func(*args, **kwargs)")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
@@ -834,7 +844,21 @@ def main():
     sys_args = parser.parse_args()
 
     if sys_args.non_stop:
-        FunctionSignature.non_stop_mode = True
+        FunctionSignature.ignore_invalid_signature = True
+        FunctionSignature.ignore_invalid_defaultarg = True
+        warnings.warn("`--non-stop` is deprecated in favor of `--ignore-invald=all`", FutureWarning)
+
+    if sys_args.ignore_invalid == 'all':
+        FunctionSignature.ignore_invalid_signature = True
+        FunctionSignature.ignore_invalid_defaultarg = True
+    elif sys_args.ignore_invalid:
+        for inv in sys_args.ignore_invalid.split(','):
+            if inv == 'signature':
+                FunctionSignature.ignore_invalid_signature = True
+            elif inv == 'defaultarg':
+                FunctionSignature.ignore_invalid_defaultarg = True
+            else:
+                parser.error("Invalid argument '%s' for --ignore-invalid" % inv)
 
     if sys_args.skip_signature_downgrade:
         FunctionSignature.signature_downgrade = False
@@ -861,8 +885,7 @@ def main():
         for _module_name in sys_args.module_names:
             _module = ModuleStubsGenerator(_module_name)
             _module.parse()
-            if FunctionSignature.non_stop_mode or (FunctionSignature.n_invalid_signatures == 0 and
-                                                   FunctionSignature.n_invalid_default_values == 0):
+            if FunctionSignature.continue_is_ok():
                 _module.stub_suffix = sys_args.root_module_suffix
                 _module.write_setup_py = not sys_args.no_setup_py
                 recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
