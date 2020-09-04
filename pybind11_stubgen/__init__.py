@@ -47,9 +47,11 @@ def replace_default_pybind11_repr_with_ellipses(line):
 
 
 class FunctionSignature(object):
-    # When True keeps generation of stubs with invalid signatures found in docstrings
-    # (yes, global variables, blame me)
-    non_stop_mode = False
+    # When True don't raise an error when invalid signatures/defaultargs are
+    # encountered (yes, global variables, blame me)
+    ignore_invalid_signature = False
+    ignore_invalid_defaultarg = False
+
     signature_downgrade = True
 
     # Number of invalid default values found so far
@@ -57,6 +59,11 @@ class FunctionSignature(object):
 
     # Number of invalid signatures found so far
     n_invalid_signatures = 0
+
+    @classmethod
+    def n_fatal_errors(cls):
+        return ((0 if cls.ignore_invalid_defaultarg else cls.n_invalid_default_values) +
+                (0 if cls.ignore_invalid_signature else cls.n_invalid_signatures))
 
     def __init__(self, name, args='*args, **kwargs', rtype='None', validate=True):
         self.name = name
@@ -67,9 +74,10 @@ class FunctionSignature(object):
             invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
             if invalid_defaults:
                 FunctionSignature.n_invalid_default_values += 1
-                logger.error("Default argument value(s) replaced with ellipses (...):")
+                lvl = logging.WARNING if FunctionSignature.ignore_invalid_defaultarg else logging.ERROR
+                logger.log(lvl, "Default argument value(s) replaced with ellipses (...):")
                 for invalid_default in invalid_defaults:
-                    logger.error("    {}".format(invalid_default))
+                    logger.log(lvl, "    {}".format(invalid_default))
 
             function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: ...".format(sig=self)
             try:
@@ -80,8 +88,8 @@ class FunctionSignature(object):
                     self.name = name
                     self.args = "*args, **kwargs"
                     self.rtype = "typing.Any"
-                    logger.error("Generated stubs signature is degraded to `(*args, **kwargs) -> typing.Any` for")
-                    lvl = logging.ERROR
+                    lvl = logging.WARNING if FunctionSignature.ignore_invalid_signature else logging.ERROR
+                    logger.log(lvl, "Generated stubs signature is degraded to `(*args, **kwargs) -> typing.Any` for")
                 else:
                     lvl = logging.WARNING
                     logger.warning("Ignoring invalid signature:")
@@ -825,7 +833,9 @@ def main():
     parser.add_argument("--root_module_suffix", type=str, default=None, dest='root_module_suffix_deprecated',
                         help="Deprecated.  Use `--root-module-suffix`")
     parser.add_argument("--no-setup-py", action='store_true')
-    parser.add_argument("--non-stop", action='store_true', help="Don't stop when encountered invalid signatures")
+    parser.add_argument("--non-stop", action='store_true', help="Deprecated. Use `--ignore-invalid=all`")
+    parser.add_argument("--ignore-invalid", nargs="+", choices=["signature", "defaultarg", "all"], default=[],
+                        help="Ignore invalid specified python expressions in docstrings")
     parser.add_argument("--skip-signature-downgrade", action='store_true',
                         help="Do not downgrade invalid function signatures to func(*args, **kwargs)")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
@@ -834,7 +844,17 @@ def main():
     sys_args = parser.parse_args()
 
     if sys_args.non_stop:
-        FunctionSignature.non_stop_mode = True
+        sys_args.ignore_invalid = ['all']
+        warnings.warn("`--non-stop` is deprecated in favor of `--ignore-invalid=all`", FutureWarning)
+
+    if 'all' in sys_args.ignore_invalid:
+        FunctionSignature.ignore_invalid_signature = True
+        FunctionSignature.ignore_invalid_defaultarg = True
+    else:
+        if 'signature' in sys_args.ignore_invalid:
+            FunctionSignature.ignore_invalid_signature = True
+        if 'defaultarg' in sys_args.ignore_invalid:
+            FunctionSignature.ignore_invalid_defaultarg = True
 
     if sys_args.skip_signature_downgrade:
         FunctionSignature.signature_downgrade = False
@@ -861,8 +881,7 @@ def main():
         for _module_name in sys_args.module_names:
             _module = ModuleStubsGenerator(_module_name)
             _module.parse()
-            if FunctionSignature.non_stop_mode or (FunctionSignature.n_invalid_signatures == 0 and
-                                                   FunctionSignature.n_invalid_default_values == 0):
+            if FunctionSignature.n_fatal_errors() == 0:
                 _module.stub_suffix = sys_args.root_module_suffix
                 _module.write_setup_py = not sys_args.no_setup_py
                 recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
@@ -877,7 +896,7 @@ def main():
             logger.info("      https://pybind11.readthedocs.io/en/master/advanced/functions.html"
                         "#default-arguments-revisited")
 
-        if FunctionSignature.n_invalid_signatures > 0 or FunctionSignature.n_invalid_default_values > 0:
+        if FunctionSignature.n_fatal_errors() > 0:
             exit(1)
 
 
