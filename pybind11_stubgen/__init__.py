@@ -900,7 +900,7 @@ def main():
             logger.info("      https://pybind11.readthedocs.io/en/master/advanced/functions.html"
                         "#default-arguments-revisited")
 
-        if FunctionSignature.n_invalid_signatures > 0 or FunctionSignature.n_invalid_default_values > 0:
+        if not FunctionSignature.continue_is_ok():
             exit(1)
 
 
