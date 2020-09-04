@@ -181,7 +181,8 @@ class StubsGenerator(object):
     INDENT = " " * 4
 
     GLOBAL_CLASSNAME_REPLACEMENTS = {
-        re.compile(r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?\]"): replace_numpy_array,
+        re.compile(
+            r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?(?P<extra>[^][]*)\]"): replace_numpy_array,
         re.compile(
             r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union')(?!\w)"): replace_typing_types
     }
@@ -752,7 +753,7 @@ class ModuleStubsGenerator(StubsGenerator):
             # result.extend(map(self.indent, map(lambda m: "import {}".format(m), used_modules)))
             result.extend(map(lambda mod: "import {}".format(mod), used_modules))
 
-        if "numpy" in used_modules:
+        if "numpy" in used_modules and not BARE_NUPMY_NDARRAY:
             result += [
                 "_Shape = typing.Tuple[int, ...]"
             ]
