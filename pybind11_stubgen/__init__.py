@@ -154,7 +154,13 @@ class PropertySignature(object):
         return FunctionSignature.argument_type(FunctionSignature('name', self.setter_args).split_arguments()[1])
 
 
+# If true numpy.ndarray[int32[3,3]] will be reduced to numpy.ndarray
+BARE_NUPMY_NDARRAY = False
+
+
 def replace_numpy_array(match_obj):
+    if BARE_NUPMY_NDARRAY:
+        return "numpy.ndarray"
     numpy_type = match_obj.group("type")
     # pybind always append size of data type
     if numpy_type in ['int8', 'int16', 'int32', 'int64',
@@ -839,6 +845,8 @@ def main():
                         help="Ignore invalid specified python expressions in docstrings")
     parser.add_argument("--skip-signature-downgrade", action='store_true',
                         help="Do not downgrade invalid function signatures to func(*args, **kwargs)")
+    parser.add_argument("--bare-numpy-ndarray", action='store_true', default=False,
+                        help="Render `numpy.ndarray` without (non-standardized) bracket-enclosed type and shape info")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="INFO", help="Set output log level")
 
@@ -847,6 +855,10 @@ def main():
     if sys_args.non_stop:
         sys_args.ignore_invalid = ['all']
         warnings.warn("`--non-stop` is deprecated in favor of `--ignore-invalid=all`", FutureWarning)
+
+    if sys_args.bare_numpy_ndarray:
+        global BARE_NUPMY_NDARRAY
+        BARE_NUPMY_NDARRAY = True
 
     if 'all' in sys_args.ignore_invalid:
         FunctionSignature.ignore_invalid_signature = True

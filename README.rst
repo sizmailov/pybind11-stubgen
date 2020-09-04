@@ -49,6 +49,7 @@ Usage
                     [--root-module-suffix ROOT_MODULE_SUFFIX] \
                     [--no-setup-py] \
                     [--ignore-invalid {signature,defaultarg,all} [{signature,defaultarg,all} ...]] \
-                    [--skip-signature-downgrade]
+                    [--skip-signature-downgrade] \
+                    [--bare-numpy-ndarray] \
                     [--log-level LOG_LEVEL] \
                     MODULE_NAME [MODULE_NAME ...]
