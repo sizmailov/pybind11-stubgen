@@ -215,7 +215,10 @@ class StubsGenerator(object):
         class_name = getattr(klass, "__qualname__", klass.__name__)
 
         if module_name == "builtins":
-            return class_name
+            if class_name == 'NoneType':
+                return 'None'
+            else:
+                return class_name
         else:
             return "{module}.{klass}".format(
                 module=module_name,
