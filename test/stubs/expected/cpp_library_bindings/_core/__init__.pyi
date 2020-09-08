@@ -13,6 +13,8 @@ __all__ = [
     "foolist",
     "foovar",
     "invalid_signatures",
+    "list_with_none",
+    "none",
     "numeric",
     "opaque_types",
     "sublibA"
@@ -95,3 +97,5 @@ class Outer():
     pass
 foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo
+list_with_none = [None, 2, {}]
+none = None

@@ -340,7 +340,7 @@ class AttributeStubsGenerator(StubsGenerator):
         _visited_objects.append(self)
 
     def is_safe_to_use_repr(self, value):
-        if isinstance(value, (int, str)):
+        if value is None or isinstance(value, (int, str)):
             return True
         if isinstance(value, (float, complex)):
             try:

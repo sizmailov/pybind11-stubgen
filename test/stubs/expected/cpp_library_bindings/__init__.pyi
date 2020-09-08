@@ -25,6 +25,8 @@ __all__ = [
     "foolist",
     "foovar",
     "invalid_signatures",
+    "list_with_none",
+    "none",
     "numeric",
     "opaque_types",
     "sublibA",
@@ -34,4 +36,6 @@ __all__ = [
 
 foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo
+list_with_none = [None, 2, {}]
+none = None
 version = '0.0.0'
