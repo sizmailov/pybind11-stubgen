@@ -844,7 +844,7 @@ def recursive_mkdir_walker(subdirs, callback):  # type: (List[str], Callable) ->
             recursive_mkdir_walker(subdirs[1:], callback)
 
 
-def main():
+def main(args=None):
     parser = ArgumentParser(prog='pybind11-stubgen', description="Generates stubs for specified modules")
     parser.add_argument("-o", "--output-dir", help="the root directory for output stubs", default="./stubs")
     parser.add_argument("--root-module-suffix", type=str, default="-stubs", dest='root_module_suffix',
@@ -862,7 +862,7 @@ def main():
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="INFO", help="Set output log level")
 
-    sys_args = parser.parse_args()
+    sys_args = parser.parse_args(args or sys.argv)
 
     if sys_args.non_stop:
         sys_args.ignore_invalid = ['all']
