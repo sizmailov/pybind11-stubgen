@@ -317,7 +317,7 @@ class StubsGenerator(object):
             docstring = hook(docstring)
 
         signature_regex = r"(\s*(?P<overload_number>\d+).\s*)" \
-                          r"?{name}\s*\((?P<args>[^\(\)]*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name=r"\w+")
+                          r"?{name}\s*\((?P<args>.*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name=r"\w+")
 
         lines = docstring.split("\n\n")
         lines = filter(lambda line: line != "Overloaded function.", lines)
