@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 _visited_objects = []
 
+# A list of function docstring pre-processing hooks
+function_docstring_preprocessing_hooks: List[Callable[[str], str]] = []
+
 
 class DirectoryWalkerGuard(object):
 
@@ -239,9 +242,13 @@ class StubsGenerator(object):
                               r"\s*->\s*" \
                               r"(?P<rtype>[^\(\)]+)\s*".format(name=name,
                                                                balanced_parentheses=parentheses_three_fold)
-            doc_lines = func.__doc__
+            docstring = func.__doc__
+
+            for hook in function_docstring_preprocessing_hooks:
+                docstring = hook(docstring)
+
             signatures = []
-            for line in doc_lines.split("\n"):
+            for line in docstring.split("\n"):
                 m = re.match(signature_regex, line)
                 if m:
                     args = m.group("args")
