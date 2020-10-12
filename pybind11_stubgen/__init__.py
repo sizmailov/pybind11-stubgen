@@ -313,6 +313,9 @@ class StubsGenerator(object):
         if docstring is None:
             return ""
 
+        for hook in function_docstring_preprocessing_hooks:
+            docstring = hook(docstring)
+
         signature_regex = r"(\s*(?P<overload_number>\d+).\s*)" \
                           r"?{name}\s*\((?P<args>[^\(\)]*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(name=r"\w+")
 
