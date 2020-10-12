@@ -865,7 +865,7 @@ def main(args=None):
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="INFO", help="Set output log level")
 
-    sys_args = parser.parse_args(args or sys.argv)
+    sys_args = parser.parse_args(args or sys.argv[1:])
 
     if sys_args.non_stop:
         sys_args.ignore_invalid = ['all']
