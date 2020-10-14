@@ -36,7 +36,7 @@ class DirectoryWalkerGuard(object):
         os.chdir(os.path.pardir)
 
 
-_default_pybind11_repr_re = re.compile(r'<\w+(\.\w+)* object at 0x[0-9a-fA-F]+>')
+_default_pybind11_repr_re = re.compile(r'(<\w+(\.\w+)* object at 0x[0-9a-fA-F]+>)|(<\w+(.\w+)*: \d+>)')
 
 
 def replace_default_pybind11_repr_with_ellipses(line):
