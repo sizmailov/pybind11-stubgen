@@ -36,15 +36,18 @@ class DirectoryWalkerGuard(object):
         os.chdir(os.path.pardir)
 
 
-_default_pybind11_repr_re = re.compile(r'(<\w+(\.\w+)* object at 0x[0-9a-fA-F]+>)|(<\w+(.\w+)*: \d+>)')
+_default_pybind11_repr_re = re.compile(r'(<(?P<class>\w+(\.\w+)*) object at 0x[0-9a-fA-F]+>)|'
+                                       r'(<(?P<enum>\w+(.\w+)*): \d+>)')
 
 
-def replace_default_pybind11_repr_with_ellipses(line):
+def replace_default_pybind11_repr(line):
     default_reprs = []
 
     def replacement(m):
-        default_reprs.append(m.group(0))
-        return "..."
+        if m.group("class"):
+            default_reprs.append(m.group(0))
+            return "..."
+        return m.group("enum")
 
     return default_reprs, _default_pybind11_repr_re.sub(replacement, line)
 
@@ -74,7 +77,7 @@ class FunctionSignature(object):
         self.rtype = rtype
 
         if validate:
-            invalid_defaults, self.args = replace_default_pybind11_repr_with_ellipses(self.args)
+            invalid_defaults, self.args = replace_default_pybind11_repr(self.args)
             if invalid_defaults:
                 FunctionSignature.n_invalid_default_values += 1
                 lvl = logging.WARNING if FunctionSignature.ignore_invalid_defaultarg else logging.ERROR

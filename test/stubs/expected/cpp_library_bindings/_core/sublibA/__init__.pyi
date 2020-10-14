@@ -1,5 +1,6 @@
 import cpp_library_bindings._core.sublibA
 import typing
+import ConsoleForegroundColor
 
 __all__ = [
     "Blue",
@@ -75,7 +76,7 @@ class ConsoleForegroundColor():
     Yellow: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = <ConsoleForegroundColor.Yellow: 33>
     __members__: dict # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>}
     pass
-def accept_defaulted_enum(color: ConsoleForegroundColor = ...) -> None:
+def accept_defaulted_enum(color: ConsoleForegroundColor = ConsoleForegroundColor.Blue) -> None:
     pass
 def add(arg0: int, arg1: int) -> int:
     pass
