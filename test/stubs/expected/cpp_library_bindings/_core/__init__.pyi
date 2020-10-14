@@ -63,18 +63,22 @@ class Outer():
 
               TWO
             """
+            def __eq__(self, arg0: object) -> bool: ...
+            def __getstate__(self) -> int: ...
+            def __hash__(self) -> int: ...
             def __init__(self, arg0: int) -> None: ...
             def __int__(self) -> int: ...
+            def __ne__(self, arg0: object) -> bool: ...
+            def __repr__(self) -> str: ...
+            def __setstate__(self, arg0: int) -> None: ...
             @property
             def name(self) -> str:
                 """
-                (self: handle) -> str
-
                 :type: str
                 """
-            ONE: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = NestedEnum.ONE
-            TWO: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = NestedEnum.TWO
-            __members__: dict # value = {'ONE': NestedEnum.ONE, 'TWO': NestedEnum.TWO}
+            ONE: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = <NestedEnum.ONE: 1>
+            TWO: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = <NestedEnum.TWO: 2>
+            __members__: dict # value = {'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}
             pass
         @property
         def value(self) -> Outer.Inner.NestedEnum:
