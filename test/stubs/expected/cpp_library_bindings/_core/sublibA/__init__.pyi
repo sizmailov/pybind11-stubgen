@@ -8,6 +8,7 @@ __all__ = [
     "Green",
     "Magenta",
     "Yellow",
+    "accept_defaulted_enum",
     "add"
 ]
 
@@ -73,6 +74,8 @@ class ConsoleForegroundColor():
     Magenta: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = <ConsoleForegroundColor.Magenta: 35>
     Yellow: cpp_library_bindings._core.sublibA.ConsoleForegroundColor # value = <ConsoleForegroundColor.Yellow: 33>
     __members__: dict # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>}
+    pass
+def accept_defaulted_enum(color: ConsoleForegroundColor = ...) -> None:
     pass
 def add(arg0: int, arg1: int) -> int:
     pass
