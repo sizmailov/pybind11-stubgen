@@ -286,7 +286,7 @@ class StubsGenerator(object):
                 for line in prop.fget.__doc__.split("\n"):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
-                    m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
+                    m = re.match(r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
                     if m:
                         getter_rtype = m.group("rtype")
                         break
@@ -297,7 +297,7 @@ class StubsGenerator(object):
                 for line in prop.fset.__doc__.split("\n"):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
-                    m = re.match(r"\s*\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
+                    m = re.match(r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*", line)
                     if m:
                         args = m.group("args")
                         # replace first argument with self
