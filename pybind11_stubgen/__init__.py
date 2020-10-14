@@ -918,12 +918,12 @@ def main(args=None):
 
         if FunctionSignature.n_invalid_signatures > 0:
             logger.info("Useful link: Avoiding C++ types in docstrings:")
-            logger.info("      https://pybind11.readthedocs.io/en/master/advanced/misc.html"
+            logger.info("      https://pybind11.readthedocs.io/en/latest/advanced/misc.html"
                         "#avoiding-cpp-types-in-docstrings")
 
         if FunctionSignature.n_invalid_default_values > 0:
             logger.info("Useful link: Default argument representation:")
-            logger.info("      https://pybind11.readthedocs.io/en/master/advanced/functions.html"
+            logger.info("      https://pybind11.readthedocs.io/en/latest/advanced/functions.html"
                         "#default-arguments-revisited")
 
         if FunctionSignature.n_fatal_errors() > 0:
