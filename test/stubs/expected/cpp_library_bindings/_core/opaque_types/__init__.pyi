@@ -26,7 +26,6 @@ class MapStringComplex():
         """
     def __setitem__(self, arg0: str, arg1: complex) -> None: ...
     def items(self) -> typing.Iterator: ...
-    __pybind11_module_local_v4_gcc_libstdcpp_cxxabi1013__: PyCapsule # value = <capsule object NULL>
     pass
 class VectorPairStringDouble():
     def __bool__(self) -> bool: 
@@ -112,7 +111,6 @@ class VectorPairStringDouble():
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
     __hash__ = None
-    __pybind11_module_local_v4_gcc_libstdcpp_cxxabi1013__: PyCapsule # value = <capsule object NULL>
     pass
 def get_complex_map() -> MapStringComplex:
     pass

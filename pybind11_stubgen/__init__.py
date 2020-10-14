@@ -582,6 +582,8 @@ class ClassStubsGenerator(StubsGenerator):
             # check if attribute is in __dict__ (fast path) before slower search in base classes
             if name not in self.klass.__dict__ and is_base_member(name, member):
                 continue
+            if name.startswith('__pybind11_module'):
+                continue
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif name != '__class__' and inspect.isclass(member):
