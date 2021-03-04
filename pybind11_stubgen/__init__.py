@@ -99,7 +99,7 @@ class FunctionSignature(object):
                 else:
                     lvl = logging.WARNING
                     logger.warning("Ignoring invalid signature:")
-                logger.log(lvl, e.text.rstrip())
+                logger.log(lvl, function_def_str)
                 logger.log(lvl, " " * (e.offset - 1) + "^-- Invalid syntax")
 
     def __eq__(self, other):
