@@ -85,6 +85,68 @@ class FunctionSignature(object):
                 for invalid_default in invalid_defaults:
                     logger.log(lvl, "    {}".format(invalid_default))
 
+            if USE_BOOST_PYTHON:
+                if args: 
+                    find_optional_args = re.findall('\[(.*?)\]$', args)
+                    optional_args = None
+                    if find_optional_args:
+                        optional_args = find_optional_args[0]
+                    if optional_args:
+                        nominal_args = args.replace("[" + optional_args + "]","")
+                    else:
+                        nominal_args = args
+                        
+                    num_nominal_args = 0
+                    if nominal_args: 
+                        nominal_args = nominal_args.split(",")
+                        num_nominal_args = len(nominal_args)
+                    
+                    num_optional_args = 0
+                    if optional_args:
+                        optional_args = optional_args.split("[,") 
+                        num_optional_args = len(optional_args)
+                        if num_optional_args > 1: 
+                            optional_args[-1] = re.sub(']'*(num_optional_args-1)+'$', '', optional_args[-1]) # Replace at the end
+                    new_args = ""
+
+                    if nominal_args:
+                        for k,arg in enumerate(nominal_args):
+                            type_name = re.findall('\((.*?)\)', arg)[0]
+                            arg_name = arg.split(")")[1]
+                            arg_name = arg_name.replace(' ','_')
+
+                            new_args += arg_name + ": " + type_name
+                            if k < num_nominal_args-1:
+                                new_args += ", "
+
+                    if num_optional_args > 0 and num_nominal_args > 0:
+                        new_args += ", " 
+
+                    if optional_args and True:
+                        for k,arg in enumerate(optional_args):
+                            # Check for default value
+                            split_arg_equal = arg.split('=',maxsplit=1)
+                            main_arg = split_arg_equal[0]
+                            type_name = re.findall('\((.*?)\)', main_arg)[0]
+
+                            arg_name = main_arg.split(")")[1]
+                            arg_name = arg_name.replace(' ','_')
+                            new_args += arg_name + ": " + type_name
+                            optional_value = None 
+                            if len(split_arg_equal) > 1:
+                                optional_value = split_arg_equal[1]
+                                new_args += " = " + optional_value
+
+                            if k < num_optional_args-1:
+                                new_args += ", "
+                        
+                    new_args = new_args.replace(" ,", ",")
+                    self.args = new_args
+                    args = new_args
+                
+                rtype = rtype.split(" :")[0]
+                self.rtype = rtype
+
             function_def_str = "def {sig.name}({sig.args}) -> {sig.rtype}: ...".format(sig=self)
             try:
                 ast.parse(function_def_str)
@@ -188,6 +250,9 @@ def replace_typing_types(match):
     # pybind used to have iterator/iterable in place of Iterator/Iterable
     return "typing." + match.group('type').capitalize()
 
+
+# If true, parse BOOST_PYTHON signature
+USE_BOOST_PYTHON = False
 
 class StubsGenerator(object):
     INDENT = " " * 4
@@ -869,6 +934,7 @@ def main(args=None):
                         help="Render `numpy.ndarray` without (non-standardized) bracket-enclosed type and shape info")
     parser.add_argument("module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names")
     parser.add_argument("--log-level", default="INFO", help="Set output log level")
+    parser.add_argument("--boost-python", action="store_true")
 
     sys_args = parser.parse_args(args or sys.argv[1:])
 
@@ -879,6 +945,10 @@ def main(args=None):
     if sys_args.bare_numpy_ndarray:
         global BARE_NUPMY_NDARRAY
         BARE_NUPMY_NDARRAY = True
+
+    if sys_args.boost_python:
+        global USE_BOOST_PYTHON
+        USE_BOOST_PYTHON = True
 
     if 'all' in sys_args.ignore_invalid:
         FunctionSignature.ignore_invalid_signature = True
