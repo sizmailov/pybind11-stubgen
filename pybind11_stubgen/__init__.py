@@ -767,6 +767,8 @@ class ModuleStubsGenerator(StubsGenerator):
                         self.classes.append(ClassStubsGenerator(member))
                 else:
                     self.imported_classes[name] = member
+                    self.classes.append(ClassStubsGenerator(member))
+                    self.classes[-1].parse()
             elif name == "__doc__":
                 self.doc_string = member
             elif name not in self.attributes_blacklist:
