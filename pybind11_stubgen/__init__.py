@@ -833,15 +833,20 @@ class ModuleStubsGenerator(StubsGenerator):
             "import typing"
         ]
 
-        for name, class_ in self.imported_classes.items():
-            class_name = getattr(class_, "__qualname__", class_.__name__)
-            if name == class_name:
-                suffix = ""
-            else:
-                suffix = " as {}".format(name)
-            result += [
-                'from {} import {}{}'.format(class_.__module__, class_name, suffix)
-            ]
+        globals_ = {}
+        exec("from {} import *".format(self.module.__name__), globals_)
+
+        result += [""]
+        all_ = set(globals_.keys()) - {"__builtins__"}
+        result.append("__all__ = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]\n")
+
+        for x in itertools.chain(self.classes,
+                                 self.free_functions):
+            result.extend(x.to_lines())
+            result += [""]
+
+        for x in itertools.chain(self.attributes):
+            result.extend(x.to_lines())
 
         # import used packages
         used_modules = sorted(self.get_involved_modules_names())
@@ -858,15 +863,7 @@ class ModuleStubsGenerator(StubsGenerator):
         # add space between imports and rest of module
         result += [""]
 
-        globals_ = {}
-        exec("from {} import *".format(self.module.__name__), globals_)
-        all_ = set(globals_.keys()) - {"__builtins__"}
-        result.append("__all__ = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]\n\n")
 
-        for x in itertools.chain(self.classes,
-                                 self.free_functions,
-                                 self.attributes):
-            result.extend(x.to_lines())
         result.append("")  # Newline at EOF
         return result
 
