@@ -767,6 +767,7 @@ class ModuleStubsGenerator(StubsGenerator):
                         self.classes.append(ClassStubsGenerator(member))
                 else:
                     self.imported_classes[name] = member
+                    importlib.import_module(member.__module__)
                     self.classes.append(ClassStubsGenerator(member))
                     self.classes[-1].parse()
             elif name == "__doc__":
