@@ -872,12 +872,13 @@ class ModuleStubsGenerator(StubsGenerator):
         return self.module.__name__.split(".")[-1]
 
     def write(self):
+        import codecs
         if not os.path.exists(self.short_name + self.stub_suffix):
             logger.debug("mkdir `%s`" % (self.short_name + self.stub_suffix))
             os.mkdir(self.short_name + self.stub_suffix)
 
         with DirectoryWalkerGuard(self.short_name + self.stub_suffix):
-            with open("__init__.pyi", "w") as init_pyi:
+            with codecs.open("__init__.pyi", "w", "utf8") as init_pyi:
                 init_pyi.write("\n".join(self.to_lines()))
             for m in self.submodules:
                 m.write()
