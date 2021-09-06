@@ -761,6 +761,9 @@ class ModuleStubsGenerator(StubsGenerator):
                     logger.debug("Skip '%s' module while parsing '%s' " % (m.module.__name__, self.module.__name__))
             elif inspect.isbuiltin(member) or inspect.isfunction(member):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
+            elif type(member) is type:
+                logger.debug("Skip '%s' type while parsing '%s' " % (name, self.module.__name__))
+                pass
             elif inspect.isclass(member):
                 if member.__module__ == self.module.__name__:
                     if member.__name__ not in self.class_name_blacklist:
