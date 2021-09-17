@@ -9,6 +9,7 @@ import cpp_library_bindings._core
 import cpp_library_bindings._core.copy_types
 import cpp_library_bindings._core.eigen
 import cpp_library_bindings._core.invalid_signatures
+import cpp_library_bindings._core.issues
 import cpp_library_bindings._core.numeric
 import cpp_library_bindings._core.opaque_types
 import cpp_library_bindings._core.sublibA
@@ -25,6 +26,7 @@ __all__ = [
     "foolist",
     "foovar",
     "invalid_signatures",
+    "issues",
     "list_with_none",
     "none",
     "numeric",
