@@ -19,6 +19,40 @@ _visited_objects = []
 function_docstring_preprocessing_hooks: List[Callable[[str], str]] = []
 
 
+def _find_str_end(s, start):
+    for i in range(start, len(s)):
+        if i == "\\":  # skip escaped chars
+            continue
+        if i == s[start]:
+            return i
+    return -1
+
+
+def _is_balanced(s):
+    closing = {
+        "(": ")",
+        "{": "}",
+        "[": "]"
+    }
+
+    stack = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c in "\"'":
+            # TODO: handle triple-quoted strings too
+            i = _find_str_end(s, i)
+            if i < 0:
+                return False
+        if c in closing:
+            stack.append(closing[c])
+        elif stack and stack[-1] == c:
+            stack.pop()
+        i += 1
+
+    return len(stack) == 0
+
+
 class DirectoryWalkerGuard(object):
 
     def __init__(self, dirname):
@@ -236,10 +270,6 @@ class StubsGenerator(object):
     @staticmethod
     def function_signatures_from_docstring(name, func, module_name):  # type: (Any, str) -> List[FunctionSignature]
         try:
-            no_parentheses = r"[^()]*"
-            parentheses_one_fold = r"({nopar}(\({nopar}\))?)*".format(nopar=no_parentheses)
-            parentheses_two_fold = r"({nopar}(\({par1}\))?)*".format(par1=parentheses_one_fold, nopar=no_parentheses)
-            parentheses_three_fold = r"({nopar}(\({par2}\))?)*".format(par2=parentheses_two_fold, nopar=no_parentheses)
             signature_regex = r"(\s*(?P<overload_number>\d+).)" \
                               r"?\s*{name}\s*\((?P<args>{balanced_parentheses})\)" \
                               r"\s*->\s*" \
@@ -256,7 +286,8 @@ class StubsGenerator(object):
                 if m:
                     args = m.group("args")
                     rtype = m.group("rtype")
-                    signatures.append(FunctionSignature(name, args, rtype))
+                    if _is_balanced(args):
+                        signatures.append(FunctionSignature(name, args, rtype))
 
             # strip module name if provided
             if module_name:
