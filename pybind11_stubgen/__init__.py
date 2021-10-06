@@ -250,6 +250,14 @@ class StubsGenerator(object):
         return "\n".join(lines)
 
     @staticmethod
+    def is_valid_module(module_name):  # type: (str) -> bool
+        import importlib.util
+        try:
+            return importlib.import_module(module_name) is not None
+        except ModuleNotFoundError:
+            return False
+
+    @staticmethod
     def fully_qualified_name(klass):
         module_name = klass.__module__ if hasattr(klass, '__module__') else None
         class_name = getattr(klass, "__qualname__", klass.__name__)
@@ -268,7 +276,7 @@ class StubsGenerator(object):
         return s
 
     @staticmethod
-    def function_signatures_from_docstring(name, func, module_name):  # type: (Any, str) -> List[FunctionSignature]
+    def function_signatures_from_docstring(name, func, module_name):  # type: (str, Any, str) -> List[FunctionSignature]
         try:
             signature_regex = r"(\s*(?P<overload_number>\d+).)" \
                               r"?\s*{name}\s*\((?P<args>{balanced_parentheses})\)" \
@@ -491,8 +499,9 @@ class FreeFunctionStubsGenerator(StubsGenerator):
         for s in self.signatures:  # type: FunctionSignature
             for t in s.get_all_involved_types():  # type: str
                 try:
-                    i = t.rindex(".")
-                    involved_modules_names.add(t[:i])
+                    module_name = t[:t.rindex(".")]
+                    if self.is_valid_module(module_name):
+                        involved_modules_names.add(module_name)
                 except ValueError:
                     pass
         return involved_modules_names

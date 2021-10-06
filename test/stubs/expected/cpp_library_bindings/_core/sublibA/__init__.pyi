@@ -1,6 +1,5 @@
 import cpp_library_bindings._core.sublibA
 import typing
-import ConsoleForegroundColor
 
 __all__ = [
     "Blue",
