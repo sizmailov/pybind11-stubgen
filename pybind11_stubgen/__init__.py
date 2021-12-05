@@ -54,20 +54,19 @@ def _is_balanced(s):
 
 
 class DirectoryWalkerGuard(object):
-
     def __init__(self, dirname):
         self.dirname = dirname
+        self.origin = os.getcwd()
 
     def __enter__(self):
         if not os.path.exists(self.dirname):
-            os.mkdir(self.dirname)
+            os.makedirs(self.dirname)
 
         assert os.path.isdir(self.dirname)
-
         os.chdir(self.dirname)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(os.path.pardir)
+        os.chdir(self.origin)
 
 
 _default_pybind11_repr_re = re.compile(r'(<(?P<class>\w+(\.\w+)*) object at 0x[0-9a-fA-F]+>)|'
@@ -949,7 +948,7 @@ def main(args=None):
     output_path = sys_args.output_dir
 
     if not os.path.exists(output_path):
-        os.mkdir(output_path)
+        os.makedirs(output_path)
 
     with DirectoryWalkerGuard(output_path):
         for _module_name in sys_args.module_names:
