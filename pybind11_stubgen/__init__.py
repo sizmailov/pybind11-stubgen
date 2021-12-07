@@ -230,7 +230,7 @@ class StubsGenerator(object):
         re.compile(
             r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?(?P<extra>[^][]*)\]"): replace_numpy_array,
         re.compile(
-            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union')(?!\w)"): replace_typing_types
+            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union)(?!\w)"): replace_typing_types
     }
 
     def parse(self):
