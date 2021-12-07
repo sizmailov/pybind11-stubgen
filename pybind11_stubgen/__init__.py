@@ -1,5 +1,4 @@
 from typing import Optional, Callable, Iterator, Iterable, List, Set, Mapping, Tuple, Any, Dict
-from functools import cmp_to_key
 import ast
 import warnings
 import importlib
@@ -54,20 +53,19 @@ def _is_balanced(s):
 
 
 class DirectoryWalkerGuard(object):
-
     def __init__(self, dirname):
         self.dirname = dirname
+        self.origin = os.getcwd()
 
     def __enter__(self):
         if not os.path.exists(self.dirname):
-            os.mkdir(self.dirname)
+            os.makedirs(self.dirname)
 
         assert os.path.isdir(self.dirname)
-
         os.chdir(self.dirname)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(os.path.pardir)
+        os.chdir(self.origin)
 
 
 _default_pybind11_repr_re = re.compile(r'(<(?P<class>\w+(\.\w+)*) object at 0x[0-9a-fA-F]+>)|'
@@ -845,10 +843,6 @@ class ModuleStubsGenerator(StubsGenerator):
         return self.module.__name__.split(".")[-1]
 
     def write(self):
-        if not os.path.exists(self.short_name + self.stub_suffix):
-            logger.debug("mkdir `%s`" % (self.short_name + self.stub_suffix))
-            os.mkdir(self.short_name + self.stub_suffix)
-
         with DirectoryWalkerGuard(self.short_name + self.stub_suffix):
             with open("__init__.pyi", "w") as init_pyi:
                 init_pyi.write("\n".join(self.to_lines()))
@@ -881,16 +875,6 @@ setup(
     install_requires=['{package_name}'],
     package_data=find_stubs('{package_name}-stubs'),
 )""".format(package_name=self.short_name))
-
-
-def recursive_mkdir_walker(subdirs, callback):  # type: (List[str], Callable) -> None
-    if len(subdirs) == 0:
-        callback()
-    else:
-        if not os.path.exists(subdirs[0]):
-            os.mkdir(subdirs[0])
-        with DirectoryWalkerGuard(subdirs[0]):
-            recursive_mkdir_walker(subdirs[1:], callback)
 
 
 def main(args=None):
@@ -946,19 +930,17 @@ def main(args=None):
         handlers=handlers
     )
 
-    output_path = sys_args.output_dir
-
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-
-    with DirectoryWalkerGuard(output_path):
+    with DirectoryWalkerGuard(sys_args.output_dir):
         for _module_name in sys_args.module_names:
             _module = ModuleStubsGenerator(_module_name)
             _module.parse()
             if FunctionSignature.n_fatal_errors() == 0:
                 _module.stub_suffix = sys_args.root_module_suffix
                 _module.write_setup_py = not sys_args.no_setup_py
-                recursive_mkdir_walker(_module_name.split(".")[:-1], lambda: _module.write())
+                _dir = _module_name.split(".")[:-1] or ["."]
+                _dir = os.path.join(*_dir)
+                with DirectoryWalkerGuard(_dir):
+                    _module.write()
 
         if FunctionSignature.n_invalid_signatures > 0:
             logger.info("Useful link: Avoiding C++ types in docstrings:")
