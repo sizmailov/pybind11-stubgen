@@ -450,7 +450,7 @@ class AttributeStubsGenerator(StubsGenerator):
             return [
                        "{name}: {typename} # value = ".format(
                            name=self.name,
-                           typename=str(type(self.attr)))
+                           typename=self.fully_qualified_name(type(self.attr)))
                    ] \
                    + ['"""'] \
                    + [l.replace('"""', r'\"\"\"') for l in value_lines] \
