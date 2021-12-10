@@ -431,11 +431,12 @@ class AttributeStubsGenerator(StubsGenerator):
             ]
 
         value_lines = repr(self.attr).split("\n")
+        typename = self.fully_qualified_name(type(self.attr))
+
         if len(value_lines) == 1:
             value = value_lines[0]
             # remove random address from <foo.Foo object at 0x1234>
             value = re.sub(r" at 0x[0-9a-fA-F]+>", ">", value)
-            typename = self.fully_qualified_name(type(self.attr))
             if value == "<{typename} object>".format(typename=typename):
                 value_comment = ""
             else:
@@ -450,7 +451,7 @@ class AttributeStubsGenerator(StubsGenerator):
             return [
                        "{name}: {typename} # value = ".format(
                            name=self.name,
-                           typename=str(type(self.attr)))
+                           typename=typename)
                    ] \
                    + ['"""'] \
                    + [l.replace('"""', r'\"\"\"') for l in value_lines] \
