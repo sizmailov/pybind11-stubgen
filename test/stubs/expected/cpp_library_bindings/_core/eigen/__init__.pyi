@@ -1,3 +1,4 @@
+from __future__ import annotations
 import cpp_library_bindings._core.eigen
 import typing
 import numpy

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import cpp_library_bindings.core
 import typing
 from cpp_library_bindings._core import Base

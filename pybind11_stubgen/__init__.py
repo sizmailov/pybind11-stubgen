@@ -792,6 +792,11 @@ class ModuleStubsGenerator(StubsGenerator):
         if self.doc_string:
             result += ['"""' + self.doc_string.replace('"""', r'\"\"\"') + '"""']
 
+        if sys.version_info[:2] >= (3, 7):
+            result += [
+                "from __future__ import annotations"
+            ]
+
         result += [
             "import {}".format(self.module.__name__)
         ]
