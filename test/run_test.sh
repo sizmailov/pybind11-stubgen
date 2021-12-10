@@ -3,7 +3,7 @@
 set -e
 
 (cd pybind11-project-example; git submodule update --init --recursive)
-(cd pybind11-project-example; python -m pip install -U . )
+(cd pybind11-project-example; python3 -m pip install -U . )
 
 rm -rf "./stubs/generated"
 
@@ -13,4 +13,4 @@ rm -rf "./stubs/generated"
            --ignore-invalid=all \
            --no-setup-py || exit 0)
 
-python compare_walker.py
+python3 compare_walker.py

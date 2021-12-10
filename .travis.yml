@@ -1,7 +1,7 @@
 language: python
 sudo: false
 os: linux
-dist: trusty
+dist: focal
 branches:
   only:
     - master
@@ -10,26 +10,24 @@ git:
 matrix:
   include:
     - env:
-        - COMPILER=g++-7
+        - COMPILER=g++-9
         - BUILD_TYPE=Release
         - RUN_CTESTS=false
       addons:
         apt:
           packages:
-            - g++-7
-            - python3.6
-            - python3.6-dev
-          sources:
-            - deadsnakes
-            - ubuntu-toolchain-r-test
-      python: 3.6
+            - g++-9
+            - python3.8
+            - python3.8-dev
+      python: 3.8
 before_install:
   - export CXX=$COMPILER
   - "$COMPILER --version"
-  - python --version
-  - python -m pip install codecov
+  - python3 --version
+  - python3 -m pip install -U pip setuptools wheel
+  - python3 -m pip install codecov
 install:
-  - python setup.py install
+  - python3 setup.py install
 script:
   - (cd test ; bash run_test.sh)
 after_success:
