@@ -19,10 +19,11 @@ function_docstring_preprocessing_hooks: List[Callable[[str], str]] = []
 
 
 def _find_str_end(s, start):
-    for i in range(start, len(s)):
-        if i == "\\":  # skip escaped chars
+    for i in range(start + 1, len(s)):
+        c = s[i]
+        if c == "\\":  # skip escaped chars
             continue
-        if i == s[start]:
+        if c == s[start]:
             return i
     return -1
 
