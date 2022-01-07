@@ -70,7 +70,7 @@ class DirectoryWalkerGuard(object):
 
 
 _default_pybind11_repr_re = re.compile(r'(<(?P<class>\w+(\.\w+)*) object at 0x[0-9a-fA-F]+>)|'
-                                       r'(<(?P<enum>\w+(.\w+)*): \d+>)')
+                                       r'(<(?P<enum>\w+(.\w+)*): -?\d+>)')
 
 
 def replace_default_pybind11_repr(line):
