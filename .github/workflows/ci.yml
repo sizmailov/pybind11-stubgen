@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - use-github-actions
+      - master
+      - stable
+      - v*
+
+jobs:
+
+  tests:
+    name: "🐍 ${{ matrix.python }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+            - 3.8
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Setup Python ${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Update CMake
+      uses: jwlawson/actions-setup-cmake@v1.11
+
+    - name: Setup annotations on Linux
+      if: runner.os == 'Linux'
+      run: python -m pip install pytest-github-actions-annotate-failures
+
+    - name: Install pybind11-stubgens
+      run: python -m pip install .
+
+    - name: Install pybind11-project-example
+      run: python -m pip install tests/pybind11-project-example
+
+    - name: Generate stubs
+      run: |
+        pybind11-stubgen cpp_library_bindings \
+           --output-dir="./tests/stubs/generated" \
+           --root-module-suffix="" \
+           --ignore-invalid=all \
+           --no-setup-py
+
+    - name: Check stubs
+      run: cd tests ; python compare_walker.py
