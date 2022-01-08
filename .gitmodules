@@ -1,0 +1,6 @@
+[submodule "tests/pybind11-project-example/external/pybind11"]
+	path = tests/pybind11-project-example/external/pybind11
+	url = https://github.com/pybind/pybind11.git
+[submodule "tests/pybind11-project-example/external/eigen"]
+	path = tests/pybind11-project-example/external/eigen
+	url = https://gitlab.com/libeigen/eigen.git
