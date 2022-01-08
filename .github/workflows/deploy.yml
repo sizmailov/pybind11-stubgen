@@ -7,7 +7,6 @@ on:
 jobs:
 
   build_dist:
-    needs: [tests]
     name: Build distributions
     runs-on: ubuntu-latest
 
