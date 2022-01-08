@@ -6,6 +6,8 @@ from cpp_library_bindings._core import CppException
 from cpp_library_bindings._core import Derived
 from cpp_library_bindings._core import Foo
 from cpp_library_bindings._core import Outer
+import _core
+import core
 import cpp_library_bindings._core
 import cpp_library_bindings._core.copy_types
 import cpp_library_bindings._core.eigen

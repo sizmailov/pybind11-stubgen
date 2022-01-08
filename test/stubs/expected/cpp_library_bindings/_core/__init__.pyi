@@ -1,7 +1,14 @@
 from __future__ import annotations
 import cpp_library_bindings._core
 import typing
+import copy_types
+import eigen
+import invalid_signatures
+import issues
+import numeric
 import numpy.linalg
+import opaque_types
+import sublibA
 
 __all__ = [
     "Base",
