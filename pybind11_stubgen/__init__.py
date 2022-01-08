@@ -219,7 +219,9 @@ def replace_numpy_array(match_obj):
 
 def replace_typing_types(match):
     # pybind used to have iterator/iterable in place of Iterator/Iterable
-    return "typing." + match.group('type').capitalize()
+    name = match.group('type')
+    capitalized = name[0].capitalize() + name[1:]
+    return "typing." + capitalized
 
 
 class StubsGenerator(object):
@@ -229,7 +231,8 @@ class StubsGenerator(object):
         re.compile(
             r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?(?P<extra>[^][]*)\]"): replace_numpy_array,
         re.compile(
-            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List|Optional|Set|Tuple|Union)(?!\w)"): replace_typing_types
+            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List"
+            r"|Optional|Set|Tuple|Union|ItemsView|KeysView|ValuesView)(?!\w)"): replace_typing_types
     }
 
     def parse(self):
@@ -587,6 +590,7 @@ class ClassStubsGenerator(StubsGenerator):
                  ):
         self.klass = klass
         assert inspect.isclass(klass)
+        assert klass.__name__.isidentifier()
 
         self.doc_string = None  # type: Optional[str]
 
@@ -631,7 +635,7 @@ class ClassStubsGenerator(StubsGenerator):
             if inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif name != '__class__' and inspect.isclass(member):
-                if member.__name__ not in self.class_name_blacklist:
+                if member.__name__ not in self.class_name_blacklist and member.__name__.isidentifier():
                     self.classes.append(ClassStubsGenerator(member))
             elif isinstance(member, property):
                 self.properties.append(PropertyStubsGenerator(name, member, self.klass.__module__))
@@ -739,7 +743,7 @@ class ModuleStubsGenerator(StubsGenerator):
                 self.free_functions.append(FreeFunctionStubsGenerator(name, member, self.module.__name__))
             elif inspect.isclass(member):
                 if member.__module__ == self.module.__name__:
-                    if member.__name__ not in self.class_name_blacklist:
+                    if member.__name__ not in self.class_name_blacklist and member.__name__.isidentifier():
                         self.classes.append(ClassStubsGenerator(member))
                 else:
                     self.imported_classes[name] = member
@@ -835,7 +839,7 @@ class ModuleStubsGenerator(StubsGenerator):
 
         globals_ = {}
         exec("from {} import *".format(self.module.__name__), globals_)
-        all_ = set(globals_.keys()) - {"__builtins__"}
+        all_ = set(member for member in globals_.keys() if member.isidentifier()) - {"__builtins__"}
         result.append("__all__ = [\n    " + ",\n    ".join(map(lambda s: '"%s"' % s, sorted(all_))) + "\n]\n\n")
 
         for x in itertools.chain(self.classes,
