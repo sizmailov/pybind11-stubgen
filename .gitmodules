@@ -1,3 +1,3 @@
-[submodule "test/pybind11-project-example"]
-	path = test/pybind11-project-example
+[submodule "tests/pybind11-project-example"]
+	path = tests/pybind11-project-example
 	url = https://github.com/sizmailov/pybind11-project-example.git
