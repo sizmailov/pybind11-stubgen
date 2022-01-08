@@ -33,7 +33,7 @@ jobs:
             dist/*.whl  
 
   upload_pypi:
-    needs: [build_wheels, build_dist]
+    needs: [build_dist]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
