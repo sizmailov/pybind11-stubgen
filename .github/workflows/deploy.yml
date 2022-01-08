@@ -1,8 +1,7 @@
 name: Build and upload to PyPI
 
 on:
-  push:
-    branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
 
@@ -35,8 +34,6 @@ jobs:
   upload_pypi:
     needs: [build_dist]
     runs-on: ubuntu-latest
-    # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
 
     steps:
       - uses: actions/download-artifact@v2
