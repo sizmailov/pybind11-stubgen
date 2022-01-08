@@ -785,6 +785,7 @@ class ModuleStubsGenerator(StubsGenerator):
         for f in self.free_functions:  # type: FreeFunctionStubsGenerator
             result |= f.get_involved_modules_names()
 
+        result.update(m.short_name for m in self.submodules)
         return set(result) - {"builtins", 'typing', self.module.__name__}
 
     def to_lines(self):  # type: () -> List[str]
