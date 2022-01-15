@@ -43,10 +43,10 @@ jobs:
     - name: Generate stubs
       run: |
         pybind11-stubgen cpp_library_bindings \
-           --output-dir="./tests/stubs/generated" \
-           --root-module-suffix="" \
-           --ignore-invalid=all \
-           --no-setup-py
+           '--output-dir=./tests/stubs/generated' \
+           '--root-module-suffix=""' \
+           '--ignore-invalid=all' \
+           '--no-setup-py'
 
     - name: Check stubs
       run: cd tests ; python compare_walker.py
