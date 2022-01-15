@@ -855,13 +855,13 @@ class ModuleStubsGenerator(StubsGenerator):
 
     def write(self):
         with DirectoryWalkerGuard(self.short_name + self.stub_suffix):
-            with open("__init__.pyi", "w") as init_pyi:
+            with open("__init__.pyi", "w", encoding="utf-8") as init_pyi:
                 init_pyi.write("\n".join(self.to_lines()))
             for m in self.submodules:
                 m.write()
 
             if self.write_setup_py:
-                with open("setup.py", "w") as setuppy:
+                with open("setup.py", "w", encoding="utf-8") as setuppy:
                     setuppy.write("""from setuptools import setup
 import os
 
