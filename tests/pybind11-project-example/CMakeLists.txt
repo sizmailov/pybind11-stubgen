@@ -17,7 +17,7 @@ include_directories(SYSTEM external/pybind11/include)
 include_directories(SYSTEM external/eigen)
 
 file(GLOB_RECURSE SOURCES src/**.cpp)
-add_library(cpp_library SHARED ${SOURCES})
+add_library(cpp_library STATIC ${SOURCES})
 target_include_directories(cpp_library PUBLIC ./include)
 
 add_subdirectory(cpp_library_bindings)
