@@ -22,7 +22,7 @@ if __name__ == "__main__":
         e = expected_path / rel_sub_path
         g = generated_path / rel_sub_path
         print("Compare %s with %s" % (e, g))
-        with open(e) as ef, open(g) as gf:
+        with open(e, encoding='utf-8') as ef, open(g, encoding='utf-8') as gf:
             elines = ef.readlines()
             glines = gf.readlines()
             assert elines == glines, "Expected (%s) != Generated (%s): \n" % (e, g) + \
