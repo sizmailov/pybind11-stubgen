@@ -18,6 +18,7 @@ include_directories(SYSTEM external/eigen)
 
 file(GLOB_RECURSE SOURCES src/**.cpp)
 add_library(cpp_library STATIC ${SOURCES})
+set_property(TARGET cpp_library PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(cpp_library PUBLIC ./include)
 
 add_subdirectory(cpp_library_bindings)
