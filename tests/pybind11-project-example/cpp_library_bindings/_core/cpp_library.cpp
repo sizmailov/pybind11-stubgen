@@ -149,4 +149,13 @@ PYBIND11_MODULE(_core, m)
     Use-case:
         issue_51(os.get_handle_inheritable, os.set_handle_inheritable))docstring");
 
+  issues.def("issue_73_utf8_doc_chars", [] {}, py::doc(
+      "Construct a Ramsete unicycle controller.\n"
+      "\n"
+      "Tuning parameter (b > 0 rad²/m²) for which larger values make\n"
+      "\n"
+      "convergence more aggressive like a proportional term.\n"
+      "Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger\n"
+      "values provide more damping in response.")
+  );
 }
