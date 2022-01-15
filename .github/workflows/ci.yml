@@ -8,11 +8,12 @@ on:
 jobs:
 
   tests:
-    name: "🐍 ${{ matrix.python }}"
-    runs-on: ubuntu-latest
+    name: "🐍 ${{ matrix.python }} • ${{ matrix.runs-on }}"
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
+        runs-on: [ubuntu-latest, windows-2022]
         python:
             - 3.8
 
