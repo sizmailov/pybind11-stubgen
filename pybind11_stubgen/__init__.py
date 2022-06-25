@@ -598,6 +598,7 @@ class ClassStubsGenerator(StubsGenerator):
         self.fields = []  # type: List[AttributeStubsGenerator]
         self.properties = []  # type: List[PropertyStubsGenerator]
         self.methods = []  # type: List[ClassMemberStubsGenerator]
+        self.alias = []
 
         self.base_classes = []
         self.involved_modules_names = set()  # Set[str]
@@ -632,7 +633,9 @@ class ClassStubsGenerator(StubsGenerator):
                 continue
             if name.startswith('__pybind11_module'):
                 continue
-            if inspect.isroutine(member):
+            if (inspect.isroutine(member) or inspect.isclass(member)) and name != member.__name__:
+                self.alias.append(AliasStubsGenerator(name, member))
+            elif inspect.isroutine(member):
                 self.methods.append(ClassMemberStubsGenerator(name, member, self.klass.__module__))
             elif name != '__class__' and inspect.isclass(member):
                 if member.__name__ not in self.class_name_blacklist and member.__name__.isidentifier():
@@ -649,7 +652,8 @@ class ClassStubsGenerator(StubsGenerator):
         for x in itertools.chain(self.classes,
                                  self.methods,
                                  self.properties,
-                                 self.fields):
+                                 self.fields,
+                                 self.alias):
             x.parse()
 
         for B in bases:
@@ -698,6 +702,32 @@ class ClassStubsGenerator(StubsGenerator):
         return result
 
 
+class AliasStubsGenerator(StubsGenerator):
+
+    def __init__(self, alias_name, origin):
+        self.alias_name = alias_name
+        self.origin = origin
+
+    def parse(self):
+        pass
+
+    def to_lines(self): # type: () -> List[str]
+        return [
+            "{alias} = {origin}".format(
+                alias=self.alias_name,
+                origin=self.fully_qualified_name(self.origin)
+            )
+        ]
+
+    def get_involved_modules_names(self): # type: () -> Set[str]
+        if inspect.ismodule(self.origin):
+            return {self.origin.__name__}
+        elif inspect.isroutine(self.origin) or inspect.isclass(self.origin):
+            return {self.origin.__module__.__name__}
+        else:
+            return set()
+
+
 class ModuleStubsGenerator(StubsGenerator):
     CLASS_NAME_BLACKLIST = ClassStubsGenerator.CLASS_NAME_BLACKLIST
     ATTRIBUTES_BLACKLIST = ("__file__", "__loader__", "__name__", "__package__",
@@ -720,6 +750,7 @@ class ModuleStubsGenerator(StubsGenerator):
         self.imported_modules = []  # type: List[str]
         self.imported_classes = {}  # type: Dict[str, type]
         self.attributes = []  # type: List[AttributeStubsGenerator]
+        self.alias = []
         self.stub_suffix = ""
         self.write_setup_py = False
 
@@ -732,7 +763,9 @@ class ModuleStubsGenerator(StubsGenerator):
         _visited_objects.append(self.module)
         logger.debug("Parsing '%s' module" % self.module.__name__)
         for name, member in inspect.getmembers(self.module):
-            if inspect.ismodule(member):
+            if (inspect.isfunction(member) or inspect.isclass(member)) and name != member.__name__:
+                self.alias.append(AliasStubsGenerator(name, member))
+            elif inspect.ismodule(member):
                 m = ModuleStubsGenerator(member)
                 if m.module.__name__.split('.')[:-1] == self.module.__name__.split('.'):
                     self.submodules.append(m)
@@ -844,7 +877,8 @@ class ModuleStubsGenerator(StubsGenerator):
 
         for x in itertools.chain(self.classes,
                                  self.free_functions,
-                                 self.attributes):
+                                 self.attributes,
+                                 self.alias):
             result.extend(x.to_lines())
         result.append("")  # Newline at EOF
         return result
