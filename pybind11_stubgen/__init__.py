@@ -192,13 +192,16 @@ class PropertySignature(object):
     def setter_arg_type(self):
         return FunctionSignature.argument_type(FunctionSignature('name', self.setter_args).split_arguments()[1])
 
+    def get_all_involved_types(self):
+        return FunctionSignature('name', self.setter_args).get_all_involved_types()
+
 
 # If true numpy.ndarray[int32[3,3]] will be reduced to numpy.ndarray
-BARE_NUPMY_NDARRAY = False
+BARE_NUMPY_NDARRAY = False
 
 
 def replace_numpy_array(match_obj):
-    if BARE_NUPMY_NDARRAY:
+    if BARE_NUMPY_NDARRAY:
         return "numpy.ndarray"
     numpy_type = match_obj.group("type")
     # pybind always append size of data type
@@ -572,6 +575,17 @@ class PropertyStubsGenerator(StubsGenerator):
 
         return result
 
+    def get_involved_modules_names(self):  # type: () -> Set[str]
+        involved_modules_names = set()
+        for t in self.signature.get_all_involved_types():  # type: str
+            try:
+                module_name = t[:t.rindex(".")]
+                if self.is_valid_module(module_name):
+                    involved_modules_names.add(module_name)
+            except ValueError:
+                pass
+        return involved_modules_names
+
 
 class ClassStubsGenerator(StubsGenerator):
     ATTRIBUTES_BLACKLIST = ("__class__", "__module__", "__qualname__", "__dict__", "__weakref__", "__annotations__")
@@ -662,6 +676,10 @@ class ClassStubsGenerator(StubsGenerator):
 
         for attr in self.fields:
             self.involved_modules_names |= attr.get_involved_modules_names()
+
+        for p in self.properties:  # type: PropertyStubsGenerator
+            self.involved_modules_names |= p.get_involved_modules_names()
+
 
     def to_lines(self):  # type: () -> List[str]
 
@@ -829,7 +847,7 @@ class ModuleStubsGenerator(StubsGenerator):
             # result.extend(map(self.indent, map(lambda m: "import {}".format(m), used_modules)))
             result.extend(map(lambda mod: "import {}".format(mod), used_modules))
 
-        if "numpy" in used_modules and not BARE_NUPMY_NDARRAY:
+        if "numpy" in used_modules and not BARE_NUMPY_NDARRAY:
             result += [
                 "_Shape = typing.Tuple[int, ...]"
             ]
@@ -913,8 +931,8 @@ def main(args=None):
         warnings.warn("`--non-stop` is deprecated in favor of `--ignore-invalid=all`", FutureWarning)
 
     if sys_args.bare_numpy_ndarray:
-        global BARE_NUPMY_NDARRAY
-        BARE_NUPMY_NDARRAY = True
+        global BARE_NUMPY_NDARRAY
+        BARE_NUMPY_NDARRAY = True
 
     if 'all' in sys_args.ignore_invalid:
         FunctionSignature.ignore_invalid_signature = True
