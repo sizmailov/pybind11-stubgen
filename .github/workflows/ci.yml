@@ -7,6 +7,25 @@ on:
 
 jobs:
 
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10.6'
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Install requirements
+        run: pip install -r requirements-dev.txt
+      - name: Run black
+        run: black --diff . --extend-exclude=tests/pybind11-project-example/external/
+        if: ${{ failure() ||  success() }}
+      - name: Run isort
+        run: isort --extend-skip=tests/pybind11-project-example/external/ --check --profile=black --diff  .
+        if: ${{ failure() ||  success() }}
+
   tests:
     name: "🐍 ${{ matrix.python }} • ${{ matrix.runs-on }}"
     runs-on: ${{ matrix.runs-on }}
@@ -35,7 +54,9 @@ jobs:
       run: python -m pip install pytest-github-actions-annotate-failures
 
     - name: Install pybind11-stubgens
-      run: python -m pip install .
+      run: |
+        python -m pip install .
+        python -m pip install black isort
 
     - name: Install pybind11-project-example
       run: python -m pip install tests/pybind11-project-example
@@ -43,6 +64,8 @@ jobs:
     - name: Generate stubs
       run: |
         pybind11-stubgen cpp_library_bindings  '--output-dir=./tests/stubs/generated' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
+        black ./tests/stubs/generated
+        isort --profile=black ./tests/stubs/generated
 
     - name: Check stubs
       run: cd tests ; python compare_walker.py
