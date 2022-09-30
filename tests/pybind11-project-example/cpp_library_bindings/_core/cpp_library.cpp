@@ -158,4 +158,10 @@ PYBIND11_MODULE(_core, m)
       "Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger\n"
       "values provide more damping in response.")
   );
+
+  // https://github.com/sizmailov/pybind11-stubgen/issues/86
+  auto cleanup_callback = []() { /* ... */ };
+  m.attr("issues").attr("_cleanup") = py::capsule(cleanup_callback);
+
+
 }

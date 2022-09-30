@@ -434,6 +434,16 @@ class AttributeStubsGenerator(StubsGenerator):
                 )
             ]
 
+        # special case for PyCapsule
+        # https://github.com/sizmailov/pybind11-stubgen/issues/86
+        attr_type = type(self.attr)
+        if attr_type.__name__ == "PyCapsule" and attr_type.__module__ == "builtins":
+            return [
+                "{name}: typing.Any  # PyCapsule()".format(
+                    name=self.name
+                )
+            ]
+
         value_lines = repr(self.attr).split("\n")
         typename = self.fully_qualified_name(type(self.attr))
 
@@ -462,8 +472,12 @@ class AttributeStubsGenerator(StubsGenerator):
                    + ['"""']
 
     def get_involved_modules_names(self):  # type: () -> Set[str]
-        if type(self.attr) is type(os):
+        attr_type = type(self.attr)
+        if attr_type is type(os):
             return {self.attr.__name__}
+        if attr_type.__name__ == "PyCapsule" and attr_type.__module__ == "builtins":
+            # PyCapsule rendered as typing.Any
+            return {"typing"}
         return {self.attr.__class__.__module__}
 
 

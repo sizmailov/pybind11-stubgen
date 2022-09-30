@@ -23,3 +23,4 @@ def issue_73_utf8_doc_chars() -> None:
     Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger
     values provide more damping in response.
     """
+_cleanup: typing.Any  # PyCapsule()
