@@ -19,12 +19,11 @@ __all__ = [
     "none",
     "numeric",
     "opaque_types",
-    "sublibA"
+    "sublibA",
 ]
 
-
-class Base():
-    class Inner():
+class Base:
+    class Inner:
         pass
     @property
     def name(self) -> str:
@@ -35,8 +34,10 @@ class Base():
     def name(self, arg0: str) -> None:
         pass
     pass
+
 class CppException(Exception, BaseException):
     pass
+
 class Derived(Base):
     @property
     def count(self) -> int:
@@ -47,17 +48,19 @@ class Derived(Base):
     def count(self, arg0: int) -> None:
         pass
     pass
-class Foo():
-    class FooChild():
+
+class Foo:
+    class FooChild:
         def __init__(self) -> None: ...
         def g(self) -> None: ...
         pass
     def __init__(self) -> None: ...
     def f(self) -> None: ...
     pass
-class Outer():
-    class Inner():
-        class NestedEnum():
+
+class Outer:
+    class Inner:
+        class NestedEnum:
             """
             Members:
 
@@ -65,6 +68,7 @@ class Outer():
 
               TWO
             """
+
             def __eq__(self, other: object) -> bool: ...
             def __getstate__(self) -> int: ...
             def __hash__(self) -> int: ...
@@ -84,9 +88,9 @@ class Outer():
                 """
                 :type: int
                 """
-            ONE: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = <NestedEnum.ONE: 1>
-            TWO: cpp_library_bindings._core.Outer.Inner.NestedEnum # value = <NestedEnum.TWO: 2>
-            __members__: dict # value = {'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}
+            ONE: cpp_library_bindings._core.Outer.Inner.NestedEnum  # value = <NestedEnum.ONE: 1>
+            TWO: cpp_library_bindings._core.Outer.Inner.NestedEnum  # value = <NestedEnum.TWO: 2>
+            __members__: dict  # value = {'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}
             pass
         @property
         def value(self) -> Outer.Inner.NestedEnum:
@@ -107,7 +111,8 @@ class Outer():
         pass
     linalg = numpy.linalg
     pass
-foolist: list # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
+
+foolist: list  # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_bindings._core.Foo object>]
 foovar: cpp_library_bindings._core.Foo
 list_with_none = [None, 2, {}]
 none = None
