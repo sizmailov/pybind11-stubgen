@@ -1,6 +1,8 @@
 from __future__ import annotations
-import cpp_library_bindings._core.sublibA
+
 import typing
+
+import cpp_library_bindings._core.sublibA
 
 __all__ = [
     "Blue",

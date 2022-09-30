@@ -1,6 +1,8 @@
 from __future__ import annotations
-import cpp_library_bindings._core.numeric
+
 import typing
+
+import cpp_library_bindings._core.numeric
 import numpy
 
 _Shape = typing.Tuple[int, ...]

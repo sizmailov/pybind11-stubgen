@@ -1,5 +1,5 @@
-from pathlib import Path
 import difflib
+from pathlib import Path
 
 if __name__ == "__main__":
     expected_path = Path("stubs/expected")

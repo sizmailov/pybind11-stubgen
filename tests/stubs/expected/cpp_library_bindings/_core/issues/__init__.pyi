@@ -1,6 +1,8 @@
 from __future__ import annotations
-import cpp_library_bindings._core.issues
+
 import typing
+
+import cpp_library_bindings._core.issues
 
 __all__ = ["issue_51", "issue_73_utf8_doc_chars"]
 

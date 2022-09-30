@@ -1,21 +1,14 @@
-from typing import (
-    Optional,
-    Callable,
-    List,
-    Set,
-    Any,
-    Dict,
-)
 import ast
-import warnings
 import importlib
-import itertools
 import inspect
+import itertools
 import logging
-import sys
 import os
 import re
+import sys
+import warnings
 from argparse import ArgumentParser
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 

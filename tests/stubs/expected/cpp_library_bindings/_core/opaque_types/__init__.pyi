@@ -1,6 +1,8 @@
 from __future__ import annotations
-import cpp_library_bindings._core.opaque_types
+
 import typing
+
+import cpp_library_bindings._core.opaque_types
 
 __all__ = [
     "MapStringComplex",

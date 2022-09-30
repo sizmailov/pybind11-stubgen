@@ -1,6 +1,8 @@
 from __future__ import annotations
-import cpp_library_bindings._core.copy_types
+
 import typing
+
+import cpp_library_bindings._core.copy_types
 
 __all__ = ["get_complex_map", "get_vector_of_pairs"]
 
