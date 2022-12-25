@@ -585,8 +585,14 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
             )
         for sig in self.signatures:
             args = sig.args
-            if not args.strip().startswith("self"):
-                result.append("@staticmethod")
+            sargs = args.strip()
+            if not sargs.startswith("self"):
+                if sargs.startswith("cls"):
+                    result.append("@classmethod")
+                    # remove type of cls
+                    args = ",".join(["cls"] + sig.split_arguments()[1:])
+                else:
+                    result.append("@staticmethod")
             else:
                 # remove type of self
                 args = ",".join(["self"] + sig.split_arguments()[1:])
