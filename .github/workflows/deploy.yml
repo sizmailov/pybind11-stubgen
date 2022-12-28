@@ -2,6 +2,9 @@ name: Build and upload to PyPI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
 
@@ -44,4 +47,4 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
