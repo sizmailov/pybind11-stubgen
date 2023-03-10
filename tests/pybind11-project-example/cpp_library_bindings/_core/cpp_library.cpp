@@ -164,4 +164,20 @@ PYBIND11_MODULE(_core, m)
   m.attr("issues").attr("_cleanup") = py::capsule(cleanup_callback);
 
 
+  {
+    auto aliases_m = m.def_submodule("aliases");
+    struct Color
+    {
+        int value;
+    };
+
+    pybind11::class_<Color>(aliases_m, "Color")
+        .def_readwrite("value", &Color::value);
+
+    aliases_m.attr("Colour") = aliases_m.attr("Color");
+
+    // Alias in another module
+    m.attr("Colour") = aliases_m.attr("Color");
+  }
+
 }

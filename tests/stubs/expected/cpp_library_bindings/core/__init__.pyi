@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 
 import cpp_library_bindings._core
+import cpp_library_bindings._core.aliases
 import cpp_library_bindings._core.copy_types
 import cpp_library_bindings._core.eigen
 import cpp_library_bindings._core.invalid_signatures
@@ -15,10 +16,12 @@ from cpp_library_bindings._core import Base, CppException, Derived, Foo, Outer
 
 __all__ = [
     "Base",
+    "Colour",
     "CppException",
     "Derived",
     "Foo",
     "Outer",
+    "aliases",
     "copy_types",
     "eigen",
     "foolist",
@@ -36,3 +39,4 @@ foolist: list  # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_
 foovar: cpp_library_bindings._core.Foo
 list_with_none = [None, 2, {}]
 none = None
+Colour = cpp_library_bindings._core.aliases.Color

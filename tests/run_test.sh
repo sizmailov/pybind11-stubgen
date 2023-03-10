@@ -7,10 +7,13 @@ set -e
 
 rm -rf "./stubs/generated"
 
-(coverage run -m pybind11_stubgen cpp_library_bindings \
+(python ../pybind11_stubgen/__init__.py cpp_library_bindings \
            --output-dir="./stubs/generated" \
            --root-module-suffix="" \
            --ignore-invalid=all \
            --no-setup-py || exit 0)
+
+black ./stubs/generated
+isort --profile=black ./stubs/generated
 
 python3 compare_walker.py

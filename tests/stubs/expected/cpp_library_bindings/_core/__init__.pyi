@@ -7,10 +7,12 @@ import numpy.linalg
 
 __all__ = [
     "Base",
+    "Colour",
     "CppException",
     "Derived",
     "Foo",
     "Outer",
+    "aliases",
     "copy_types",
     "eigen",
     "foolist",
@@ -118,3 +120,4 @@ foolist: list  # value = [<cpp_library_bindings._core.Foo object>, <cpp_library_
 foovar: cpp_library_bindings._core.Foo
 list_with_none = [None, 2, {}]
 none = None
+Colour = cpp_library_bindings._core.aliases.Color
