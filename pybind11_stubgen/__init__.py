@@ -799,6 +799,22 @@ class ClassStubsGenerator(StubsGenerator):
 
         result.append(self.indent("pass"))
         return result
+    
+class ClassAliasedGenerator(ClassStubsGenerator):
+    def __init__(self, klass, aliasing_name):
+        self.klass = klass
+        self.origin_name = klass.__name__
+        self.aliasing_name = aliasing_name
+        
+    def parse(self):
+        pass
+
+    def to_lines(self):
+        return [f"{self.aliasing_name} = {self.origin_name}"]
+    
+    def get_involved_modules_names(self):
+        return set()
+
 
 
 class ModuleStubsGenerator(StubsGenerator):
@@ -843,6 +859,7 @@ class ModuleStubsGenerator(StubsGenerator):
         if self.module in _visited_objects:
             return
         _visited_objects.append(self.module)
+        unique_names = set()
         logger.debug("Parsing '%s' module" % self.module.__name__)
         for name, member in inspect.getmembers(self.module):
             if inspect.ismodule(member):
@@ -865,7 +882,11 @@ class ModuleStubsGenerator(StubsGenerator):
                         member.__name__ not in self.class_name_blacklist
                         and member.__name__.isidentifier()
                     ):
-                        self.classes.append(ClassStubsGenerator(member))
+                        if not member.__name__ in unique_names:
+                            unique_names.add(member.__name__)
+                            self.classes.append(ClassStubsGenerator(member))
+                        else:
+                            self.classes.append(ClassAliasedGenerator(member, name))
                 else:
                     self.imported_classes[name] = member
             elif name == "__doc__":
