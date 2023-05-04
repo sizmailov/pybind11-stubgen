@@ -41,7 +41,8 @@ PYBIND11_MODULE(_core, m)
     .def("g",&cpp_library::Foo::Child::g);
 
   auto sublibA = m.def_submodule("sublibA");
-  sublibA.def("add", cpp_library::sublibA::add);
+  sublibA.def("add", py::overload_cast<int, int>(&cpp_library::sublibA::add), "Add two integers");
+  sublibA.def("add", py::overload_cast<float, float>(&cpp_library::sublibA::add), py::arg("a"), py::arg("b"), "Add two floats");
 
   py::enum_<cpp_library::sublibA::ConsoleForegroundColor> (sublibA, "ConsoleForegroundColor")
     .value("Green", cpp_library::sublibA::ConsoleForegroundColor::Green)

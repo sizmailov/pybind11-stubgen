@@ -103,10 +103,11 @@ class FunctionSignature(object):
             0 if cls.ignore_invalid_defaultarg else cls.n_invalid_default_values
         ) + (0 if cls.ignore_invalid_signature else cls.n_invalid_signatures)
 
-    def __init__(self, name, args="*args, **kwargs", rtype="None", validate=True):
+    def __init__(self, name, args="*args, **kwargs", rtype="None", docstring="", validate=True):
         self.name = name
         self.args = args
         self.rtype = rtype
+        self.docstring = docstring
 
         if validate:
             invalid_defaults, self.args = replace_default_pybind11_repr(self.args)
@@ -328,13 +329,25 @@ class StubsGenerator(object):
                 docstring = hook(docstring)
 
             signatures = []
+            signature = None
+            signature_docstring = []
             for line in docstring.split("\n"):
                 m = re.match(signature_regex, line)
                 if m:
                     args = m.group("args")
                     rtype = m.group("rtype")
                     if _is_balanced(args):
-                        signatures.append(FunctionSignature(name, args, rtype))
+                        if signature:
+                            signature.docstring = "\n".join(signature_docstring)
+                            signatures.append(signature)
+                        signature_docstring = []
+                        signature = FunctionSignature(name, args, rtype)
+                        continue
+                if signature:
+                    signature_docstring.append(line)
+            if signature:
+                signature.docstring = "\n".join(signature_docstring)
+                signatures.append(signature)
 
             # strip module name if provided
             if module_name:
@@ -532,13 +545,6 @@ class FreeFunctionStubsGenerator(StubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.sanitize_docstring(self.member.__doc__)
-        if not docstring and not (
-            self.name.startswith("__") and self.name.endswith("__")
-        ):
-            logger.debug(
-                "Docstring is empty for '%s'" % self.fully_qualified_name(self.member)
-            )
         for sig in self.signatures:
             if len(self.signatures) > 1:
                 result.append("@typing.overload")
@@ -547,9 +553,15 @@ class FreeFunctionStubsGenerator(StubsGenerator):
                     name=sig.name, args=sig.args, rtype=sig.rtype
                 )
             )
+            docstring = self.sanitize_docstring(sig.docstring)
+            if not docstring and not (
+                self.name.startswith("__") and self.name.endswith("__")
+            ):
+                logger.debug(
+                    "Docstring is empty for '%s'" % self.fully_qualified_name(self.member)
+                )
             if docstring:
                 result.append(self.format_docstring(docstring))
-                docstring = None  # don't print docstring for other overloads
             else:
                 result.append(self.indent("pass"))
 
@@ -576,13 +588,6 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
 
     def to_lines(self):  # type: () -> List[str]
         result = []
-        docstring = self.sanitize_docstring(self.member.__doc__)
-        if not docstring and not (
-            self.name.startswith("__") and self.name.endswith("__")
-        ):
-            logger.debug(
-                "Docstring is empty for '%s'" % self.fully_qualified_name(self.member)
-            )
         for sig in self.signatures:
             args = sig.args
             sargs = args.strip()
@@ -599,6 +604,13 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
             if len(self.signatures) > 1:
                 result.append("@typing.overload")
 
+            docstring = self.sanitize_docstring(sig.docstring)
+            if not docstring and not (
+                self.name.startswith("__") and self.name.endswith("__")
+            ):
+                logger.debug(
+                    "Docstring is empty for '%s'" % self.fully_qualified_name(self.member)
+                )
             result.append(
                 "def {name}({args}) -> {rtype}: {ellipsis}".format(
                     name=sig.name,
@@ -609,7 +621,6 @@ class ClassMemberStubsGenerator(FreeFunctionStubsGenerator):
             )
             if docstring:
                 result.append(self.format_docstring(docstring))
-                docstring = None  # don't print docstring for other overloads
         return result
 
 
