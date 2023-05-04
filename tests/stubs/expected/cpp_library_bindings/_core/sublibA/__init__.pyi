@@ -98,14 +98,16 @@ def accept_defaulted_enum(
 ) -> None:
     pass
 
-def add(arg0: int, arg1: int) -> int:
-    """
-    Add two integers
-    """
-
+@typing.overload
 def add(a: float, b: float) -> float:
     """
     Add two floats
+    """
+
+@typing.overload
+def add(arg0: int, arg1: int) -> int:
+    """
+    Add two integers
     """
 
 Blue: cpp_library_bindings._core.sublibA.ConsoleBackgroundColor  # value = <ConsoleBackgroundColor.Blue: 44>
