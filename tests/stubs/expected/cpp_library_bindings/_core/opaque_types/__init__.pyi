@@ -58,7 +58,7 @@ class VectorPairStringDouble:
     @typing.overload
     def __getitem__(self, arg0: int) -> typing.Tuple[str, float]: ...
     @typing.overload
-    def __getitem__(self, s: slice) -> VectorPairStringDouble: ...
+    def __getitem__(self, s: slice) -> VectorPairStringDouble:
         """
         Retrieve list elements using a slice object
         """
