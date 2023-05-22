@@ -265,7 +265,7 @@ class StubsGenerator(object):
             r"numpy.ndarray\[(?P<type>[^\[\]]+)(\[(?P<shape>[^\[\]]+)\])?(?P<extra>[^][]*)\]"
         ): replace_numpy_array,
         re.compile(
-            r"(?<!\w)(?P<type>Callable|Dict|[Ii]terator|[Ii]terable|List"
+            r"(?<!\w)(?P<type>Annotated|Callable|Dict|[Ii]terator|[Ii]terable|List"
             r"|Optional|Set|Tuple|Union|ItemsView|KeysView|ValuesView)(?!\w)"
         ): replace_typing_types,
     }
