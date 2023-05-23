@@ -960,6 +960,12 @@ class ModuleStubsGenerator(StubsGenerator):
 
         # import everything from typing
         result += ["import typing"]
+        result += [
+            "if typing.TYPE_CHECKING:",
+            "    if FixedSize not in vars():",
+            "        def FixedSize(value):",
+            "            pass",
+        ]
 
         for name, class_ in self.imported_classes.items():
             class_name = getattr(class_, "__qualname__", class_.__name__)
