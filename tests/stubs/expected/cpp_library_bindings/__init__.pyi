@@ -3,6 +3,12 @@ from __future__ import annotations
 import typing
 
 import cpp_library_bindings
+
+if typing.TYPE_CHECKING:
+    if FixedSize not in vars():
+        def FixedSize(value):
+            pass
+
 import cpp_library_bindings._core
 import cpp_library_bindings._core.aliases
 import cpp_library_bindings._core.copy_types
