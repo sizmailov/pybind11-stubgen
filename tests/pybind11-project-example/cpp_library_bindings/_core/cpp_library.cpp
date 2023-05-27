@@ -180,4 +180,9 @@ PYBIND11_MODULE(_core, m)
     m.attr("Colour") = aliases_m.attr("Color");
   }
 
+  {
+    auto std_array = m.def_submodule("std_array");
+    std_array.def("transform", [](const std::array<int, 3>& a){ return a;});
+  }
+
 }
