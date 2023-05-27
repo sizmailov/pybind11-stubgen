@@ -13,7 +13,9 @@ rm -rf "./stubs/generated"
            --ignore-invalid=all \
            --no-setup-py || exit 0)
 
-black ./stubs/generated
-isort --profile=black ./stubs/generated
+# isort works slightly different when started from project root or ./tests/ directory
+# cd to project root to match CI setup
+(cd .. ; black ./tests/stubs/generated)
+(cd .. ; isort --profile=black ./tests/stubs/generated)
 
 python3 compare_walker.py
