@@ -44,3 +44,86 @@ Usage
                     [--bare-numpy-ndarray] \
                     [--log-level LOG_LEVEL] \
                     MODULE_NAME [MODULE_NAME ...]
+
+
+
+Customization
+=============
+
+If you need some docstring pre-processing, or you find the hard-coded ``pybind11-stubgen`` defaults to be off,
+you can make the adjustments using a tiny wrapper, see examples below.
+
+
+Customization examples
+----------------------
+
+Strip a license from docstring
+
+.. code-block:: python
+
+    import pybind11_stubgen
+    import re
+
+    license_pattern = re.compile(r"EXAMPLE CORP LICENCE")
+
+    def strip_license(docstring: str):
+        return license_pattern.sub("", docstring)
+
+
+    if __name__ == '__main__':
+
+        pybind11_stubgen.function_docstring_preprocessing_hooks.append(
+            strip_license
+        )
+
+        pybind11_stubgen.main()
+
+
+
+Replace ``List[int[3]]`` with ``Annotated[List[int], FixedSize(3)]``
+
+.. code-block:: python
+
+    import pybind11_stubgen
+    import re
+
+    std_array_pattern = re.compile(r"List\[(int|complex|float)[(\d+)]]")
+
+    def std_array_fix(match: re.Match):
+        return f"Annotated[List[{match.group(0)}], FixedSize({match.group(1)})]"
+
+
+    def strip_dimension_from_std_array(docstring: str):
+        return std_array_pattern.sub(std_array_fix, docstring)
+
+
+    if __name__ == '__main__':
+
+        pybind11_stubgen.function_docstring_preprocessing_hooks.append(
+            strip_dimension_from_std_array
+        )
+
+        pybind11_stubgen.main()
+
+
+Replace one type with another
+
+
+.. code-block:: python
+
+    import pybind11_stubgen
+    import re
+
+
+    def library_b_replacement(match: re.Match):
+        type_name = match.group(0)
+        return f"library_b.types.{type_name}"
+
+
+    if __name__ == '__main__':
+        pybind11_stubgen.StubsGenerator.GLOBAL_CLASSNAME_REPLACEMENTS[
+            re.compile(r"library_a\.types\.(\w+)")
+        ] = library_b_replacement
+
+        pybind11_stubgen.main()
+
