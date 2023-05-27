@@ -257,6 +257,11 @@ def replace_typing_types(match):
     return "typing." + capitalized
 
 
+def replace_typing_ext(match):
+    name = match.group("type")
+    return "pybind11_stubgen.typing_ext." + name
+
+
 class StubsGenerator(object):
     INDENT = " " * 4
 
@@ -268,6 +273,7 @@ class StubsGenerator(object):
             r"(?<!\w)(?P<type>Annotated|Callable|Dict|[Ii]terator|[Ii]terable|List"
             r"|Optional|Set|Tuple|Union|ItemsView|KeysView|ValuesView)(?!\w)"
         ): replace_typing_types,
+        re.compile(r"(?<!\w)(?P<type>FixedSize)(?!\w)"): replace_typing_ext,
     }
 
     def parse(self):
@@ -320,7 +326,7 @@ class StubsGenerator(object):
                 r"(\s*(?P<overload_number>\d+).)"
                 r"?\s*{name}\s*\((?P<args>{balanced_parentheses})\)"
                 r"\s*->\s*"
-                r"(?P<rtype>[^\(\)]+)\s*".format(name=name, balanced_parentheses=".*")
+                r"(?P<rtype>.+)\s*".format(name=name, balanced_parentheses=".*")
             )
             docstring = func.__doc__
 
@@ -369,7 +375,7 @@ class StubsGenerator(object):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
-                        r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
+                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
                         line,
                     )
                     if m:
@@ -383,7 +389,7 @@ class StubsGenerator(object):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
-                        r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
+                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
                         line,
                     )
                     if m:
@@ -406,7 +412,7 @@ class StubsGenerator(object):
 
         signature_regex = (
             r"(\s*(?P<overload_number>\d+).\s*)"
-            r"?{name}\s*\((?P<args>.*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(
+            r"?{name}\s*\((?P<args>.*)\)\s*(->\s*(?P<rtype>.+)\s*)?".format(
                 name=r"\w+"
             )
         )

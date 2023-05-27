@@ -11,6 +11,7 @@ import cpp_library_bindings._core.invalid_signatures
 import cpp_library_bindings._core.issues
 import cpp_library_bindings._core.numeric
 import cpp_library_bindings._core.opaque_types
+import cpp_library_bindings._core.std_array
 import cpp_library_bindings._core.sublibA
 from cpp_library_bindings._core import Base, CppException, Derived, Foo, Outer
 
@@ -33,6 +34,7 @@ __all__ = [
     "none",
     "numeric",
     "opaque_types",
+    "std_array",
     "sublibA",
     "version",
 ]

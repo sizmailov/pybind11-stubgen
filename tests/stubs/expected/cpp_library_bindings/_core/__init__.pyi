@@ -23,6 +23,7 @@ __all__ = [
     "none",
     "numeric",
     "opaque_types",
+    "std_array",
     "sublibA",
 ]
 
