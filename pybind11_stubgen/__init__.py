@@ -320,7 +320,7 @@ class StubsGenerator(object):
                 r"(\s*(?P<overload_number>\d+).)"
                 r"?\s*{name}\s*\((?P<args>{balanced_parentheses})\)"
                 r"\s*->\s*"
-                r"(?P<rtype>[^\(\)]+)\s*".format(name=name, balanced_parentheses=".*")
+                r"(?P<rtype>.+)\s*".format(name=name, balanced_parentheses=".*")
             )
             docstring = func.__doc__
 
@@ -369,7 +369,7 @@ class StubsGenerator(object):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
-                        r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
+                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
                         line,
                     )
                     if m:
@@ -383,7 +383,7 @@ class StubsGenerator(object):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
-                        r"\s*(\w*)\((?P<args>[^()]*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
+                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
                         line,
                     )
                     if m:
@@ -406,7 +406,7 @@ class StubsGenerator(object):
 
         signature_regex = (
             r"(\s*(?P<overload_number>\d+).\s*)"
-            r"?{name}\s*\((?P<args>.*)\)\s*(->\s*(?P<rtype>[^\(\)]+)\s*)?".format(
+            r"?{name}\s*\((?P<args>.*)\)\s*(->\s*(?P<rtype>.+)\s*)?".format(
                 name=r"\w+"
             )
         )
