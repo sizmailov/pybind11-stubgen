@@ -375,7 +375,7 @@ class StubsGenerator(object):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
-                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>[^()]+)\s*",
+                        r"\s*(\w*)\((?P<args>.*)\)\s*->\s*(?P<rtype>.+)\s*",
                         line,
                     )
                     if m:
