@@ -183,6 +183,13 @@ PYBIND11_MODULE(_core, m)
   {
     auto std_array = m.def_submodule("std_array");
     std_array.def("transform", [](const std::array<int, 3>& a){ return a;});
+
+    struct Transform
+    {
+        std::array<int, 3> value;
+    };
+    pybind11::class_<Transform>(std_array, "Transform")
+        .def_readwrite("transform", &Transform::value);
   }
 
 }
