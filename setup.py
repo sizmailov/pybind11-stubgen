@@ -13,4 +13,5 @@ setup(
         "console_scripts": "pybind11-stubgen = pybind11_stubgen.__init__:main"
     },
     packages=["pybind11_stubgen"],
+    package_data={"pybind11_stubgen":["py.typed"]},
 )
