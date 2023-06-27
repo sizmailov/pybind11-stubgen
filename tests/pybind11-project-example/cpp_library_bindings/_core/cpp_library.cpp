@@ -192,4 +192,9 @@ PYBIND11_MODULE(_core, m)
         .def_readwrite("transform", &Transform::value);
   }
 
+  {
+    auto protocols = m.def_submodule("protocols");
+    protocols.def("sequence", [](py::sequence& seq){ return seq; });
+  }
+
 }
