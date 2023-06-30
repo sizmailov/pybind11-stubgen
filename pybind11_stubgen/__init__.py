@@ -372,7 +372,10 @@ class StubsGenerator(object):
         if hasattr(prop, "fget") and prop.fget is not None:
             access_type |= PropertySignature.READ_ONLY
             if hasattr(prop.fget, "__doc__") and prop.fget.__doc__ is not None:
-                for line in prop.fget.__doc__.split("\n"):
+                docstring = prop.fget.__doc__
+                for hook in function_docstring_preprocessing_hooks:
+                    docstring = hook(docstring)
+                for line in docstring.split("\n"):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
@@ -386,7 +389,10 @@ class StubsGenerator(object):
         if hasattr(prop, "fset") and prop.fset is not None:
             access_type |= PropertySignature.WRITE_ONLY
             if hasattr(prop.fset, "__doc__") and prop.fset.__doc__ is not None:
-                for line in prop.fset.__doc__.split("\n"):
+                docstring = prop.fset.__doc__
+                for hook in function_docstring_preprocessing_hooks:
+                    docstring = hook(docstring)
+                for line in docstring.split("\n"):
                     if strip_module_name:
                         line = line.replace(module_name + ".", "")
                     m = re.match(
