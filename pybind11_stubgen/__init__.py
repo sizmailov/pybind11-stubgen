@@ -479,6 +479,10 @@ class AttributeStubsGenerator(StubsGenerator):
         return False
 
     def to_lines(self):  # type: () -> List[str]
+        # special case for __hash__ to mark the surrounding class as unhashable
+        if self.name == "__hash__" and self.attr is None:
+            return ["{name} = None # type: None".format(name=self.name)]
+
         if self.is_safe_to_use_repr(self.attr):
             return ["{name} = {repr}".format(name=self.name, repr=repr(self.attr))]
 
