@@ -118,7 +118,7 @@ class VectorPairStringDouble:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
-    __hash__ = None
+    __hash__ = None  # type: None
     pass
 
 def get_complex_map() -> MapStringComplex:
