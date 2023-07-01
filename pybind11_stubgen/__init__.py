@@ -1134,6 +1134,12 @@ def main(args=None):
         help="Render `numpy.ndarray` without (non-standardized) bracket-enclosed type and shape info",
     )
     parser.add_argument(
+        "--use-numpy-nptyping",
+        action="store_true",
+        default=False,
+        help="Use the nptyping library for numpy type hints",
+    )
+    parser.add_argument(
         "module_names", nargs="+", metavar="MODULE_NAME", type=str, help="modules names"
     )
     parser.add_argument("--log-level", default="INFO", help="Set output log level")
@@ -1151,6 +1157,10 @@ def main(args=None):
         global BARE_NUPMY_NDARRAY
         BARE_NUPMY_NDARRAY = True
 
+    if sys_args.use_numpy_nptyping:
+        global USE_NUMPY_NPTYPING
+        USE_NUMPY_NPTYPING = True
+    
     if "all" in sys_args.ignore_invalid:
         FunctionSignature.ignore_invalid_signature = True
         FunctionSignature.ignore_invalid_defaultarg = True
