@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v4.3.0"
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: no-commit-to-branch
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: python
+        minimum_pre_commit_version: 2.9.2
+        require_serial: true
+        types_or: [ python, pyi ]
+      - id: isort
+        name: isort
+        entry: isort
+        args:
+          - --profile=black
+        language: system
+        types: [ python ]
+        stages: [ commit ]
+      - id: flake8
+        name: flake8
+        exclude: ^(tests|examples)/
+        language: system
+        entry: flake8
+        args:
+          # The line length in black
+          - --max-line-length=88
+          - --extend-ignore=E203
+        types: [ python ]
+        stages: [ commit ]

@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="pybind11-stubgen",
@@ -6,12 +6,13 @@ setup(
     maintainer_email="sergei.a.izmailov@gmail.com",
     description="PEP 561 type stubs generator for pybind11 modules",
     url="https://github.com/sizmailov/pybind11-stubgen",
-    version="0.16.2",
-    long_description=open("README.rst").read(),
+    version="1.0-dev.1",
+    long_description=open("README.md").read(),
     license="BSD",
     entry_points={
         "console_scripts": "pybind11-stubgen = pybind11_stubgen.__init__:main"
     },
-    packages=["pybind11_stubgen"],
-    package_data={"pybind11_stubgen":["py.typed"]},
+    packages=find_packages(),
+    package_data={"pybind11_stubgen": ["py.typed"]},
+    python_requires="~=3.10",  # TODO: support 3.8, 3.9
 )

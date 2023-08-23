@@ -1,0 +1,750 @@
+from __future__ import annotations
+
+import ast
+import inspect
+import re
+import types
+from typing import Any
+
+from pybind11_stubgen.parser.errors import (
+    InvalidExpressionError,
+    InvalidIdentifierError,
+    NameResolutionError,
+)
+from pybind11_stubgen.parser.interface import IParser
+from pybind11_stubgen.structs import (
+    Alias,
+    Argument,
+    Attribute,
+    Class,
+    Decorator,
+    Docstring,
+    Field,
+    Function,
+    Identifier,
+    Import,
+    InvalidExpression,
+    Method,
+    Modifier,
+    Module,
+    Property,
+    QualifiedName,
+    ResolvedType,
+    Value,
+)
+
+_generic_args = [
+    Argument(name=Identifier("args"), variadic=True),
+    Argument(name=Identifier("kwargs"), kw_variadic=True),
+]
+
+
+class ParserDispatchMixin(IParser):
+    def handle_class(self, path: QualifiedName, class_: type) -> Class | None:
+        base_classes = inspect.getmro(class_)[1:]
+        result = Class(name=path[-1], bases=self.handle_bases(path, base_classes))
+        for name, member in inspect.getmembers(class_):
+            obj = self.handle_class_member(
+                QualifiedName([*path, Identifier(name)]), class_, member
+            )
+            match obj:
+                case Docstring():
+                    result.doc = obj
+                case Alias():
+                    result.aliases.append(obj)
+                case Field():
+                    result.fields.append(obj)
+                case Class():
+                    result.classes.append(obj)
+                case [Method(), *_]:
+                    result.methods.extend(obj)
+                case Property():
+                    result.properties.append(obj)
+                case None | []:
+                    pass
+                case _:
+                    raise RuntimeError()
+        return result
+
+    def handle_class_member(
+        self, path: QualifiedName, class_: type, member: Any
+    ) -> Docstring | Alias | Class | list[Method] | Field | Property | None:
+        if inspect.isroutine(member):
+            return self.handle_method(path, member)
+        if self._is_alias(path, member):
+            return self.handle_alias(path, member)
+        if inspect.isclass(member):
+            return self.handle_class(path, member)
+        if self._is_descriptor(member):
+            return self.handle_property(path, member)
+        if path[-1] == "__doc__":
+            return self.handle_docstring(path, member)
+        return self.handle_field(path, member)
+
+    def handle_module(
+        self, path: QualifiedName, module: types.ModuleType
+    ) -> Module | None:
+        result = Module(name=path[-1])
+        for name, member in inspect.getmembers(module):
+            obj = self.handle_module_member(
+                QualifiedName([*path, Identifier(name)]), module, member
+            )
+            match obj:
+                case Docstring():
+                    result.doc = obj
+                case Import():
+                    result.imports.add(obj)
+                case Alias():
+                    result.aliases.append(obj)
+                case Class():
+                    result.classes.append(obj)
+                case [Function(), *_]:
+                    result.functions.extend(obj)
+                case Module():
+                    result.sub_modules.append(obj)
+                case Attribute():
+                    result.attributes.append(obj)
+                case None | []:
+                    pass
+                case _:
+                    raise RuntimeError()
+        return result
+
+    def handle_module_member(
+        self, path: QualifiedName, module: types.ModuleType, member: Any
+    ) -> (
+        Docstring | Import | Alias | Class | list[Function] | Attribute | Module | None
+    ):
+        member_module = self._get_value_parent_module_name(member)
+        if (
+            member_module is not None
+            and member_module != module.__name__
+            or path[-1] == "annotations"
+        ):
+            return self.handle_import(path, member)
+        if self._is_alias(path, member):
+            return self.handle_alias(path, member)
+        if inspect.isroutine(member):
+            return self.handle_function(path, member)
+        if inspect.isclass(member):
+            return self.handle_class(path, member)
+        if inspect.ismodule(member):
+            return self.handle_module(path, member)
+        if path[-1] == "__doc__":
+            return self.handle_docstring(path, member)
+        return self.handle_attribute(path, member)
+
+    def _get_value_parent_module_name(self, obj: Any) -> str | None:
+        if inspect.ismodule(obj):
+            return obj.__name__.rsplit(".", 1)[0]
+        if inspect.isclass(obj) or inspect.isroutine(obj):
+            return getattr(obj, "__module__", None)
+        return None
+
+    def _is_alias(self, path: QualifiedName, member: Any):
+        if (inspect.isroutine(member) or inspect.isclass(member)) and path[
+            -1
+        ] != member.__name__:
+            return True
+        if inspect.ismodule(member) and member.__name__ != str(path):
+            return True
+        return False
+
+    def _is_descriptor(self, member: Any) -> bool:
+        # https://docs.python.org/3/glossary.html#term-descriptor
+        # Ignore `__delete__`-only descriptors
+        return hasattr(member, "__get__") or hasattr(member, "__set__")
+
+
+class BaseParser(IParser):
+    def is_print_safe(self, value: Value) -> bool:
+        value_type = type(value)
+        # Use exact type match, not `isinstance()` that allows inherited types pass
+        if value is None or value_type in (int, str):
+            return True
+        if value_type in (float, complex):
+            try:
+                # checks for NaN, +inf, -inf
+                eval(repr(value))
+                return True
+            except (SyntaxError, NameError):
+                return False
+        if value_type in (list, tuple, set):
+            assert isinstance(value, (list, tuple, set))
+            for x in value:
+                if not self.is_print_safe(x):
+                    return False
+            return True
+        if value_type is dict:
+            assert isinstance(value, dict)
+            for k, v in value.items():
+                if not self.is_print_safe(k) or not self.is_print_safe(v):
+                    return False
+            return True
+        if inspect.ismodule(value):
+            return True
+        return False
+
+    def handle_alias(self, path: QualifiedName, origin: Any) -> Alias | None:
+        full_name = self._get_full_name(path, origin)
+        if full_name is None:
+            return None
+
+        return Alias(
+            name=path[-1],
+            origin=full_name,
+        )
+
+    def handle_attribute(self, path: QualifiedName, value: Any) -> Attribute | None:
+        return Attribute(
+            name=path[-1],
+            value=self.handle_value(value),
+            annotation=ResolvedType(name=self.handle_type(type(value))),
+        )
+
+    def handle_bases(
+        self, path: QualifiedName, bases: tuple[type, ...]
+    ) -> list[QualifiedName]:
+        return [self.handle_type(type_) for type_ in bases]
+
+    def handle_docstring(self, path: QualifiedName, value: Any) -> Docstring | None:
+        if isinstance(value, str):
+            return Docstring(value)
+        return None
+
+    def handle_field(self, path: QualifiedName, value: Any) -> Field | None:
+        attr = self.handle_attribute(path, value)
+        if attr is None:
+            return None
+        result = Field(
+            attribute=Attribute(
+                name=attr.name,
+                value=attr.value,
+            ),
+            modifier="static",
+        )
+        if attr.annotation is not None:
+            class_var = self.parse_annotation_str("typing.ClassVar")
+            assert isinstance(class_var, ResolvedType)
+            result.attribute.annotation = ResolvedType(
+                name=class_var.name,
+                parameters=[attr.annotation],
+            )
+        return result
+
+    def handle_function(self, path: QualifiedName, func: Any) -> list[Function]:
+        doc: Docstring | None = (
+            Docstring(func.__doc__)
+            if getattr(func, "__doc__", None) is not None
+            else None
+        )
+        func_name = Identifier(path[-1])
+
+        try:
+            (
+                args,
+                var_args,
+                var_kw,
+                defaults,
+                kw_only_args,
+                kw_only_defaults,
+                annotations,
+            ) = inspect.getfullargspec(func)
+
+            func_args: dict[str, Argument] = {
+                arg_name: Argument(name=Identifier(arg_name)) for arg_name in args
+            }
+            func_args["return"] = Argument(
+                name=Identifier(),
+            )
+            if var_args is not None:
+                func_args[var_args] = Argument(name=Identifier(var_args), variadic=True)
+            for arg_name in kw_only_args:
+                func_args[arg_name] = Argument(name=Identifier(arg_name), kw_only=True)
+            if var_kw is not None:
+                func_args[var_kw] = Argument(name=Identifier(var_kw), kw_variadic=True)
+            if defaults is not None:
+                for i, default in enumerate(defaults):
+                    arg_name = args[len(args) - len(defaults) + i]
+                    func_args[arg_name].default = self.handle_value(default)
+            if kw_only_defaults is not None:
+                for arg_name, default in kw_only_defaults.items():
+                    func_args[arg_name].default = self.handle_value(default)
+            for arg_name, annotation in annotations.items():
+                if isinstance(annotation, str):
+                    func_args[arg_name].annotation = self.parse_annotation_str(
+                        annotation
+                    )
+                elif not isinstance(annotation, type):
+                    func_args[arg_name].annotation = self.handle_value(annotation)
+                elif isinstance(annotation, types.GenericAlias):
+                    func_args[arg_name].annotation = self.parse_annotation_str(
+                        str(annotation)
+                    )
+                else:
+                    func_args[arg_name].annotation = ResolvedType(
+                        name=self.handle_type(annotation),
+                    )
+            if "return" in func_args:
+                returns = func_args["return"].annotation
+            else:
+                returns = None
+            return [
+                Function(
+                    name=func_name,
+                    args=[
+                        arg
+                        for arg_name, arg in func_args.items()
+                        if arg_name != "return"
+                    ],
+                    returns=returns,
+                    doc=doc,
+                )
+            ]
+
+        except TypeError:
+            # generic signature `f(*args, *kwargs)`
+            return [
+                Function(
+                    name=func_name,
+                    args=_generic_args,
+                    doc=doc,
+                )
+            ]
+
+    def handle_import(self, path: QualifiedName, origin: Any) -> Import | None:
+        full_name = self._get_full_name(path, origin)
+        if full_name is None:
+            return None
+
+        return Import(
+            path[-1],
+            full_name,
+        )
+
+    def handle_method(self, path: QualifiedName, method: Any) -> list[Method]:
+        return [
+            Method(function=func, modifier=self._get_method_modifier(func.args))
+            for func in self.handle_function(path, method)
+        ]
+
+    def handle_value(self, value: Any) -> Value:
+        result = self.parse_value_str(self.value_to_repr(value))
+        if self.is_print_safe(value):
+            result.is_print_safe = True
+        return result
+
+    def handle_type(self, type_: type) -> QualifiedName:
+        return QualifiedName(
+            (
+                Identifier(part)
+                for part in (
+                    *type_.__module__.split("."),
+                    *type_.__qualname__.split("."),
+                )
+            )
+        )
+
+    def parse_value_str(self, value: str) -> Value:
+        return Value(value)
+
+    def value_to_repr(self, value: Any) -> str:
+        if inspect.ismodule(value):
+            return value.__name__
+        if inspect.isroutine(value):
+            parts = []
+            module = getattr(value, "__module__", None)
+            if module is not None:
+                parts.append(module)
+            name = getattr(value, "__qualname__", None)
+            if name is not None:
+                parts.append(name)
+            return ".".join(parts)
+        if value is ...:
+            return "..."
+        return repr(value)
+
+    def _get_method_modifier(self, args: list[Argument]) -> Modifier:
+        if len(args) == 0:
+            return "static"
+        match args[0].name:
+            case Identifier("self"):
+                return None
+            case Identifier("cls"):
+                return "class"
+            case _:
+                return "static"
+
+    def _get_full_name(self, path: QualifiedName, origin: Any) -> QualifiedName | None:
+        if inspect.ismodule(origin):
+            origin_full_name = origin.__name__
+        else:
+            module_name = getattr(origin, "__module__", None)
+            if module_name == "__future__":
+                return None
+            if module_name is None:
+                self.report_error(NameResolutionError(path))
+                return None
+            qual_name = getattr(origin, "__qualname__", None)
+            if qual_name is None:
+                self.report_error(NameResolutionError(path))
+                return None
+            # Note: `PyCapsule.` prefix in __qualname__ is an artefact of pybind11
+            qual_name = qual_name.removeprefix("PyCapsule.")
+            origin_full_name = f"{module_name}.{qual_name}"
+
+        origin_name = QualifiedName.from_str(origin_full_name)
+
+        for part in origin_name:
+            if not part.isidentifier():
+                self.report_error(InvalidIdentifierError(part, path))
+                return None
+        return origin_name
+
+
+class ExtractSignaturesFromPybind11Docstrings(IParser):
+    _arg_star_name_regex = re.compile(
+        r"^\s*(?P<stars>\*{1,2})?" r"\s*(?P<name>\w+)\s*$"
+    )
+
+    def handle_function(self, path: QualifiedName, func: Any) -> list[Function]:
+        result = super().handle_function(path, func)
+        if len(result) == 1 and result[0].args == _generic_args:
+            doc: str | None = func.__doc__
+            func_name = Identifier(path[-1])
+
+            if doc is not None:
+                parsed_funcs = self.parse_function_docstring(
+                    func_name, doc.splitlines()
+                )
+
+                if len(parsed_funcs) > 0:
+                    return parsed_funcs
+        return result
+
+    def handle_property(self, path: QualifiedName, prop: Any) -> Property | None:
+        result = Property(name=path[-1], modifier=None)
+
+        def get_fake_path(func):
+            # Note: pybind *usually* does not include function name
+            #       in getter/setter signatures, e.g.:
+            #           (arg0: demo._bindings.enum.ConsoleForegroundColor) -> int
+            #
+            #       Let's pretend the function name is empty if its
+            #       docstring starts with `(`
+            doc = getattr(func, "__doc__", None)
+            if doc is not None and doc.startswith("("):
+                return QualifiedName((*path, Identifier("")))
+            return path
+
+        if hasattr(prop, "fget") and prop.fget is not None:
+            getters = self.handle_function(get_fake_path(prop.fget), prop.fget)
+            if len(getters) == 1:
+                result.getter = getters[0]
+            if len(getters) > 1:
+                raise RuntimeError("Getter overloads")
+        if hasattr(prop, "fset") and prop.fset is not None:
+            setters = self.handle_function(get_fake_path(prop.fset), prop.fset)
+            if len(setters) == 1:
+                result.setter = setters[0]
+            if len(setters) > 1:
+                raise RuntimeError("Setter overloads")
+        if result.getter is None and result.setter is None:
+            return None
+        return result
+
+    def parse_args_str(self, args_str: str) -> list[Argument]:
+        split_args = self._split_args_str(args_str)
+        if split_args is None:
+            return _generic_args
+
+        result: list[Argument] = []
+        kw_only = False
+        for arg_str, annotation_str, default_str in split_args:
+            if arg_str.strip() == "/":
+                for arg in result:
+                    arg.pos_only = True
+                continue
+            if arg_str.strip() == "*":
+                kw_only = True
+                continue
+            match = self._arg_star_name_regex.match(arg_str)
+            if match is None:
+                return _generic_args
+            name = Identifier(match.group("name"))
+
+            variadic = False
+            kw_variadic = False
+            match match.group("stars"):
+                case "*":
+                    variadic = True
+                case "**":
+                    kw_variadic = True
+
+            if annotation_str is not None:
+                annotation = self.parse_annotation_str(annotation_str)
+            else:
+                annotation = None
+
+            if default_str is not None:
+                default = self.parse_value_str(default_str)
+            else:
+                default = None
+
+            result.append(
+                Argument(
+                    name=name,
+                    default=default,
+                    annotation=annotation,
+                    variadic=variadic,
+                    kw_variadic=kw_variadic,
+                    kw_only=kw_only,
+                )
+            )
+        return result
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        variants = self._split_type_union_str(annotation_str)
+        if variants is None or len(variants) == 0:
+            self.report_error(InvalidExpressionError(annotation_str))
+            return InvalidExpression(annotation_str)
+        if len(variants) == 1:
+            return self.parse_type_str(variants[0])
+        union_t = self.parse_annotation_str("typing.Union")
+        assert isinstance(union_t, ResolvedType)
+        return ResolvedType(
+            name=union_t.name,
+            parameters=[self.parse_type_str(variant) for variant in variants],
+        )
+
+    def parse_type_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        qname_regex = re.compile(
+            r"^\s*(?P<qual_name>[_A-Za-z]\w+(\s*\.\s*[_A-Za-z]\w+)*)"
+        )
+        annotation_str = annotation_str.strip()
+        match = qname_regex.match(annotation_str)
+        if match is None:
+            return self._parse_expression_str(annotation_str)
+        qual_name = QualifiedName(
+            Identifier(part)
+            for part in match.group("qual_name").replace(" ", "").split(".")
+        )
+        parameters_str = annotation_str[match.end("qual_name") :].strip()
+
+        if len(parameters_str) == 0:
+            parameters = None
+        else:
+            if parameters_str[0] != "[" or parameters_str[-1] != "]":
+                return self._parse_expression_str(annotation_str)
+
+            split_parameters = self._split_parameters_str(parameters_str[1:-1])
+            if split_parameters is None:
+                return self._parse_expression_str(annotation_str)
+
+            parameters = [
+                self.parse_annotation_str(param_str) for param_str in split_parameters
+            ]
+        return ResolvedType(name=qual_name, parameters=parameters)
+
+    def _parse_expression_str(self, expr_str: str) -> Value | InvalidExpression:
+        try:
+            ast.parse(expr_str)
+            return self.parse_value_str(expr_str)
+        except SyntaxError:
+            self.report_error(InvalidExpressionError(expr_str))
+            return InvalidExpression(expr_str)
+
+    def parse_function_docstring(
+        self, func_name: Identifier, doc_lines: list[str]
+    ) -> list[Function]:
+        if len(doc_lines) == 0:
+            return []
+
+        top_signature_regex = re.compile(
+            rf"^{func_name}\((?P<args>.*)\)\s*(->\s*(?P<returns>.+))?$"
+        )
+
+        match = top_signature_regex.match(doc_lines[0])
+        if match is None:
+            return []
+
+        if len(doc_lines) < 2 or doc_lines[1] != "Overloaded function.":
+            if returns_str := match.group("returns"):
+                returns = self.parse_annotation_str(returns_str)
+            else:
+                returns = None
+
+            return [
+                Function(
+                    name=func_name,
+                    args=self.parse_args_str(match.group("args")),
+                    doc=self._strip_empty_lines(doc_lines[1:]),
+                    returns=returns,
+                )
+            ]
+
+        overload_signature_regex = re.compile(
+            rf"^(\s*(?P<overload_number>\d+).\s*)"
+            rf"{func_name}\((?P<args>.*)\)\s*->\s*(?P<returns>.+)$"
+        )
+
+        doc_start = 0
+        _dummy = Function(Identifier(""))
+        overloads = [_dummy]
+
+        for i in range(2, len(doc_lines)):
+            match = overload_signature_regex.match(doc_lines[i])
+            if match:
+                if match.group("overload_number") != f"{len(overloads)}":
+                    continue
+                overloads[-1].doc = self._strip_empty_lines(doc_lines[doc_start:i])
+                doc_start = i + 1
+                overloads.append(
+                    Function(
+                        name=func_name,
+                        args=self.parse_args_str(match.group("args")),
+                        returns=self.parse_annotation_str(match.group("returns")),
+                        doc=None,
+                        decorators=[
+                            # use `parse_annotation_str()` to trigger typing import
+                            Decorator(str(self.parse_annotation_str("typing.overload")))
+                        ],
+                    )
+                )
+
+        overloads[-1].doc = self._strip_empty_lines(doc_lines[doc_start:])
+
+        return overloads[1:]
+
+    def _split_args_str(
+        self, args_str: str
+    ) -> list[tuple[str, str | None, str | None]] | None:
+        result = []
+
+        closing = {"(": ")", "{": "}", "[": "]"}
+        stack = []
+        i = 0
+        arg_begin = 0
+        semicolon_pos: int | None = None
+        eq_sign_pos: int | None = None
+
+        def add_arg():
+            nonlocal semicolon_pos
+            nonlocal eq_sign_pos
+            annotation = None
+            default = None
+
+            arg_end = i
+
+            if eq_sign_pos is not None:
+                arg_end = eq_sign_pos
+                default = args_str[eq_sign_pos + 1 : i]
+
+            if semicolon_pos is not None:
+                annotation = args_str[semicolon_pos + 1 : arg_end]
+                arg_end = semicolon_pos
+
+            name = args_str[arg_begin:arg_end]
+            result.append((name, annotation, default))
+            semicolon_pos = None
+            eq_sign_pos = None
+
+        while i < len(args_str):
+            c = args_str[i]
+            if c in "\"'":
+                # TODO: handle triple-quoted strings too
+                str_end = self._find_str_end(args_str, i)
+                if str_end is None:
+                    return None
+                i = str_end
+            elif c in closing:
+                stack.append(closing[c])
+            elif len(stack) == 0:
+                if c == ",":
+                    add_arg()
+                    arg_begin = i + 1
+                elif c == ":" and semicolon_pos is None:
+                    semicolon_pos = i
+                elif c == "=" and args_str[i : i + 2] != "==":
+                    eq_sign_pos = i
+            elif stack[-1] == c:
+                stack.pop()
+
+            i += 1
+
+        if len(stack) != 0:
+            return None
+
+        if len(args_str[arg_begin:i].strip()) != 0:
+            add_arg()
+
+        return result
+
+    def _split_type_union_str(self, type_str: str) -> list[str] | None:
+        return self._split_str(type_str, delim="|")
+
+    def _split_parameters_str(self, param_str: str) -> list[str] | None:
+        return self._split_str(param_str, delim=",")
+
+    def _split_str(self, param_str: str, delim: str):
+        result = []
+        closing = {"(": ")", "{": "}", "[": "]"}
+        stack = []
+        i = 0
+        arg_begin = 0
+
+        def add_arg():
+            arg_end = i
+            param = param_str[arg_begin:arg_end]
+            result.append(param)
+
+        while i < len(param_str):
+            c = param_str[i]
+            if c in "\"'":
+                # TODO: handle triple-quoted strings too
+                str_end = self._find_str_end(param_str, i)
+                if str_end is None:
+                    return None
+                i = str_end
+            elif c in closing:
+                stack.append(closing[c])
+            elif len(stack) == 0:
+                if c == delim:
+                    add_arg()
+                    arg_begin = i + 1
+            elif stack[-1] == c:
+                stack.pop()
+
+            i += 1
+        if len(stack) != 0:
+            return None
+        if param_str[arg_begin:i].strip() != 0:
+            add_arg()
+        return result
+
+    def _find_str_end(self, s, start) -> int | None:
+        for i in range(start + 1, len(s)):
+            c = s[i]
+            if c == "\\":  # skip escaped chars
+                continue
+            if c == s[start]:
+                return i
+        return None
+
+    def _strip_empty_lines(self, doc_lines: list[str]) -> Docstring | None:
+        start = 0
+        for start in range(0, len(doc_lines)):
+            if len(doc_lines[start].strip()) > 0:
+                break
+        end = len(doc_lines) - 1
+        for end in range(len(doc_lines) - 1, 0, -1):
+            if len(doc_lines[end].strip()) > 0:
+                break
+        result = "\n".join(doc_lines[start : end + 1])
+        if len(result) == 0:
+            return None
+        return Docstring(result)
