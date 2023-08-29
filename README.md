@@ -33,8 +33,3 @@ pybind11-stubgen [-h]
                  [--exit-code]
                  MODULE_NAME
 ```
-
-Customization
--------------
-
-The configuration built into the CLI tool should suffice most of the use cases.
