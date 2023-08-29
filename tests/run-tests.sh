@@ -70,7 +70,8 @@ run_stubgen() {
       demo \
       --output-dir="${TESTS_ROOT}/stubs" \
       --numpy-array-wrap-with-annotated-fixed-size \
-      --ignore-all-errors
+      --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)" \
+      --exit-code
 }
 
 format_stubs() {
