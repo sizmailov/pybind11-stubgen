@@ -37,7 +37,7 @@ class ConsoleForegroundColor:
         ConsoleForegroundColor
     ]  # value = <ConsoleForegroundColor.Yellow: 33>
     __members__: typing.ClassVar[
-        dict
+        typing.Dict[str, ConsoleForegroundColor]
     ]  # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>}
     @staticmethod
     def __str__(*args, **kwargs):

@@ -528,3 +528,52 @@ class FixMissingFixedSizeImport(IParser):
             except ValueError:
                 pass
         return result
+
+
+class FixMissingEnumMembersAnnotation(IParser):
+    __class_var_dict = ResolvedType(
+        name=QualifiedName.from_str("typing.ClassVar"),
+        parameters=[ResolvedType(name=QualifiedName.from_str("dict"))],
+    )
+
+    def handle_field(self, path: QualifiedName, field: Any) -> Field | None:
+        result = super().handle_field(path, field)
+        if result is None:
+            return None
+        if (
+            path[-1] == "__members__"
+            and isinstance(field, dict)
+            and result.attribute.annotation == self.__class_var_dict
+        ):
+            dict_type = self._guess_dict_type(field)
+            if dict_type is not None:
+                result.attribute.annotation.parameters = [dict_type]
+        return result
+
+    def _guess_dict_type(self, d: dict) -> ResolvedType | None:
+        if len(d) == 0:
+            return None
+        key_types = set()
+        value_types = set()
+        for key, value in d.items():
+            key_types.add(self.handle_type(type(key)))
+            value_types.add(self.handle_type(type(value)))
+        if len(key_types) == 1:
+            key_type = [ResolvedType(name=t) for t in key_types][0]
+        else:
+            union_t = self.parse_annotation_str("typing.Union")
+            key_type = ResolvedType(
+                name=union_t.name, parameters=[ResolvedType(name=t) for t in key_types]
+            )
+        if len(value_types) == 1:
+            value_type = [ResolvedType(name=t) for t in value_types][0]
+        else:
+            union_t = self.parse_annotation_str("typing.Union")
+            value_type = ResolvedType(
+                name=union_t.name,
+                parameters=[ResolvedType(name=t) for t in value_types],
+            )
+        return ResolvedType(
+            name=self.parse_annotation_str("typing.Dict").name,
+            parameters=[key_type, value_type],
+        )
