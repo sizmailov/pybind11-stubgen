@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field as field_
-from typing import Literal
+from typing import Literal, Union
 
 Modifier = Literal["static", "class", None]
 
@@ -72,7 +72,7 @@ class Alias:
     origin: QualifiedName
 
 
-Annotation = ResolvedType | Value | InvalidExpression
+Annotation = Union[ResolvedType, Value, InvalidExpression]
 
 
 @dataclass

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import sys
 import types
@@ -19,7 +21,7 @@ class LogErrors(IParser):
     def __init__(self):
         super().__init__()
         self._seen_errors: set[str] = set()
-        self._module: str = None
+        self._module: str | None = None
 
     def handle_module(
         self, path: QualifiedName, module: types.ModuleType
@@ -43,24 +45,25 @@ class LogErrors(IParser):
 
 class IgnoreFixedErrors(IParser):
     def report_error(self, error: ParserError):
-        match error:
-            case NameResolutionError(name=name):
-                if name[0] in ["pybind11_builtins", "PyCapsule", "module", "handle"]:
-                    return
-            case InvalidExpressionError(expression=expression):
-                if expression.startswith("FixedSize"):
-                    # https://github.com/pybind/pybind11/pull/4679
-                    return
-            case InvalidIdentifierError(name=name):
-                if (
-                    name.startswith("ItemsView[")
-                    and name.endswith("]")
-                    or name.startswith("KeysView[")
-                    and name.endswith("]")
-                    or name.startswith("ValuesView[")
-                    and name.endswith("]")
-                ):
-                    return
+        if isinstance(error, NameResolutionError):
+            if error.name[0] in ["pybind11_builtins", "PyCapsule", "module", "handle"]:
+                return
+        elif isinstance(error, InvalidExpressionError):
+            if error.expression.startswith("FixedSize"):
+                # https://github.com/pybind/pybind11/pull/4679
+                return
+        elif isinstance(error, InvalidIdentifierError):
+            name = error.name
+            if (
+                name.startswith("ItemsView[")
+                and name.endswith("]")
+                or name.startswith("KeysView[")
+                and name.endswith("]")
+                or name.startswith("ValuesView[")
+                and name.endswith("]")
+            ):
+                return
+
         super().report_error(error)
 
 
@@ -74,10 +77,9 @@ class IgnoreUnresolvedNameErrors(IParser):
 
     def report_error(self, error: ParserError):
         if self.__regex is not None:
-            match error:
-                case NameResolutionError(name=name):
-                    if self.__regex.match(str(name)):
-                        return
+            if isinstance(error, NameResolutionError):
+                if self.__regex.match(str(error.name)):
+                    return
         super().report_error(error)
 
 
@@ -91,10 +93,9 @@ class IgnoreInvalidExpressionErrors(IParser):
 
     def report_error(self, error: ParserError):
         if self.__regex is not None:
-            match error:
-                case InvalidExpressionError(expression=expression):
-                    if self.__regex.match(expression):
-                        return
+            if isinstance(error, InvalidExpressionError):
+                if self.__regex.match(error.expression):
+                    return
         super().report_error(error)
 
 
@@ -108,10 +109,9 @@ class IgnoreInvalidIdentifierErrors(IParser):
 
     def report_error(self, error: ParserError):
         if self.__regex is not None:
-            match error:
-                case InvalidIdentifierError(name=name):
-                    if self.__regex.match(str(name)):
-                        return
+            if isinstance(error, InvalidIdentifierError):
+                if self.__regex.match(str(error.name)):
+                    return
         super().report_error(error)
 
 
@@ -126,10 +126,10 @@ class SuggestCxxSignatureFix(IParser):
         self.suggest_cxx_fix = False
 
     def report_error(self, error: ParserError):
-        match error:
-            case InvalidExpressionError(expression=expression):
-                if "::" in expression or expression.endswith(">"):
-                    self.suggest_cxx_fix = True
+        if isinstance(error, InvalidExpressionError):
+            expression = error.expression
+            if "::" in expression or expression.endswith(">"):
+                self.suggest_cxx_fix = True
 
         super().report_error(error)
 

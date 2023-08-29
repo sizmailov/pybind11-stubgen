@@ -182,15 +182,14 @@ class Printer:
 
     def print_method(self, method: Method) -> list[str]:
         result = []
-        match method.modifier:
-            case "static":
-                result += ["@staticmethod"]
-            case "class":
-                result += ["@classmethod"]
-            case None:
-                pass
-            case _:
-                raise RuntimeError()
+        if method.modifier == "static":
+            result += ["@staticmethod"]
+        elif method.modifier == "class":
+            result += ["@classmethod"]
+        elif method.modifier is None:
+            pass
+        else:
+            raise RuntimeError()
         result.extend(self.print_function(method.function))
         return result
 
@@ -255,13 +254,10 @@ class Printer:
 
     def print_value(self, value: Value) -> str:
         split = value.repr.split("\n", 1)
-        match split:
-            case [result]:
-                return result
-            case [first_line, _]:
-                return first_line + "..."
-            case _:
-                raise AssertionError()
+        if len(split) == 1:
+            return split[0]
+        else:
+            return split[0] + "..."
 
     def print_type(self, type_: ResolvedType) -> str:
         if (
@@ -283,15 +279,14 @@ class Printer:
         return f"{type_.name}{param_str}"
 
     def print_annotation(self, annotation: Annotation) -> str:
-        match annotation:
-            case ResolvedType():
-                return self.print_type(annotation)
-            case Value():
-                return self.print_value(annotation)
-            case InvalidExpression():
-                return self.print_invalid_exp(annotation)
-            case _:
-                raise RuntimeError()
+        if isinstance(annotation, ResolvedType):
+            return self.print_type(annotation)
+        elif isinstance(annotation, Value):
+            return self.print_value(annotation)
+        elif isinstance(annotation, InvalidExpression):
+            return self.print_invalid_exp(annotation)
+        else:
+            raise AssertionError()
 
     def print_invalid_exp(self, invalid_expr: InvalidExpression) -> str:
         if self.invalid_expr_as_ellipses:

@@ -47,23 +47,22 @@ class ParserDispatchMixin(IParser):
             obj = self.handle_class_member(
                 QualifiedName([*path, Identifier(name)]), class_, member
             )
-            match obj:
-                case Docstring():
-                    result.doc = obj
-                case Alias():
-                    result.aliases.append(obj)
-                case Field():
-                    result.fields.append(obj)
-                case Class():
-                    result.classes.append(obj)
-                case [Method(), *_]:
-                    result.methods.extend(obj)
-                case Property():
-                    result.properties.append(obj)
-                case None | []:
-                    pass
-                case _:
-                    raise RuntimeError()
+            if isinstance(obj, Docstring):
+                result.doc = obj
+            elif isinstance(obj, Alias):
+                result.aliases.append(obj)
+            elif isinstance(obj, Field):
+                result.fields.append(obj)
+            elif isinstance(obj, Class):
+                result.classes.append(obj)
+            elif isinstance(obj, list):  # list[Method]
+                result.methods.extend(obj)
+            elif isinstance(obj, Property):
+                result.properties.append(obj)
+            elif obj is None:
+                pass
+            else:
+                raise AssertionError()
         return result
 
     def handle_class_member(
@@ -89,25 +88,25 @@ class ParserDispatchMixin(IParser):
             obj = self.handle_module_member(
                 QualifiedName([*path, Identifier(name)]), module, member
             )
-            match obj:
-                case Docstring():
-                    result.doc = obj
-                case Import():
-                    result.imports.add(obj)
-                case Alias():
-                    result.aliases.append(obj)
-                case Class():
-                    result.classes.append(obj)
-                case [Function(), *_]:
-                    result.functions.extend(obj)
-                case Module():
-                    result.sub_modules.append(obj)
-                case Attribute():
-                    result.attributes.append(obj)
-                case None | []:
-                    pass
-                case _:
-                    raise RuntimeError()
+            if isinstance(obj, Docstring):
+                result.doc = obj
+            elif isinstance(obj, Import):
+                result.imports.add(obj)
+            elif isinstance(obj, Alias):
+                result.aliases.append(obj)
+            elif isinstance(obj, Class):
+                result.classes.append(obj)
+            elif isinstance(obj, list):  # list[Function]
+                result.functions.extend(obj)
+            elif isinstance(obj, Module):
+                result.sub_modules.append(obj)
+            elif isinstance(obj, Attribute):
+                result.attributes.append(obj)
+            elif obj is None:
+                pass
+            else:
+                raise AssertionError()
+
         return result
 
     def handle_module_member(
@@ -367,13 +366,13 @@ class BaseParser(IParser):
     def _get_method_modifier(self, args: list[Argument]) -> Modifier:
         if len(args) == 0:
             return "static"
-        match args[0].name:
-            case Identifier("self"):
-                return None
-            case Identifier("cls"):
-                return "class"
-            case _:
-                return "static"
+        name = args[0].name
+        if name == Identifier("self"):
+            return None
+        elif name == Identifier("cls"):
+            return "class"
+        else:
+            return "static"
 
     def _get_full_name(self, path: QualifiedName, origin: Any) -> QualifiedName | None:
         if inspect.ismodule(origin):
@@ -475,11 +474,11 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
 
             variadic = False
             kw_variadic = False
-            match match.group("stars"):
-                case "*":
-                    variadic = True
-                case "**":
-                    kw_variadic = True
+
+            if (stars := match.group("stars")) == "*":
+                variadic = True
+            elif stars == "**":
+                kw_variadic = True
 
             if annotation_str is not None:
                 annotation = self.parse_annotation_str(annotation_str)
