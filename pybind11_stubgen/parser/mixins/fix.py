@@ -265,10 +265,10 @@ class FixMissingNoneHashFieldAnnotation(IParser):
 
 
 class FixTypingTypeNames(IParser):
-    typing_names: set[Identifier] = set(
+    __typing_names: set[Identifier] = set(
         map(
             Identifier,
-            (
+            [
                 "Annotated",
                 "Callable",
                 "Dict",
@@ -287,7 +287,7 @@ class FixTypingTypeNames(IParser):
                 "iterator",
                 "iterable",
                 "sequence",
-            ),
+            ],
         )
     )
 
@@ -300,9 +300,33 @@ class FixTypingTypeNames(IParser):
         assert len(result.name) > 0
 
         word = result.name[0]
-        if word in self.typing_names:
+        if word in self.__typing_names:
             result.name = QualifiedName.from_str(f"typing.{word[0].upper()}{word[1:]}")
 
+        return result
+
+
+class FixTypingExtTypeNames(IParser):
+    __typing_names: set[Identifier] = set(
+        map(
+            Identifier,
+            ["buffer"],
+        )
+    )
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if not isinstance(result, ResolvedType):
+            return result
+        assert len(result.name) > 0
+
+        word = result.name[0]
+        if word in self.__typing_names and result.parameters is None:
+            result.name = QualifiedName.from_str(
+                f"typing_extensions.{word[0].upper()}{word[1:]}"
+            )
         return result
 
 
@@ -372,8 +396,8 @@ class FixValueReprRandomAddress(IParser):
 
 
 class FixNumpyArrayDimAnnotation(IParser):
-    ndarray_name = QualifiedName.from_str("numpy.ndarray")
-    annotated_name = QualifiedName.from_str("typing.Annotated")
+    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
+    __annotated_name = QualifiedName.from_str("typing.Annotated")
     numpy_primitive_types: set[QualifiedName] = set(
         map(
             lambda name: QualifiedName.from_str(f"numpy.{name}"),
@@ -402,7 +426,7 @@ class FixNumpyArrayDimAnnotation(IParser):
         result = super().parse_annotation_str(annotation_str)
         if (
             not isinstance(result, ResolvedType)
-            or result.name != self.ndarray_name
+            or result.name != self.__ndarray_name
             or result.parameters is None
             or len(result.parameters) != 1
             or not isinstance(param := result.parameters[0], ResolvedType)
@@ -417,9 +441,9 @@ class FixNumpyArrayDimAnnotation(IParser):
 
         # override result with Annotated[...]
         result = ResolvedType(
-            name=self.annotated_name,
+            name=self.__annotated_name,
             parameters=[
-                ResolvedType(self.ndarray_name),
+                ResolvedType(self.__ndarray_name),
                 ResolvedType(param.name),
             ],
         )
@@ -435,13 +459,13 @@ class FixNumpyArrayDimAnnotation(IParser):
 
 
 class FixNumpyArrayRemoveParameters(IParser):
-    ndarray_name = QualifiedName.from_str("numpy.ndarray")
+    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
 
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
         result = super().parse_annotation_str(annotation_str)
-        if isinstance(result, ResolvedType) and result.name == self.ndarray_name:
+        if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
             result.parameters = None
         return result
 

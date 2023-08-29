@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import typing
 
-__all__ = ["sequence"]
+import typing_extensions
 
-def sequence(arg0: typing.Sequence) -> typing.Sequence: ...
+__all__ = ["get_buffer", "get_sequence"]
+
+def get_buffer(arg0: typing_extensions.Buffer) -> typing_extensions.Buffer: ...
+def get_sequence(arg0: typing.Sequence) -> typing.Sequence: ...

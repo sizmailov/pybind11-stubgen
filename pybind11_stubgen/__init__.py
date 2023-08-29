@@ -32,6 +32,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixNumpyArrayRemoveParameters,
     FixRedundantBuiltinsAnnotation,
     FixRedundantMethodsFromBuiltinObject,
+    FixTypingExtTypeNames,
     FixTypingTypeNames,
     FixValueReprRandomAddress,
     RemoveSelfAnnotation,
@@ -175,6 +176,7 @@ def stub_parser_from_args(args) -> IParser:
         FixMissingNoneHashFieldAnnotation,
         FixMissingImports,
         FixTypingTypeNames,
+        FixTypingExtTypeNames,
         FixMissingFixedSizeImport,
         *numpy_fixes,  # type: ignore[misc]
         FixCurrentModulePrefixInTypeNames,
