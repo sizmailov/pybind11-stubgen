@@ -32,7 +32,7 @@ jobs:
         with:
           path: |
             dist/*.tar.gz
-            dist/*.whl  
+            dist/*.whl
 
   upload_pypi:
     needs: [build_dist]
