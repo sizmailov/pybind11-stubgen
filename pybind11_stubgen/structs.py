@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field as field_
-from typing import Literal, Union
+from typing import Literal, Tuple, Union
 
 Modifier = Literal["static", "class", None]
 
@@ -27,7 +27,7 @@ class InvalidExpression:
         return f"Invalid python expression `{self.text}`"
 
 
-class QualifiedName(tuple[Identifier, ...]):
+class QualifiedName(Tuple[Identifier, ...]):
     """Fully Qualified Name"""
 
     @classmethod
