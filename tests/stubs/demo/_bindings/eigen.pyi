@@ -22,13 +22,9 @@ def accept_vector_float64(
         numpy.ndarray, numpy.float64, pybind11_stubgen.typing_ext.FixedSize(3, 1)
     ]
 ) -> None: ...
-def get_matrix_int() -> (
-    typing.Annotated[
-        numpy.ndarray, numpy.int32, pybind11_stubgen.typing_ext.FixedSize(3, 3)
-    ]
-): ...
-def get_vector_float64() -> (
-    typing.Annotated[
-        numpy.ndarray, numpy.float64, pybind11_stubgen.typing_ext.FixedSize(3, 1)
-    ]
-): ...
+def get_matrix_int() -> typing.Annotated[
+    numpy.ndarray, numpy.int32, pybind11_stubgen.typing_ext.FixedSize(3, 3)
+]: ...
+def get_vector_float64() -> typing.Annotated[
+    numpy.ndarray, numpy.float64, pybind11_stubgen.typing_ext.FixedSize(3, 1)
+]: ...
