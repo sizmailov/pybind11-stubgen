@@ -545,6 +545,7 @@ class FixMissingEnumMembersAnnotation(IParser):
             and isinstance(field, dict)
             and result.attribute.annotation == self.__class_var_dict
         ):
+            assert isinstance(result.attribute.annotation, ResolvedType)
             dict_type = self._guess_dict_type(field)
             if dict_type is not None:
                 result.attribute.annotation.parameters = [dict_type]
@@ -562,6 +563,7 @@ class FixMissingEnumMembersAnnotation(IParser):
             key_type = [ResolvedType(name=t) for t in key_types][0]
         else:
             union_t = self.parse_annotation_str("typing.Union")
+            assert isinstance(union_t, ResolvedType)
             key_type = ResolvedType(
                 name=union_t.name, parameters=[ResolvedType(name=t) for t in key_types]
             )
@@ -569,11 +571,14 @@ class FixMissingEnumMembersAnnotation(IParser):
             value_type = [ResolvedType(name=t) for t in value_types][0]
         else:
             union_t = self.parse_annotation_str("typing.Union")
+            assert isinstance(union_t, ResolvedType)
             value_type = ResolvedType(
                 name=union_t.name,
                 parameters=[ResolvedType(name=t) for t in value_types],
             )
+        dict_t = self.parse_annotation_str("typing.Dict")
+        assert isinstance(dict_t, ResolvedType)
         return ResolvedType(
-            name=self.parse_annotation_str("typing.Dict").name,
+            name=dict_t.name,
             parameters=[key_type, value_type],
         )
