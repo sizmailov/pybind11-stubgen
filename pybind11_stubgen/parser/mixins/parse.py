@@ -389,7 +389,9 @@ class BaseParser(IParser):
                 self.report_error(NameResolutionError(path))
                 return None
             # Note: `PyCapsule.` prefix in __qualname__ is an artefact of pybind11
-            qual_name = qual_name.removeprefix("PyCapsule.")
+            _PyCapsule = "PyCapsule."
+            if qual_name.startswith(_PyCapsule):
+                qual_name = qual_name[len(_PyCapsule) :]
             origin_full_name = f"{module_name}.{qual_name}"
 
         origin_name = QualifiedName.from_str(origin_full_name)

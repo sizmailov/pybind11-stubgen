@@ -520,13 +520,14 @@ class FixMissingFixedSizeImport(IParser):
             try:
                 dimensions = map(
                     int,
-                    result.repr.removeprefix("FixedSize(").removesuffix(")").split(","),
+                    result.repr[len("FixedSize(") : -len(")")].split(","),
                 )
+            except ValueError:
+                pass
+            else:
                 # call `handle_type` to trigger implicit import
                 self.handle_type(FixedSize)
                 return self.handle_value(FixedSize(*dimensions))
-            except ValueError:
-                pass
         return result
 
 
