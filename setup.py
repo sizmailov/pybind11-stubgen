@@ -14,5 +14,5 @@ setup(
     },
     packages=find_packages(),
     package_data={"pybind11_stubgen": ["py.typed"]},
-    python_requires="~=3.10",  # TODO: support 3.8, 3.9
+    python_requires="~=3.7",
 )
