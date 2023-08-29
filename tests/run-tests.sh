@@ -2,9 +2,10 @@
 
 set -e
 
+PYBIND11_BRANCH="v2.11"
 TESTS_ROOT="$(dirname "$0")"
 PROJECT_ROOT="${TESTS_ROOT}/.."
-TEMP_DIR="${PROJECT_ROOT}/tmp"
+TEMP_DIR="${PROJECT_ROOT}/tmp/pybind-${PYBIND11_BRANCH}"
 INSTALL_PREFIX="${TEMP_DIR}/install"
 BUILD_ROOT="${TEMP_DIR}/build"
 EXTERNAL_DIR="${TEMP_DIR}/external"
@@ -27,7 +28,7 @@ clone_pybind11() {
   if [ ! -d "${EXTERNAL_DIR}/pybind11" ]; then
     git clone \
         --depth 1 \
-        --branch master \
+        --branch "${PYBIND11_BRANCH}" \
         --single-branch \
         https://github.com/pybind/pybind11.git \
         "${EXTERNAL_DIR}/pybind11"
