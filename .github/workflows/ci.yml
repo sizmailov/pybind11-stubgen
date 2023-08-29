@@ -41,35 +41,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest]
+        runs-on: [ ubuntu-latest ]
         python:
-            - "3.11"
-            - "3.10"
-            - "3.9"
-            - "3.8"
+          - "3.11"
+          - "3.10"
+          - "3.9"
+        # - "3.8" #  `typing.Annotated` not available
         include:
-            - runs-on: "windows-2022"
-              python: "3.10"
+          - runs-on: "windows-2022"
+            python: "3.10"
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Setup Python ${{ matrix.python }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python }}
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
-    - name: Update CMake
-      uses: jwlawson/actions-setup-cmake@v1.13
+      - name: Update CMake
+        uses: jwlawson/actions-setup-cmake@v1.13
 
-    - name: Setup annotations on Linux
-      if: runner.os == 'Linux'
-      run: python -m pip install pytest-github-actions-annotate-failures
+      - name: Setup annotations on Linux
+        if: runner.os == 'Linux'
+        run: python -m pip install pytest-github-actions-annotate-failures
 
-    - name: Install requirements
-      run: pip install -r requirements-dev.txt
+      - name: Install requirements
+        run: pip install -r requirements-dev.txt
 
-    - name: Install pybind11-stubgen
-      run: pip install .
+      - name: Install pybind11-stubgen
+        run: pip install .
 
-    - name: Run tests
-      run: ./tests/run-tests.sh
+      - name: Run tests
+        run: ./tests/run-tests.sh
