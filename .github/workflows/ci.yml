@@ -8,7 +8,7 @@ on:
 jobs:
 
   format:
-    name: Format
+    name: Format code
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.10.6'
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v3
       - name: Install requirements
         run: pip install -r requirements-dev.txt
       - name: Run isort
@@ -39,14 +39,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, windows-2022]
+        runs-on: [ubuntu-latest]
         python:
-            - "3.10.6"
-
+            - "3.12"
+            - "3.11"
+            - "3.10"
+            - "3.9"
+            - "3.8"
+        include:
+            - runs-on: "windows-2022"
+              python: "3.10"
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
+    - uses: actions/checkout@v3
 
     - name: Setup Python ${{ matrix.python }}
       uses: actions/setup-python@v4
@@ -54,7 +58,7 @@ jobs:
         python-version: ${{ matrix.python }}
 
     - name: Update CMake
-      uses: jwlawson/actions-setup-cmake@v1.11
+      uses: jwlawson/actions-setup-cmake@v1.13
 
     - name: Setup annotations on Linux
       if: runner.os == 'Linux'
