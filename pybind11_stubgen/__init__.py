@@ -137,6 +137,13 @@ def arg_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        dest="dry_run",
+        help="Don't write stubs. Parses module and report errors",
+    )
+
+    parser.add_argument(
         "module_name",
         metavar="MODULE_NAME",
         type=str,
@@ -227,7 +234,7 @@ def main():
         sub_dir = None
     else:
         sub_dir = Path(f"{args.module_name}{args.root_suffix}")
-    run(parser, printer, args.module_name, out_dir, sub_dir=sub_dir)
+    run(parser, printer, args.module_name, out_dir, sub_dir=sub_dir, dry_run=args.dry_run)
 
 
 def run(
@@ -236,6 +243,7 @@ def run(
     module_name: str,
     out_dir: Path,
     sub_dir: Path | None,
+    dry_run: bool,
 ):
     module = parser.handle_module(
         QualifiedName.from_str(module_name), importlib.import_module(module_name)
@@ -244,6 +252,9 @@ def run(
 
     if module is None:
         raise RuntimeError(f"Can't parse {module_name}")
+
+    if dry_run:
+        return
 
     writer = Writer()
 
