@@ -548,10 +548,13 @@ class ReplaceReadWritePropertyWithField(IParser):
         result = super().handle_class_member(path, class_, obj)
         if isinstance(result, Property):
             if (
-                result.getter is not None
+                result.doc is None
+                and result.getter is not None
                 and result.setter is not None
                 and len(result.getter.args) == 1
                 and len(result.setter.args) == 2
+                and result.getter.doc is None
+                and result.setter.doc is None
                 and result.getter.returns == result.setter.args[1].annotation
             ):
                 return Field(

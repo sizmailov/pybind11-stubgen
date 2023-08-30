@@ -458,16 +458,24 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
             getters = self.handle_function(get_fake_path(prop.fget), prop.fget)
             if len(getters) == 1:
                 result.getter = getters[0]
-            if len(getters) > 1:
+            elif len(getters) > 1:
                 raise RuntimeError("Getter overloads")
         if hasattr(prop, "fset") and prop.fset is not None:
             setters = self.handle_function(get_fake_path(prop.fset), prop.fset)
             if len(setters) == 1:
                 result.setter = setters[0]
-            if len(setters) > 1:
+            elif len(setters) > 1:
                 raise RuntimeError("Setter overloads")
         if result.getter is None and result.setter is None:
             return None
+
+        prop_doc = getattr(prop, "__doc__", None)
+        if prop_doc is not None:
+            result.doc = self._strip_empty_lines(prop_doc.splitlines())
+
+        if result.getter is not None and result.getter.doc == result.doc:
+            result.doc = None
+
         return result
 
     def parse_args_str(self, args_str: str) -> list[Argument]:
