@@ -470,7 +470,17 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
         if prop_doc is not None:
             result.doc = self._strip_empty_lines(prop_doc.splitlines())
 
-        if result.getter is not None and result.getter.doc == result.doc:
+        if (
+            result.doc is not None
+            and result.getter is not None
+            and (
+                result.doc == result.getter.doc
+                or result.doc
+                == self._strip_empty_lines(
+                    getattr(prop.fget, "__doc__", "").splitlines()
+                )
+            )
+        ):
             result.doc = None
 
         return result
