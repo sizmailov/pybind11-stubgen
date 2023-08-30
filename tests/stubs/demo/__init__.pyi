@@ -17,7 +17,7 @@ from demo._bindings import (
     values,
 )
 
-from . import _bindings, core
+from . import _bindings, core, pure_python
 
 __all__ = [
     "aliases",
@@ -31,6 +31,7 @@ __all__ = [
     "methods",
     "numpy",
     "properties",
+    "pure_python",
     "stl",
     "stl_bind",
     "typing",
