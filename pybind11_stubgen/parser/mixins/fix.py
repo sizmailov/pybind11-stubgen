@@ -11,6 +11,7 @@ from pybind11_stubgen.parser.errors import NameResolutionError
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.structs import (
     Alias,
+    Argument,
     Attribute,
     Class,
     Docstring,
@@ -644,3 +645,34 @@ class FixMissingEnumMembersAnnotation(IParser):
             name=dict_t.name,
             parameters=[key_type, value_type],
         )
+
+
+class FixPybind11EnumStrDoc(IParser):
+    def handle_class_member(
+        self, path: QualifiedName, class_: type, obj: Any
+    ) -> Docstring | Alias | Class | list[Method] | Field | Property | None:
+        result = super().handle_class_member(path, class_, obj)
+        if not isinstance(result, list) or not hasattr(  # list[Method]
+            class_, "__members__"
+        ):  # class is enum
+            return result
+        for method in result:
+            assert isinstance(method, Method)
+            if (
+                method.function.name != "__str__"
+                or method.function.doc != "name(self: handle) -> str\n"
+            ):
+                continue
+            method.function.args = [
+                Argument(
+                    name=Identifier("self"),
+                    # annotation=ResolvedType(self.handle_type(class_)),
+                )
+            ]
+            method.function.returns = ResolvedType(name=QualifiedName.from_str("str"))
+            # Note: Wrong function name in __str.__.__doc__ triggered
+            #       generic (*args, **kwargs) signature which in turn
+            #       recognized as a static method signature
+            method.modifier = None
+            method.function.doc = None
+        return result
