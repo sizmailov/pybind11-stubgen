@@ -442,30 +442,27 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
     def handle_property(self, path: QualifiedName, prop: Any) -> Property | None:
         result = Property(name=path[-1], modifier=None)
 
-        def get_fake_path(func):
-            # Note: pybind *usually* does not include function name
-            #       in getter/setter signatures, e.g.:
-            #           (arg0: demo._bindings.enum.ConsoleForegroundColor) -> int
-            #
-            #       Let's pretend the function name is empty if its
-            #       docstring starts with `(`
-            doc = getattr(func, "__doc__", None)
-            if doc is not None and doc.startswith("("):
-                return QualifiedName((*path, Identifier("")))
-            return path
+        # Note: pybind *usually* does not include function name
+        #       in getter/setter signatures, e.g.:
+        #           (arg0: demo._bindings.enum.ConsoleForegroundColor) -> int
+        #
+        fake_path = QualifiedName((*path, Identifier("")))
 
         if hasattr(prop, "fget") and prop.fget is not None:
-            getters = self.handle_function(get_fake_path(prop.fget), prop.fget)
-            if len(getters) == 1:
-                result.getter = getters[0]
-            elif len(getters) > 1:
-                raise RuntimeError("Getter overloads")
+            for func_path in [fake_path, path]:
+                result.getter = self._fixup_parsed_getters_or_setters(
+                    self.handle_function(func_path, prop.fget)
+                )
+                if result.getter is not None and result.getter.args != _generic_args:
+                    break
+
         if hasattr(prop, "fset") and prop.fset is not None:
-            setters = self.handle_function(get_fake_path(prop.fset), prop.fset)
-            if len(setters) == 1:
-                result.setter = setters[0]
-            elif len(setters) > 1:
-                raise RuntimeError("Setter overloads")
+            for func_path in [fake_path, path]:
+                result.setter = self._fixup_parsed_getters_or_setters(
+                    self.handle_function(func_path, prop.fset)
+                )
+                if result.setter is not None and result.setter.args != _generic_args:
+                    break
         if result.getter is None and result.setter is None:
             return None
 
@@ -647,6 +644,31 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
 
         return overloads[1:]
 
+    def _fixup_parsed_getters_or_setters(
+        self, funcs: list[Function]
+    ) -> Function | None:
+        if len(funcs) == 0:
+            return None
+        if len(funcs) > 1:
+            raise RuntimeError(
+                "Multiple overloads in property's getters/setters are not supported"
+            )
+
+        func = funcs[0]
+
+        if (
+            len(func.args) > 0
+            and not func.args[0].variadic
+            and not func.args[0].kw_variadic
+            and func.args[0].default is None
+        ):
+            func.args[0].name = Identifier("self")
+            func.args[0].annotation = None
+        else:
+            pass
+            # TODO: produce warning
+        return func
+
     def _split_args_str(
         self, args_str: str
     ) -> list[tuple[str, str | None, str | None]] | None:
@@ -763,6 +785,7 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
         return None
 
     def _strip_empty_lines(self, doc_lines: list[str]) -> Docstring | None:
+        assert isinstance(doc_lines, list)
         start = 0
         for start in range(0, len(doc_lines)):
             if len(doc_lines[start].strip()) > 0:

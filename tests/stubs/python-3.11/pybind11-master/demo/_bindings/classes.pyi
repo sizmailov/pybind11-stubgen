@@ -55,6 +55,6 @@ class Outer:
                 name(self: handle) -> str
                 """
             @property
-            def value(arg0: Outer.Inner.NestedEnum) -> int: ...
+            def value(self) -> int: ...
         value: Outer.Inner.NestedEnum
     inner: Outer.Inner

@@ -17,17 +17,17 @@ class WithGetterSetterDoc:
     def_property_readonly_static: typing.ClassVar[int] = 0
     def_property_static: typing.ClassVar[int] = 0
     @property
-    def def_property(arg0: WithGetterSetterDoc) -> int:
+    def def_property(self) -> int:
         """
         getter doc token
         """
     @def_property.setter
-    def def_property(arg0: WithGetterSetterDoc, arg1: int) -> None:
+    def def_property(self, arg1: int) -> None:
         """
         setter doc token
         """
     @property
-    def def_property_readonly(arg0: WithGetterSetterDoc) -> int:
+    def def_property_readonly(self) -> int:
         """
         getter doc token
         """
@@ -40,14 +40,14 @@ class WithPropAndGetterSetterDoc:
     def_property_readonly_static: typing.ClassVar[int] = 0
     def_property_static: typing.ClassVar[int] = 0
     @property
-    def def_property(arg0: WithPropAndGetterSetterDoc) -> int:
+    def def_property(self) -> int:
         """
         prop doc token
         """
     @def_property.setter
-    def def_property(arg0: WithPropAndGetterSetterDoc, arg1: int) -> None: ...
+    def def_property(self, arg1: int) -> None: ...
     @property
-    def def_property_readonly(arg0: WithPropAndGetterSetterDoc) -> int:
+    def def_property_readonly(self) -> int:
         """
         prop doc token
         """
@@ -60,14 +60,14 @@ class WithPropDoc:
     def_property_readonly_static: typing.ClassVar[int] = 0
     def_property_static: typing.ClassVar[int] = 0
     @property
-    def def_property(arg0: WithPropDoc) -> int:
+    def def_property(self) -> int:
         """
         prop doc token
         """
     @def_property.setter
-    def def_property(arg0: WithPropDoc, arg1: int) -> None: ...
+    def def_property(self, arg1: int) -> None: ...
     @property
-    def def_property_readonly(arg0: WithPropDoc) -> int:
+    def def_property_readonly(self) -> int:
         """
         prop doc token
         """
@@ -94,6 +94,6 @@ class WithoutDoc:
     def_property: int
     def_readwrite: int
     @property
-    def def_property_readonly(arg0: WithoutDoc) -> int: ...
+    def def_property_readonly(self) -> int: ...
     @property
     def def_readonly(self) -> int: ...
