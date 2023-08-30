@@ -305,13 +305,15 @@ class FixTypingTypeNames(IParser):
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
         result = super().parse_annotation_str(annotation_str)
-        if not isinstance(result, ResolvedType):
+        if not isinstance(result, ResolvedType) or len(result.name) != 1:
             return result
         assert len(result.name) > 0
 
         word = result.name[0]
         if word in self.__typing_names:
             result.name = QualifiedName.from_str(f"typing.{word[0].upper()}{word[1:]}")
+        if word == "function" and result.parameters is None:
+            result.name = QualifiedName.from_str("typing.Callable")
 
         return result
 

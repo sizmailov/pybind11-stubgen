@@ -1,3 +1,5 @@
+#include <pybind11/typing.h>
+
 #include "modules.h"
 
 #include <demo/sublibA/add.h>
@@ -44,10 +46,17 @@ void bind_functions_module(py::module_ &&m) {
         py::arg("k"));
     m.def("generic", &generic);
 
-    m.def("pos_kw_only_variadic_mix", [](int i, int j, py::args&, int k, py::kwargs&) { return py::make_tuple(i, j, k); },py::arg("i"),
+    m.def(
+        "pos_kw_only_variadic_mix",
+        [](int i, int j, py::args &, int k, py::kwargs &) { return py::make_tuple(i, j, k); },
+        py::arg("i"),
         py::pos_only(),
         py::arg("j"),
         py::kw_only(),
-        py::arg("k")
-        );
+        py::arg("k"));
+
+    m.def("accept_callable", [](py::function &callable) { return callable(); });
+
+    m.def("accept_annotated_callable",
+          [](py::typing::Callable<int(int, int)> &callable) { return callable(13, 42); });
 }

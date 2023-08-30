@@ -3,6 +3,8 @@ from __future__ import annotations
 import typing
 
 __all__ = [
+    "accept_annotated_callable",
+    "accept_callable",
     "add",
     "func_w_anon_args",
     "func_w_named_pos_args",
@@ -12,6 +14,8 @@ __all__ = [
     "pos_kw_only_variadic_mix",
 ]
 
+def accept_annotated_callable(arg0: typing.Callable[[int, int], int]) -> object: ...
+def accept_callable(arg0: typing.Callable) -> object: ...
 def add(arg0: int, arg1: int) -> int: ...
 def func_w_anon_args(arg0: int, arg1: int, arg2: int) -> None: ...
 def func_w_named_pos_args(x: int, y: int, z: int) -> None: ...
