@@ -56,6 +56,8 @@ void bind_functions_module(py::module_ &&m) {
         py::arg("k"));
 
     m.def("accept_callable", [](py::function &callable) { return callable(); });
+    m.def("accept_py_object", [](py::object &object) { return py::str(object); });
+    m.def("accept_py_handle", [](py::handle &handle) { return py::str(handle); });
 
     m.def("accept_annotated_callable",
           [](py::typing::Callable<int(int, int)> &callable) { return callable(13, 42); });

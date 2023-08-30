@@ -314,6 +314,8 @@ class FixTypingTypeNames(IParser):
             result.name = QualifiedName.from_str(f"typing.{word[0].upper()}{word[1:]}")
         if word == "function" and result.parameters is None:
             result.name = QualifiedName.from_str("typing.Callable")
+        if word in ("object", "handle") and result.parameters is None:
+            result.name = QualifiedName.from_str("typing.Any")
 
         return result
 
