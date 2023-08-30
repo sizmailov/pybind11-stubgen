@@ -234,7 +234,14 @@ def main():
         sub_dir = None
     else:
         sub_dir = Path(f"{args.module_name}{args.root_suffix}")
-    run(parser, printer, args.module_name, out_dir, sub_dir=sub_dir, dry_run=args.dry_run)
+    run(
+        parser,
+        printer,
+        args.module_name,
+        out_dir,
+        sub_dir=sub_dir,
+        dry_run=args.dry_run,
+    )
 
 
 def run(
