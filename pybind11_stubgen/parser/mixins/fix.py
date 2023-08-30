@@ -107,6 +107,12 @@ class FixMissingImports(IParser):
             self._add_import(result)
         return result
 
+    def handle_value(self, value: Any) -> Value:
+        result = super().handle_value(value)
+        if inspect.isroutine(value) and result.is_print_safe:
+            self._add_import(QualifiedName.from_str(result.repr))
+        return result
+
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
@@ -237,6 +243,10 @@ class FixBuiltinTypes(IParser):
         if result[0] == "builtins":
             if result[1] == "NoneType":
                 return QualifiedName((Identifier("None"),))
+            if result[1] in ("function", "builtin_function_or_method"):
+                callable_t = self.parse_annotation_str("typing.Callable")
+                assert isinstance(callable_t, ResolvedType)
+                return callable_t.name
             return QualifiedName(result[1:])
 
         return result
@@ -362,6 +372,14 @@ class FixCurrentModulePrefixInTypeNames(IParser):
     def handle_type(self, type_: type) -> QualifiedName:
         result = super().handle_type(type_)
         return self._strip_current_module(result)
+
+    def handle_value(self, value: Any) -> Value:
+        result = super().handle_value(value)
+        if inspect.isroutine(value):
+            result.repr = str(
+                self._strip_current_module(QualifiedName.from_str(result.repr))
+            )
+        return result
 
     def parse_annotation_str(
         self, annotation_str: str

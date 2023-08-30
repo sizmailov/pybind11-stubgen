@@ -156,7 +156,7 @@ class ParserDispatchMixin(IParser):
 
 
 class BaseParser(IParser):
-    def is_print_safe(self, value: Value) -> bool:
+    def is_print_safe(self, value: Any) -> bool:
         value_type = type(value)
         # Use exact type match, not `isinstance()` that allows inherited types pass
         if value is None or value_type in (int, str):
@@ -180,6 +180,14 @@ class BaseParser(IParser):
                 if not self.is_print_safe(k) or not self.is_print_safe(v):
                     return False
             return True
+        if inspect.isfunction(value):
+            if (
+                (module_name := getattr(value, "__module__", None)) is not None
+                and "<" not in module_name
+                and (qual_name := getattr(value, "__qualname__", None)) is not None
+                and "<" not in qual_name
+            ):
+                return True
         if inspect.ismodule(value):
             return True
         return False
