@@ -42,25 +42,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runs-on: "windows-2022"
-            python: "3.11"
-            pybind11-branch: "master"
-          - runs-on: "ubuntu-latest"
-            python: "3.11"
-            pybind11-branch: "master"
-          - runs-on: "ubuntu-latest"
-            python: "3.10"
-            pybind11-branch: "master"
-          - runs-on: "ubuntu-latest"
-            python: "3.9"
-            pybind11-branch: "master"
-          - runs-on: "ubuntu-latest"
-            python: "3.8"
-            pybind11-branch: "master"
-          - runs-on: "ubuntu-latest"
-            python: "3.7"
-            pybind11-branch: "master"
+        pybind11-branch: [ "master" ]
+        runs-on: [ "ubuntu-latest" ]
+        python:
+          - "3.11"
+          - "3.10"
+          - "3.9"
+          - "3.8"
+          - "3.7"
     steps:
       - uses: actions/checkout@v3
 
