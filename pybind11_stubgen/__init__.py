@@ -169,11 +169,7 @@ def stub_parser_from_args(args) -> IParser:
     ]
 
     numpy_fixes: list[type] = [
-        *(
-            [FixNumpyArrayDimAnnotation]
-            if args.numpy_array_wrap_with_annotated_fixed_size
-            else []
-        ),
+        *([FixNumpyArrayDimAnnotation] if args.numpy_array_wrap_with_annotated else []),
         *(
             [FixNumpyArrayRemoveParameters]
             if args.numpy_array_remove_parameters
