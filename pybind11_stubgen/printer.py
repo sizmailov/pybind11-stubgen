@@ -239,7 +239,14 @@ class Printer:
         result.extend(
             [
                 "@property",
-                *self.print_function(dataclasses.replace(prop.getter, name=prop.name)),
+                *self.print_function(
+                    dataclasses.replace(
+                        prop.getter,
+                        name=prop.name,
+                        # replace getter docstring if prop.doc exists
+                        doc=prop.doc if prop.doc is not None else prop.getter.doc,
+                    )
+                ),
             ]
         )
         if prop.setter:
@@ -247,7 +254,12 @@ class Printer:
                 [
                     f"@{prop.name}.setter",
                     *self.print_function(
-                        dataclasses.replace(prop.setter, name=prop.name)
+                        dataclasses.replace(
+                            prop.setter,
+                            name=prop.name,
+                            # remove setter docstring if prop.doc exists
+                            doc=None if prop.doc is not None else prop.setter.doc,
+                        )
                     ),
                 ]
             )
