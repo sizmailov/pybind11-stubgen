@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - expand-ci-matrix # TODO: REMOVE
 
 jobs:
 
@@ -16,7 +17,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10.6'
+          python-version: '3.11'
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install requirements
@@ -41,15 +42,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ ubuntu-latest ]
-        python:
-          - "3.11"
-          - "3.10"
-          - "3.9"
-        # - "3.8" #  `typing.Annotated` not available
         include:
-          - runs-on: "windows-2022"
+#          - runs-on: "windows-2022"
+#            python: "3.11"
+#            pybind11-branch: "master"
+          - runs-on: "ubuntu-latest"
+            python: "3.11"
+            pybind11-branch: "master"
+          - runs-on: "ubuntu-latest"
             python: "3.10"
+            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.9"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.8"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.7"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.6"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.5"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.4"
+#            pybind11-branch: "master"
+#          - runs-on: "ubuntu-latest"
+#            python: "3.3"
+#            pybind11-branch: "master"
     steps:
       - uses: actions/checkout@v3
 
@@ -72,4 +95,7 @@ jobs:
         run: pip install .
 
       - name: Run tests
-        run: ./tests/run-tests.sh
+        run: >
+          ./tests/run-tests.sh \
+            --pybind11-branch "${{ matrix.pybind11-branch }}" \
+            --stubs-sub-dir   "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}" \
