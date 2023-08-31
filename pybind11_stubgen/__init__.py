@@ -109,11 +109,12 @@ def arg_parser() -> ArgumentParser:
 
     numpy_array_fix = parser.add_mutually_exclusive_group()
     numpy_array_fix.add_argument(
-        "--numpy-array-wrap-with-annotated-fixed-size",
+        "--numpy-array-wrap-with-annotated",
         default=False,
         action="store_true",
-        help="Replace 'numpy.ndarray[<TYPE>, [*DIMS]]' with "
-        "'Annotated[numpy.ndarray, TYPE, FixedSize(*DIMS)]'",
+        help="Replace numpy/scipy arrays of "
+        "'ARRAY_T[<TYPE>, [*DIMS], *FLAGS]' format with "
+        "'Annotated[ARRAY_T, TYPE, FixedSize|DynamicSize(*DIMS), *FLAGS]'",
     )
 
     numpy_array_fix.add_argument(
