@@ -74,16 +74,6 @@ class FilterClassMembers(IParser):
             return None
         return super().handle_attribute(path, attr)
 
-    def handle_bases(
-        self, path: QualifiedName, bases: tuple[type, ...]
-    ) -> list[QualifiedName]:
-        result = []
-        for base in super().handle_bases(path, bases):
-            if base[0] == "pybind11_builtins":
-                break
-            result.append(base)
-        return result
-
 
 class FilterPybindInternals(IParser):
     __attribute_blacklist: set[Identifier] = {*map(Identifier, ("__entries",))}

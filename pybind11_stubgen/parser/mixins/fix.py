@@ -7,7 +7,7 @@ import re
 import types
 from typing import Any
 
-from pybind11_stubgen.parser.errors import NameResolutionError
+from pybind11_stubgen.parser.errors import NameResolutionError, ParserError
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.structs import (
     Alias,
@@ -27,7 +27,7 @@ from pybind11_stubgen.structs import (
     ResolvedType,
     Value,
 )
-from pybind11_stubgen.typing_ext import FixedSize
+from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 
 class RemoveSelfAnnotation(IParser):
@@ -252,6 +252,12 @@ class FixBuiltinTypes(IParser):
 
         return result
 
+    def report_error(self, error: ParserError):
+        if isinstance(error, NameResolutionError):
+            if error.name[0] in ["PyCapsule"]:
+                return
+        super().report_error(error)
+
 
 class FixRedundantBuiltinsAnnotation(IParser):
     def handle_attribute(self, path: QualifiedName, attr: Any) -> Attribute | None:
@@ -451,7 +457,14 @@ class FixValueReprRandomAddress(IParser):
 
 
 class FixNumpyArrayDimAnnotation(IParser):
-    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
+    __array_names: set[QualifiedName] = {
+        QualifiedName.from_str("numpy.ndarray"),
+        *(
+            QualifiedName.from_str(f"scipy.sparse.{storage}_{arr}")
+            for storage in ["bsr", "coo", "csr", "csc", "dia", "dok", "lil"]
+            for arr in ["array", "matrix"]
+        ),
+    }
     __annotated_name = QualifiedName.from_str("typing.Annotated")
     numpy_primitive_types: set[QualifiedName] = set(
         map(
@@ -475,46 +488,78 @@ class FixNumpyArrayDimAnnotation(IParser):
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
         # Affects types of the following pattern:
-        #       numpy.ndarray[PRIMITIVE_TYPE[*DIMS]]
-        #       Annotated[numpy.ndarray, PRIMITIVE_TYPE, FixedSize[*DIMS]]
+        #       ARRAY_T[PRIMITIVE_TYPE[*DIMS], *FLAGS]
+        # Replace with:
+        #       Annotated[ARRAY_T, PRIMITIVE_TYPE, FixedSize/DynamicSize[*DIMS], *FLAGS]
 
         result = super().parse_annotation_str(annotation_str)
         if (
             not isinstance(result, ResolvedType)
-            or result.name != self.__ndarray_name
+            or result.name not in self.__array_names
             or result.parameters is None
-            or len(result.parameters) != 1
+            or len(result.parameters) == 0
         ):
             return result
-        param = result.parameters[0]
+
+        scalar_with_dims = result.parameters[0]  # e.g. numpy.float64[32, 32]
+        flags = result.parameters[1:]
+
         if (
-            not isinstance(param, ResolvedType)
-            or param.name not in self.numpy_primitive_types
-            or param.parameters is None
-            or any(not isinstance(dim, Value) for dim in param.parameters)
+            not isinstance(scalar_with_dims, ResolvedType)
+            or scalar_with_dims.name not in self.numpy_primitive_types
+            or (
+                scalar_with_dims.parameters is not None
+                and any(
+                    not isinstance(dim, Value) for dim in scalar_with_dims.parameters
+                )
+            )
         ):
             return result
 
-        # isinstance check is redundant, but makes mypy happy
-        dims = [int(dim.repr) for dim in param.parameters if isinstance(dim, Value)]
-
-        # override result with Annotated[...]
         result = ResolvedType(
             name=self.__annotated_name,
             parameters=[
-                ResolvedType(self.__ndarray_name),
-                ResolvedType(param.name),
+                self.parse_annotation_str(str(result.name)),
+                ResolvedType(scalar_with_dims.name),
             ],
         )
 
-        if param.parameters is not None:
-            # TRICK: Use `self.parse_type` to make `FixedSize`
-            #        properly added to the list of imports
-            self.handle_type(FixedSize)
-            assert result.parameters is not None
-            result.parameters += [self.handle_value(FixedSize(*dims))]
+        if (
+            scalar_with_dims.parameters is not None
+            and len(scalar_with_dims.parameters) >= 0
+        ):
+            result.parameters += [
+                self.handle_value(
+                    self._cook_dimension_parameters(scalar_with_dims.parameters)
+                )
+            ]
+
+        result.parameters += flags
 
         return result
+
+    def _cook_dimension_parameters(
+        self, dimensions: list[Value]
+    ) -> FixedSize | DynamicSize:
+        all_ints = True
+        new_params = []
+        for dim_param in dimensions:
+            try:
+                dim = int(dim_param.repr)
+            except ValueError:
+                dim = dim_param.repr
+                all_ints = False
+            new_params.append(dim)
+
+        if all_ints:
+            return_t = FixedSize
+        else:
+            return_t = DynamicSize
+
+        # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
+        #        properly added to the list of imports
+        self.handle_type(FixedSize)
+        return return_t(*new_params)
 
 
 class FixNumpyArrayRemoveParameters(IParser):
@@ -527,6 +572,34 @@ class FixNumpyArrayRemoveParameters(IParser):
         if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
             result.parameters = None
         return result
+
+
+class FixNumpyArrayFlags(IParser):
+    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
+    __flags: set[QualifiedName] = {
+        QualifiedName.from_str("flags.writeable"),
+        QualifiedName.from_str("flags.c_contiguous"),
+        QualifiedName.from_str("flags.f_contiguous"),
+    }
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
+            if result.parameters is not None:
+                for param in result.parameters:
+                    if param.name in self.__flags:
+                        param.name = QualifiedName.from_str(
+                            f"numpy.ndarray.{param.name}"
+                        )
+
+        return result
+
+    def report_error(self, error: ParserError) -> None:
+        if isinstance(error, NameResolutionError) and error.name in self.__flags:
+            return
+        super().report_error(error)
 
 
 class FixRedundantMethodsFromBuiltinObject(IParser):

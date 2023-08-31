@@ -10,6 +10,7 @@ from pybind11_stubgen.parser.errors import (
     InvalidExpressionError,
     InvalidIdentifierError,
     NameResolutionError,
+    ParserError,
 )
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.structs import (
@@ -378,6 +379,12 @@ class BaseParser(IParser):
         if value is ...:
             return "..."
         return repr(value)
+
+    def report_error(self, error: ParserError):
+        if isinstance(error, NameResolutionError):
+            if error.name[0] == "module":
+                return
+        super().report_error(error)
 
     def _get_method_modifier(self, args: list[Argument]) -> Modifier:
         if len(args) == 0:
@@ -808,3 +815,31 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
         if len(result) == 0:
             return None
         return Docstring(result)
+
+    def report_error(self, error: ParserError) -> None:
+        if isinstance(error, NameResolutionError):
+            if error.name[0] == "pybind11_builtins":
+                return
+        if isinstance(error, InvalidIdentifierError):
+            name = error.name
+            if (
+                name.startswith("ItemsView[")
+                and name.endswith("]")
+                or name.startswith("KeysView[")
+                and name.endswith("]")
+                or name.startswith("ValuesView[")
+                and name.endswith("]")
+            ):
+                return
+
+        super().report_error(error)
+
+    def handle_bases(
+        self, path: QualifiedName, bases: tuple[type, ...]
+    ) -> list[QualifiedName]:
+        result = []
+        for base in super().handle_bases(path, bases):
+            if base[0] == "pybind11_builtins":
+                break
+            result.append(base)
+        return result

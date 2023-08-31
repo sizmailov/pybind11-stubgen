@@ -9,7 +9,6 @@ from pathlib import Path
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.parser.mixins.error_handlers import (
     IgnoreAllErrors,
-    IgnoreFixedErrors,
     IgnoreInvalidExpressionErrors,
     IgnoreInvalidIdentifierErrors,
     IgnoreUnresolvedNameErrors,
@@ -32,6 +31,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixMissingImports,
     FixMissingNoneHashFieldAnnotation,
     FixNumpyArrayDimAnnotation,
+    FixNumpyArrayFlags,
     FixNumpyArrayRemoveParameters,
     FixPEP585CollectionNames,
     FixPybind11EnumStrDoc,
@@ -109,11 +109,12 @@ def arg_parser() -> ArgumentParser:
 
     numpy_array_fix = parser.add_mutually_exclusive_group()
     numpy_array_fix.add_argument(
-        "--numpy-array-wrap-with-annotated-fixed-size",
+        "--numpy-array-wrap-with-annotated",
         default=False,
         action="store_true",
-        help="Replace 'numpy.ndarray[<TYPE>, [*DIMS]]' with "
-        "'Annotated[numpy.ndarray, TYPE, FixedSize(*DIMS)]'",
+        help="Replace numpy/scipy arrays of "
+        "'ARRAY_T[<TYPE>, [*DIMS], *FLAGS]' format with "
+        "'Annotated[ARRAY_T, TYPE, FixedSize|DynamicSize(*DIMS), *FLAGS]'",
     )
 
     numpy_array_fix.add_argument(
@@ -155,23 +156,20 @@ def arg_parser() -> ArgumentParser:
 
 
 def stub_parser_from_args(args) -> IParser:
-    error_handlers: list[type] = [
+    error_handlers_top: list[type] = [
         *([IgnoreAllErrors] if args.ignore_all_errors else []),
         *([IgnoreInvalidIdentifierErrors] if args.ignore_invalid_identifiers else []),
         *([IgnoreInvalidExpressionErrors] if args.ignore_invalid_expressions else []),
         *([IgnoreUnresolvedNameErrors] if args.ignore_unresolved_names else []),
-        IgnoreFixedErrors,
+    ]
+    error_handlers_bottom: list[type] = [
         LogErrors,
         SuggestCxxSignatureFix,
         *([TerminateOnFatalErrors] if args.exit_code else []),
     ]
 
     numpy_fixes: list[type] = [
-        *(
-            [FixNumpyArrayDimAnnotation]
-            if args.numpy_array_wrap_with_annotated_fixed_size
-            else []
-        ),
+        *([FixNumpyArrayDimAnnotation] if args.numpy_array_wrap_with_annotated else []),
         *(
             [FixNumpyArrayRemoveParameters]
             if args.numpy_array_remove_parameters
@@ -180,7 +178,7 @@ def stub_parser_from_args(args) -> IParser:
     ]
 
     class Parser(
-        *error_handlers,  # type: ignore[misc]
+        *error_handlers_top,  # type: ignore[misc]
         FixMissing__future__AnnotationsImport,
         FixMissing__all__Attribute,
         FixMissingNoneHashFieldAnnotation,
@@ -191,6 +189,7 @@ def stub_parser_from_args(args) -> IParser:
         FixMissingFixedSizeImport,
         FixMissingEnumMembersAnnotation,
         *numpy_fixes,  # type: ignore[misc]
+        FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
         FixBuiltinTypes,
         FilterClassMembers,
@@ -205,6 +204,7 @@ def stub_parser_from_args(args) -> IParser:
         ExtractSignaturesFromPybind11Docstrings,
         ParserDispatchMixin,
         BaseParser,
+        *error_handlers_bottom,  # type: ignore[misc]
     ):
         pass
 
