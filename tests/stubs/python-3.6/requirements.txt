@@ -1,0 +1,4 @@
+black==22.8.0
+isort==5.10.1
+numpy~=1.19.5
+typing_extensions~=4.1.1

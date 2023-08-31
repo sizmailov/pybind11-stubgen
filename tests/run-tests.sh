@@ -84,6 +84,7 @@ install_demo() {
 install_pydemo() {
   (
     export CMAKE_PREFIX_PATH="$(readlink -m "${INSTALL_PREFIX}")";
+    export CMAKE_ARGS="CMAKE_CXX_STANDARD=17";
     pip install "${TESTS_ROOT}/py-demo"
   )
 }
