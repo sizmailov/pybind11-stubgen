@@ -42,8 +42,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pybind11-branch: [ "master" ]
         runs-on: [ "ubuntu-latest" ]
+        pybind11-branch: [ "master" ]
         python:
           - "3.11"
           - "3.10"
@@ -52,6 +52,7 @@ jobs:
           - "3.7"
         include:
           - runs-on: "windows-2022"
+            pybind11-branch: "master"
             python: "3.11"
     steps:
       - uses: actions/checkout@v3
@@ -75,6 +76,7 @@ jobs:
         run: pip install .
 
       - name: Run tests
+        shell: bash
         run: >
           ./tests/run-tests.sh \
             --pybind11-branch "${{ matrix.pybind11-branch }}" \
