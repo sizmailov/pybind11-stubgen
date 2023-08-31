@@ -11,30 +11,26 @@ function parse_args() {
     if [ -n "$1" ]; then
       echo -e "${RED}👉 $1${CLEAR}\n";
     fi
-    echo "Usage: $0 --pybind11-branch PYBIND11_BRANCH --stubs-sub-dir STUBS_SUB_DIR"
+    echo "Usage: $0 --pybind11-branch PYBIND11_BRANCH"
     echo "  --pybind11-branch     name of pybind11 branch"
-    echo "  --stubs-sub-dir       stubs output dir relative to this script directory"
     exit 1
   }
 
   # parse params
   while [[ "$#" > 0 ]]; do case $1 in
     --pybind11-branch) PYBIND11_BRANCH="$2"; shift;shift;;
-    --stubs-sub-dir) STUBS_SUB_DIR="$2";shift;shift;;
     *) usage "Unknown parameter passed: $1"; shift; shift;;
   esac; done
 
   # verify params
   if [ -z "$PYBIND11_BRANCH" ]; then usage "PYBIND11_BRANCH is not set"; fi;
-  if [ -z "$STUBS_SUB_DIR" ]; then usage "STUBS_SUB_DIR is not set"; fi;
 
-  TESTS_ROOT="$(dirname "$0")"
+  TESTS_ROOT="$(readlink -m "$(dirname "$0")")"
   PROJECT_ROOT="${TESTS_ROOT}/.."
   TEMP_DIR="${PROJECT_ROOT}/tmp/pybind11-${PYBIND11_BRANCH}"
   INSTALL_PREFIX="${TEMP_DIR}/install"
   BUILD_ROOT="${TEMP_DIR}/build"
   EXTERNAL_DIR="${TEMP_DIR}/external"
-  STUBS_DIR=$(readlink -m "${TESTS_ROOT}/${STUBS_SUB_DIR}")
 }
 
 
@@ -89,33 +85,6 @@ install_pydemo() {
   )
 }
 
-remove_stubs() {
-    rm -rf "${STUBS_DIR}/*" ;
-}
-
-run_stubgen() {
-  pybind11-stubgen \
-      demo \
-      --output-dir=${STUBS_DIR} \
-      --numpy-array-wrap-with-annotated-fixed-size \
-      --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)" \
-      --ignore-unresolved-names="typing\.Annotated" \
-      --exit-code
-}
-
-format_stubs() {
-  (
-    cd "${STUBS_DIR}" ;
-    black . ;
-    isort --profile=black . ;
-  )
-}
-
-check_stubs() {
-  git add --all "${STUBS_DIR}" ;
-  git diff --exit-code HEAD -- "${STUBS_DIR}"
-}
-
 main () {
   parse_args "$@"
   clone_eigen
@@ -124,10 +93,6 @@ main () {
   install_eigen
   install_demo
   install_pydemo
-  remove_stubs
-  run_stubgen
-  format_stubs
-  check_stubs
 }
 
 main "$@"

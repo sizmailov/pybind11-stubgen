@@ -69,9 +69,19 @@ jobs:
       - name: Install pybind11-stubgen
         run: pip install .
 
-      - name: Run tests
+      - name: Install demo module
         shell: bash
-        run: >
-          ./tests/run-tests.sh \
-            --pybind11-branch "${{ matrix.pybind11-branch }}" \
-            --stubs-sub-dir   "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}" \
+        run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}"
+
+      - name: Check stubs generation
+        shell: bash
+        run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}"
+
+      - name: Archive patch
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}.patch"
+          path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
+          retention-days: 30
+          if-no-files-found: ignore
