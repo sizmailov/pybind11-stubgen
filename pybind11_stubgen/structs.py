@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from dataclasses import field as field_
 from typing import Tuple, Union
 
-try:
+if sys.version_info[:2] >= (3, 8):
     from typing import Literal
 
     Modifier = Literal["static", "class", None]
-except ImportError:
+else:
     from typing import Optional
 
     Modifier = Optional[str]

@@ -1,4 +1,7 @@
-def arg_mix(
+import typing
+
+
+def args_mix(
     a: int,
     b: float = 0.5,
     /,
@@ -6,12 +9,6 @@ def arg_mix(
     *args: int,
     x: int = 1,
     y=int,
-    **kwargs: dict[int, str],
+    **kwargs: typing.Dict[int, str],
 ):
-    """Mix of positional, kw and variadic args
-
-    Note:
-        The `inspect.getfullargspec` does not reflect presence
-        of pos-only args separator (/)
-    """
     ...

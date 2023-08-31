@@ -4,7 +4,10 @@ import sys
 import typing
 
 if sys.version_info[:2] >= (3, 8):
-    from .functions_3_8_plus import arg_mix
+    from .functions_3_8_plus import args_mix
+
+if sys.version_info[:2] >= (3, 9):
+    from .functions_3_9_plus import generic_alias_annotation
 
 
 class _Dummy:

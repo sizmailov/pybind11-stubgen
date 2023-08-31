@@ -98,6 +98,7 @@ run_stubgen() {
       --output-dir=${STUBS_DIR} \
       --numpy-array-wrap-with-annotated-fixed-size \
       --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)" \
+      --ignore-unresolved-names="typing\.Annotated" \
       --exit-code
 }
 
