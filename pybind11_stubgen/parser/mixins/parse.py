@@ -41,7 +41,7 @@ _generic_args = [
 
 class ParserDispatchMixin(IParser):
     def handle_class(self, path: QualifiedName, class_: type) -> Class | None:
-        base_classes = inspect.getmro(class_)[1:]
+        base_classes = class_.__bases__
         result = Class(name=path[-1], bases=self.handle_bases(path, base_classes))
         for name, member in inspect.getmembers(class_):
             obj = self.handle_class_member(

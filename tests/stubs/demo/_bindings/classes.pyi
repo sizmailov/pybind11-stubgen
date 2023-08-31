@@ -9,7 +9,7 @@ class Base:
         pass
     name: str
 
-class CppException(Exception, BaseException, object):
+class CppException(Exception):
     pass
 
 class Derived(Base):
