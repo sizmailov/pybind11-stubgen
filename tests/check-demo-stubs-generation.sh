@@ -37,7 +37,7 @@ run_stubgen() {
   pybind11-stubgen \
       demo \
       --output-dir=${STUBS_DIR} \
-      --numpy-array-wrap-with-annotated-fixed-size \
+      --numpy-array-wrap-with-annotated \
       --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)" \
       --ignore-unresolved-names="typing\.Annotated" \
       --exit-code
