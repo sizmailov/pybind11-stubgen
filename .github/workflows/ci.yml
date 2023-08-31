@@ -50,6 +50,9 @@ jobs:
           - "3.9"
           - "3.8"
           - "3.7"
+        include:
+          - runs-on: "windows-2022"
+            python: "3.11"
     steps:
       - uses: actions/checkout@v3
 
