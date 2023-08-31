@@ -34,7 +34,7 @@ function parse_args() {
   INSTALL_PREFIX="${TEMP_DIR}/install"
   BUILD_ROOT="${TEMP_DIR}/build"
   EXTERNAL_DIR="${TEMP_DIR}/external"
-  STUBS_DIR="${TESTS_ROOT}/${STUBS_SUB_DIR}"
+  STUBS_DIR=$(readlink -m "${TESTS_ROOT}/${STUBS_SUB_DIR}")
 }
 
 
