@@ -181,10 +181,12 @@ class BaseParser(IParser):
                     return False
             return True
         if inspect.isfunction(value):
+            module_name = getattr(value, "__module__", None)
+            qual_name = getattr(value, "__qualname__", None)
             if (
-                (module_name := getattr(value, "__module__", None)) is not None
+                module_name is not None
                 and "<" not in module_name
-                and (qual_name := getattr(value, "__qualname__", None)) is not None
+                and qual_name is not None
                 and "<" not in qual_name
             ):
                 return True
@@ -284,7 +286,7 @@ class BaseParser(IParser):
                     )
                 elif not isinstance(annotation, type):
                     func_args[arg_name].annotation = self.handle_value(annotation)
-                elif isinstance(annotation, types.GenericAlias):
+                elif self._is_generic_alias(annotation):
                     func_args[arg_name].annotation = self.parse_annotation_str(
                         str(annotation)
                     )
@@ -318,6 +320,12 @@ class BaseParser(IParser):
                     doc=doc,
                 )
             ]
+
+    def _is_generic_alias(self, annotation: type) -> bool:
+        generic_alias_t: type | None = getattr(types, "GenericAlias", None)
+        if generic_alias_t is None:
+            return False
+        return isinstance(annotation, generic_alias_t)
 
     def handle_import(self, path: QualifiedName, origin: Any) -> Import | None:
         full_name = self._get_full_name(path, origin)
@@ -485,7 +493,8 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
             variadic = False
             kw_variadic = False
 
-            if (stars := match.group("stars")) == "*":
+            stars = match.group("stars")
+            if stars == "*":
                 variadic = True
             elif stars == "**":
                 kw_variadic = True
@@ -582,7 +591,8 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
             return []
 
         if len(doc_lines) < 2 or doc_lines[1] != "Overloaded function.":
-            if returns_str := match.group("returns"):
+            returns_str = match.group("returns")
+            if returns_str is not None:
                 returns = self.parse_annotation_str(returns_str)
             else:
                 returns = None

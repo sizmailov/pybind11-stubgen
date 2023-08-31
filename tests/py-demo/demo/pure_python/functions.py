@@ -1,6 +1,13 @@
 from __future__ import annotations
 
+import sys
 import typing
+
+if sys.version_info[:2] >= (3, 8):
+    from .functions_3_8_plus import args_mix
+
+if sys.version_info[:2] >= (3, 9):
+    from .functions_3_9_plus import generic_alias_annotation
 
 
 class _Dummy:
@@ -26,25 +33,6 @@ def lambda_as_default_arg(callback=lambda val: 0):
 
 
 def static_method_as_default_arg(callback=_Dummy.foo):
-    ...
-
-
-def arg_mix(
-    a: int,
-    b: float = 0.5,
-    /,
-    c: str = "",
-    *args: int,
-    x: int = 1,
-    y=search,
-    **kwargs: dict[int, str],
-):
-    """Mix of positional, kw and variadic args
-
-    Note:
-        The `inspect.getfullargspec` does not reflect presence
-        of pos-only args separator (/)
-    """
     ...
 
 

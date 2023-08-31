@@ -49,7 +49,6 @@ from pybind11_stubgen.parser.mixins.parse import (
 )
 from pybind11_stubgen.printer import Printer
 from pybind11_stubgen.structs import QualifiedName
-from pybind11_stubgen.utils import implements
 from pybind11_stubgen.writer import Writer
 
 
@@ -179,7 +178,6 @@ def stub_parser_from_args(args) -> IParser:
         ),
     ]
 
-    @implements(IParser)
     class Parser(
         *error_handlers,  # type: ignore[misc]
         FixMissing__future__AnnotationsImport,

@@ -483,7 +483,11 @@ class FixNumpyArrayDimAnnotation(IParser):
             or result.name != self.__ndarray_name
             or result.parameters is None
             or len(result.parameters) != 1
-            or not isinstance(param := result.parameters[0], ResolvedType)
+        ):
+            return result
+        param = result.parameters[0]
+        if (
+            not isinstance(param, ResolvedType)
             or param.name not in self.numpy_primitive_types
             or param.parameters is None
             or any(not isinstance(dim, Value) for dim in param.parameters)
