@@ -15,5 +15,5 @@ setup(
     },
     packages=find_packages(),
     package_data={"pybind11_stubgen": ["py.typed"]},
-    python_requires="~=3.6",
+    python_requires="~=3.7",
 )
