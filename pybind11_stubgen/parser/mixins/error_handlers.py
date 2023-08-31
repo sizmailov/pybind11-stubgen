@@ -46,7 +46,7 @@ class LogErrors(IParser):
 class IgnoreFixedErrors(IParser):
     def report_error(self, error: ParserError):
         if isinstance(error, NameResolutionError):
-            if error.name[0] in ["pybind11_builtins", "PyCapsule", "module", "handle"]:
+            if error.name[0] in ["pybind11_builtins", "PyCapsule", "module"]:
                 return
         elif isinstance(error, InvalidExpressionError):
             if error.expression.startswith("FixedSize"):

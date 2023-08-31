@@ -2,10 +2,10 @@
 
 set -e
 
-PYBIND11_BRANCH="v2.11"
+PYBIND11_BRANCH="master" # TODO: pin to 2.12+ when released
 TESTS_ROOT="$(dirname "$0")"
 PROJECT_ROOT="${TESTS_ROOT}/.."
-TEMP_DIR="${PROJECT_ROOT}/tmp/pybind-${PYBIND11_BRANCH}"
+TEMP_DIR="${PROJECT_ROOT}/tmp/pybind11-${PYBIND11_BRANCH}"
 INSTALL_PREFIX="${TEMP_DIR}/install"
 BUILD_ROOT="${TEMP_DIR}/build"
 EXTERNAL_DIR="${TEMP_DIR}/external"
