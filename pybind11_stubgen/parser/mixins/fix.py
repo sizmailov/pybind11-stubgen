@@ -302,7 +302,7 @@ class FixPEP585CollectionNames(IParser):
 
         word = result.name[1]
         if word in self.__typing_collection_names:
-            result.name = QualifiedName.from_str(f"{word[0].lower()}{word[1:]}")
+            result.name = QualifiedName.from_str(f"{word.lower()}")
 
         return result
 
