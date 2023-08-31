@@ -13,7 +13,7 @@ __all__ = [
     "typing",
 ]
 
-class _Dummy(object):
+class _Dummy:
     @staticmethod
     def foo(): ...
 
