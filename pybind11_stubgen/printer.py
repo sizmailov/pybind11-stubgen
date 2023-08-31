@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import sys
 
 from pybind11_stubgen.structs import (
     Alias,
@@ -133,7 +134,8 @@ class Printer:
                 kw_only = True
             if not pos_only and not arg.pos_only:
                 pos_only = True
-                args.append("/")
+                if sys.version_info[:2] >= (3, 8):
+                    args.append("/")
             if not kw_only and arg.kw_only:
                 kw_only = True
                 args.append("*")

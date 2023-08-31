@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field as field_
-from typing import Literal, Tuple, Union
+from typing import Tuple, Union
 
-Modifier = Literal["static", "class", None]
+try:
+    from typing import Literal
+
+    Modifier = Literal["static", "class", None]
+except ImportError:
+    from typing import Optional
+
+    Modifier = Optional[str]
 
 
 class Identifier(str):
