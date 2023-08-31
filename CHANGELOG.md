@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 1.x (TBA)
+--------------------------
+Changes:
+
+- 🐛 Fix missing remap of `numpy.ndarray.flags` (#128)
+- ✨ Process `scipy.sparse.*` types the same as `numpy.ndarray` with `--numpy-array-wrap-with-annotated` (#128)
+- ✨ Support dynamic array size with `--numpy-array-wrap-with-annotated` (#128)
+- ❗️ Renamed CLI argument `--numpy-array-wrap-with-annotated-fixed-size` to `--numpy-array-wrap-with-annotated` (#128)
+
 
 Version 1.2 (Aug 31, 2023)
 --------------------------
