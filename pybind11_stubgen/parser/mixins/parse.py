@@ -212,7 +212,7 @@ class BaseParser(IParser):
     def handle_bases(
         self, path: QualifiedName, bases: tuple[type, ...]
     ) -> list[QualifiedName]:
-        return [self.handle_type(type_) for type_ in bases]
+        return [self.handle_type(type_) for type_ in bases if type_ is not object]
 
     def handle_docstring(self, path: QualifiedName, value: Any) -> Docstring | None:
         if isinstance(value, str):

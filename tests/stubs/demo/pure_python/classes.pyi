@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __all__ = ["A", "B", "C", "X"]
 
-class A(object):
+class A:
     """
     A
     """
@@ -17,5 +17,5 @@ class C(B):
     C
     """
 
-class X(object):
+class X:
     pass
