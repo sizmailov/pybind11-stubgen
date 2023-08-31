@@ -37,7 +37,7 @@ class Outer:
             ONE: typing.ClassVar[Outer.Inner.NestedEnum]  # value = <NestedEnum.ONE: 1>
             TWO: typing.ClassVar[Outer.Inner.NestedEnum]  # value = <NestedEnum.TWO: 2>
             __members__: typing.ClassVar[
-                typing.Dict[str, Outer.Inner.NestedEnum]
+                dict[str, Outer.Inner.NestedEnum]
             ]  # value = {'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}
             def __eq__(self, other: typing.Any) -> bool: ...
             def __getstate__(self) -> int: ...

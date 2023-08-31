@@ -274,6 +274,39 @@ class FixMissingNoneHashFieldAnnotation(IParser):
         return result
 
 
+class FixPEP585CollectionNames(IParser):
+    __typing_collection_names: set[Identifier] = set(
+        map(
+            Identifier,
+            [
+                "Dict",
+                "List",
+                "Set",
+                "Tuple",
+                "FrozenSet",
+                "Type",
+            ],
+        )
+    )
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if (
+            not isinstance(result, ResolvedType)
+            or len(result.name) != 2
+            or result.name[0] != "typing"
+        ):
+            return result
+
+        word = result.name[1]
+        if word in self.__typing_collection_names:
+            result.name = QualifiedName.from_str(f"{word[0].lower()}{word[1:]}")
+
+        return result
+
+
 class FixTypingTypeNames(IParser):
     __typing_names: set[Identifier] = set(
         map(
@@ -307,7 +340,6 @@ class FixTypingTypeNames(IParser):
         result = super().parse_annotation_str(annotation_str)
         if not isinstance(result, ResolvedType) or len(result.name) != 1:
             return result
-        assert len(result.name) > 0
 
         word = result.name[0]
         if word in self.__typing_names:
