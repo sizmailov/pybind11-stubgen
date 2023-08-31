@@ -43,30 +43,6 @@ class LogErrors(IParser):
         super().report_error(error)
 
 
-class IgnoreFixedErrors(IParser):
-    def report_error(self, error: ParserError):
-        if isinstance(error, NameResolutionError):
-            if error.name[0] in ["pybind11_builtins", "PyCapsule", "module"]:
-                return
-        elif isinstance(error, InvalidExpressionError):
-            if error.expression.startswith("FixedSize"):
-                # https://github.com/pybind/pybind11/pull/4679
-                return
-        elif isinstance(error, InvalidIdentifierError):
-            name = error.name
-            if (
-                name.startswith("ItemsView[")
-                and name.endswith("]")
-                or name.startswith("KeysView[")
-                and name.endswith("]")
-                or name.startswith("ValuesView[")
-                and name.endswith("]")
-            ):
-                return
-
-        super().report_error(error)
-
-
 class IgnoreUnresolvedNameErrors(IParser):
     def __init__(self):
         super().__init__()
@@ -154,8 +130,8 @@ class TerminateOnFatalErrors(IParser):
         self.__found_fatal_errors = False
 
     def report_error(self, error: ParserError):
-        super().report_error(error)
         self.__found_fatal_errors = True
+        super().report_error(error)
 
     def finalize(self):
         super().finalize()

@@ -9,7 +9,6 @@ from pathlib import Path
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.parser.mixins.error_handlers import (
     IgnoreAllErrors,
-    IgnoreFixedErrors,
     IgnoreInvalidExpressionErrors,
     IgnoreInvalidIdentifierErrors,
     IgnoreUnresolvedNameErrors,
@@ -32,6 +31,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixMissingImports,
     FixMissingNoneHashFieldAnnotation,
     FixNumpyArrayDimAnnotation,
+    FixNumpyArrayFlags,
     FixNumpyArrayRemoveParameters,
     FixPEP585CollectionNames,
     FixPybind11EnumStrDoc,
@@ -155,12 +155,13 @@ def arg_parser() -> ArgumentParser:
 
 
 def stub_parser_from_args(args) -> IParser:
-    error_handlers: list[type] = [
+    error_handlers_top: list[type] = [
         *([IgnoreAllErrors] if args.ignore_all_errors else []),
         *([IgnoreInvalidIdentifierErrors] if args.ignore_invalid_identifiers else []),
         *([IgnoreInvalidExpressionErrors] if args.ignore_invalid_expressions else []),
         *([IgnoreUnresolvedNameErrors] if args.ignore_unresolved_names else []),
-        IgnoreFixedErrors,
+    ]
+    error_handlers_bottom: list[type] = [
         LogErrors,
         SuggestCxxSignatureFix,
         *([TerminateOnFatalErrors] if args.exit_code else []),
@@ -180,7 +181,7 @@ def stub_parser_from_args(args) -> IParser:
     ]
 
     class Parser(
-        *error_handlers,  # type: ignore[misc]
+        *error_handlers_top,  # type: ignore[misc]
         FixMissing__future__AnnotationsImport,
         FixMissing__all__Attribute,
         FixMissingNoneHashFieldAnnotation,
@@ -191,6 +192,7 @@ def stub_parser_from_args(args) -> IParser:
         FixMissingFixedSizeImport,
         FixMissingEnumMembersAnnotation,
         *numpy_fixes,  # type: ignore[misc]
+        FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
         FixBuiltinTypes,
         FilterClassMembers,
@@ -205,6 +207,7 @@ def stub_parser_from_args(args) -> IParser:
         ExtractSignaturesFromPybind11Docstrings,
         ParserDispatchMixin,
         BaseParser,
+        *error_handlers_bottom,  # type: ignore[misc]
     ):
         pass
 
