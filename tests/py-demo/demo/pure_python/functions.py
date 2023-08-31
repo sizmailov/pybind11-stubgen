@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import typing
+
+
 class _Dummy:
     @staticmethod
     def foo():
@@ -41,3 +46,7 @@ def arg_mix(
         of pos-only args separator (/)
     """
     ...
+
+
+def accept_frozenset(arg: typing.FrozenSet[int | float]) -> int | None:
+    pass

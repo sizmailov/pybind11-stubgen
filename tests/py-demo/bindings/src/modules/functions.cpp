@@ -61,4 +61,7 @@ void bind_functions_module(py::module_ &&m) {
 
     m.def("accept_annotated_callable",
           [](py::typing::Callable<int(int, int)> &callable) { return callable(13, 42); });
+
+    m.def("accept_frozenset", [](const py::frozenset &) {});
+    m.def("accept_set", [](const py::set &) {});
 }

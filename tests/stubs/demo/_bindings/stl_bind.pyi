@@ -38,7 +38,7 @@ class VectorPairStringDouble:
         """
         Check whether the list is nonempty
         """
-    def __contains__(self, x: typing.Tuple[str, float]) -> bool:
+    def __contains__(self, x: tuple[str, float]) -> bool:
         """
         Return true the container contains ``x``
         """
@@ -59,7 +59,7 @@ class VectorPairStringDouble:
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> typing.Tuple[str, float]: ...
+    def __getitem__(self, arg0: int) -> tuple[str, float]: ...
     @typing.overload
     def __init__(self) -> None: ...
     @typing.overload
@@ -73,13 +73,13 @@ class VectorPairStringDouble:
     def __len__(self) -> int: ...
     def __ne__(self, arg0: VectorPairStringDouble) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: typing.Tuple[str, float]) -> None: ...
+    def __setitem__(self, arg0: int, arg1: tuple[str, float]) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: VectorPairStringDouble) -> None:
         """
         Assign list elements using a slice object
         """
-    def append(self, x: typing.Tuple[str, float]) -> None:
+    def append(self, x: tuple[str, float]) -> None:
         """
         Add an item to the end of the list
         """
@@ -87,7 +87,7 @@ class VectorPairStringDouble:
         """
         Clear the contents
         """
-    def count(self, x: typing.Tuple[str, float]) -> int:
+    def count(self, x: tuple[str, float]) -> int:
         """
         Return the number of times ``x`` appears in the list
         """
@@ -101,21 +101,21 @@ class VectorPairStringDouble:
         """
         Extend the list by appending all the items in the given list
         """
-    def insert(self, i: int, x: typing.Tuple[str, float]) -> None:
+    def insert(self, i: int, x: tuple[str, float]) -> None:
         """
         Insert an item at a given position.
         """
     @typing.overload
-    def pop(self) -> typing.Tuple[str, float]:
+    def pop(self) -> tuple[str, float]:
         """
         Remove and return the last item
         """
     @typing.overload
-    def pop(self, i: int) -> typing.Tuple[str, float]:
+    def pop(self, i: int) -> tuple[str, float]:
         """
         Remove and return the item at index ``i``
         """
-    def remove(self, x: typing.Tuple[str, float]) -> None:
+    def remove(self, x: tuple[str, float]) -> None:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """

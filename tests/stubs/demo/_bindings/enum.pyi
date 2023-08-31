@@ -37,7 +37,7 @@ class ConsoleForegroundColor:
         ConsoleForegroundColor
     ]  # value = <ConsoleForegroundColor.Yellow: 33>
     __members__: typing.ClassVar[
-        typing.Dict[str, ConsoleForegroundColor]
+        dict[str, ConsoleForegroundColor]
     ]  # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
