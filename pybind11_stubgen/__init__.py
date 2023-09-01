@@ -113,7 +113,7 @@ def arg_parser() -> ArgumentParser:
         default=False,
         action="store_true",
         help="Replace numpy/scipy arrays of "
-        "'ARRAY_T[<TYPE>, [*DIMS], *FLAGS]' format with "
+        "'ARRAY_T[TYPE, [*DIMS], *FLAGS]' format with "
         "'Annotated[ARRAY_T, TYPE, FixedSize|DynamicSize(*DIMS), *FLAGS]'",
     )
 

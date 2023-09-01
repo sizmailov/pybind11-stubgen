@@ -1,87 +1,126 @@
 name: CI
 
 on:
-  workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - master
+    workflow_dispatch:
+    pull_request:
+    push:
+        branches:
+            - master
 
 jobs:
 
-  format:
-    name: Format code
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install requirements
-        run: pip install -r requirements-dev.txt
-      - name: Run isort
-        run: isort --check --profile=black --diff ./pybind11_stubgen
-        if: ${{ failure() ||  success() }}
-      - name: Run black
-        run: black --diff ./pybind11_stubgen
-        if: ${{ failure() ||  success() }}
-      - name: Run flake8
-        run: |
-          flake8 \
-            --max-line-length=88 \
-            --extend-ignore=E203 \
-            --extend-exclude=venv/,.pytest_cache/,.ipynb_checkpoints/,tests/,tmp/,build/
-        if: ${{ failure() ||  success() }}
+    format:
+        name: Format code
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Setup Python
+                uses: actions/setup-python@v4
+                with:
+                    python-version: '3.11'
+            -   name: Checkout
+                uses: actions/checkout@v3
+            -   name: Install requirements
+                run: pip install -r requirements-dev.txt
+            -   name: Run isort
+                run: isort --check --profile=black --diff ./pybind11_stubgen
+                if: ${{ failure() ||  success() }}
+            -   name: Run black
+                run: black --diff ./pybind11_stubgen
+                if: ${{ failure() ||  success() }}
+            -   name: Run flake8
+                run: |
+                    flake8 \
+                      --max-line-length=88 \
+                      --extend-ignore=E203 \
+                      --extend-exclude=venv/,.pytest_cache/,.ipynb_checkpoints/,tests/,tmp/,build/
+                if: ${{ failure() ||  success() }}
 
-  tests:
-    name: "🐍 ${{ matrix.python }} • pybind-${{ matrix.pybind11-branch }}"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        pybind11-branch: [ "master" ]
-        python:
-          - "3.11"
-          - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
-    steps:
-      - uses: actions/checkout@v3
+    tests:
+        name: "Test 🐍 ${{ matrix.python }} • pybind-${{ matrix.pybind11-branch }}"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                pybind11-branch: [ "master" ]
+                python:
+                    - "3.11"
+                    - "3.10"
+                    - "3.9"
+                    - "3.8"
+                    - "3.7"
+        steps:
+            -   uses: actions/checkout@v3
 
-      - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
+            -   name: Setup Python ${{ matrix.python }}
+                uses: actions/setup-python@v4
+                with:
+                    python-version: ${{ matrix.python }}
 
-      - name: Update CMake
-        uses: jwlawson/actions-setup-cmake@v1.13
+            -   name: Update CMake
+                uses: jwlawson/actions-setup-cmake@v1.13
 
-      - name: Setup annotations on Linux
-        if: runner.os == 'Linux'
-        run: python -m pip install pytest-github-actions-annotate-failures
+            -   name: Setup annotations on Linux
+                if: runner.os == 'Linux'
+                run: python -m pip install pytest-github-actions-annotate-failures
 
-      - name: Install requirements
-        run: pip install -r "./tests/stubs/python-${{ matrix.python }}/requirements.txt"
+            -   name: Install requirements
+                run: pip install -r "./tests/stubs/python-${{ matrix.python }}/requirements.txt"
 
-      - name: Install pybind11-stubgen
-        run: pip install .
+            -   name: Install pybind11-stubgen
+                run: pip install .
 
-      - name: Install demo module
-        shell: bash
-        run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}"
+            -   name: Install demo module
+                shell: bash
+                run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}"
 
-      - name: Check stubs generation
-        shell: bash
-        run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}"
+            -   name: Check stubs generation
+                shell: bash
+                run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}"
 
-      - name: Archive patch
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}.patch"
-          path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
-          retention-days: 30
-          if-no-files-found: ignore
+            -   name: Archive patch
+                uses: actions/upload-artifact@v3
+                if: failure()
+                with:
+                    name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}.patch"
+                    path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
+                    retention-days: 30
+                    if-no-files-found: ignore
+    test-cli-options:
+        name: "Runs on 🐍 ${{ matrix.python }} • ${{ matrix.test-package }}"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                test-package: [ "gemmi" ]
+                python:
+                    - "3.11"
+                    - "3.10"
+                    - "3.9"
+                    - "3.8"
+                    - "3.7"
+        steps:
+            -   uses: actions/checkout@v3
+
+            -   name: Setup Python ${{ matrix.python }}
+                uses: actions/setup-python@v4
+                with:
+                    python-version: ${{ matrix.python }}
+
+            -   name: Setup annotations on Linux
+                if: runner.os == 'Linux'
+                run: python -m pip install pytest-github-actions-annotate-failures
+
+            -   name: Install pybind11-stubgen
+                run: pip install .
+
+            -   name: "Install ${{ matrix.test-package }}"
+                shell: bash
+                run: pip install "${{ matrix.test-package }}"
+
+            -   name: Generate stubs
+                shell: bash
+                run: |
+                    pybind11-stubgen "${{ matrix.test-package }}" -o flavour-1 --numpy-array-wrap-with-annotated
+                    pybind11-stubgen "${{ matrix.test-package }}" -o flavour-2 --numpy-array-remove-parameters
+                    pybind11-stubgen "${{ matrix.test-package }}" -o flavour-3 --print-invalid-expressions-as-is
+                    pybind11-stubgen "${{ matrix.test-package }}" --dry-run
