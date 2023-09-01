@@ -451,9 +451,10 @@ class FixValueReprRandomAddress(IParser):
         r"(?P<address>0x[a-fA-F0-9]+)>"
     )
 
-    def value_to_repr(self, value: Any) -> str:
-        result = super().value_to_repr(value)
-        return self._pattern.sub(r"<\g<name> object>", result)
+    def handle_value(self, value: Any) -> Value:
+        result = super().handle_value(value)
+        result.repr = self._pattern.sub(r"<\g<name> object>", result.repr)
+        return result
 
 
 class FixNumpyArrayDimAnnotation(IParser):

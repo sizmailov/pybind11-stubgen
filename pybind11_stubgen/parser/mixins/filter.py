@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import types
+import typing
 from typing import Any
 
 from pybind11_stubgen.parser.errors import InvalidIdentifierError
@@ -21,19 +22,29 @@ from pybind11_stubgen.structs import (
 )
 
 
+class FilterTypingModuleAttributes(IParser):
+    __sentinel = object()
+
+    def handle_attribute(self, path: QualifiedName, attr: Any) -> Attribute | None:
+        if getattr(typing, str(path[-1]), self.__sentinel) is attr:
+            return None
+        return super().handle_attribute(path, attr)
+
+
 class FilterClassMembers(IParser):
     __attribute_blacklist: set[Identifier] = {
         *map(
             Identifier,
             (
+                "__annotations__",
+                "__builtins__",
+                "__cached__",
                 "__file__",
                 "__loader__",
                 "__name__",
                 "__package__",
-                "__spec__",
                 "__path__",
-                "__cached__",
-                "__builtins__",
+                "__spec__",
             ),
         )
     }

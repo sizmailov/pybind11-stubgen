@@ -13,6 +13,7 @@ from pybind11_stubgen.parser.mixins.error_handlers import (
     IgnoreInvalidIdentifierErrors,
     IgnoreUnresolvedNameErrors,
     LogErrors,
+    LoggerData,
     SuggestCxxSignatureFix,
     TerminateOnFatalErrors,
 )
@@ -20,6 +21,7 @@ from pybind11_stubgen.parser.mixins.filter import (
     FilterClassMembers,
     FilterInvalidIdentifiers,
     FilterPybindInternals,
+    FilterTypingModuleAttributes,
 )
 from pybind11_stubgen.parser.mixins.fix import (
     FixBuiltinTypes,
@@ -157,6 +159,7 @@ def arg_parser() -> ArgumentParser:
 
 def stub_parser_from_args(args) -> IParser:
     error_handlers_top: list[type] = [
+        LoggerData,
         *([IgnoreAllErrors] if args.ignore_all_errors else []),
         *([IgnoreInvalidIdentifierErrors] if args.ignore_invalid_identifiers else []),
         *([IgnoreInvalidExpressionErrors] if args.ignore_invalid_expressions else []),
@@ -183,6 +186,7 @@ def stub_parser_from_args(args) -> IParser:
         FixMissing__all__Attribute,
         FixMissingNoneHashFieldAnnotation,
         FixMissingImports,
+        FilterTypingModuleAttributes,
         FixPEP585CollectionNames,
         FixTypingTypeNames,
         FixTypingExtTypeNames,

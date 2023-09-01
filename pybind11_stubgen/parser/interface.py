@@ -26,10 +26,6 @@ from pybind11_stubgen.structs import (
 
 class IParser(abc.ABC):
     @abc.abstractmethod
-    def is_print_safe(self, value: Value) -> bool:
-        ...
-
-    @abc.abstractmethod
     def handle_alias(self, path: QualifiedName, origin: Any) -> Alias | None:
         ...
 
@@ -111,10 +107,6 @@ class IParser(abc.ABC):
 
     @abc.abstractmethod
     def parse_value_str(self, value: str) -> Value:
-        ...
-
-    @abc.abstractmethod
-    def value_to_repr(self, value: Any) -> str:
         ...
 
     @abc.abstractmethod
