@@ -10,6 +10,6 @@ def args_mix(
     c: str = "",
     *args: int,
     x: int = 1,
-    y=...,
+    y=int,
     **kwargs: typing.Dict[int, str],
 ): ...
