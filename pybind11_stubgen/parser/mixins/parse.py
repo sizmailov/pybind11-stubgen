@@ -309,7 +309,7 @@ class BaseParser(IParser):
     def handle_value(self, value: Any) -> Value:
         value_type = type(value)
         # Use exact type match, not `isinstance()` that allows inherited types pass
-        if value is None or value_type in (int, str):
+        if value is None or value_type in (bool, int, str):
             return Value(repr=repr(value), is_print_safe=True)
         if value_type in (float, complex):
             try:
