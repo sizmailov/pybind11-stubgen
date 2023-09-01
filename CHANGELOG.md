@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 2.0 (Sep 1, 2023)
+--------------------------
+Changes:
+
+- 🐛 Explicitly set encoding of stubs to utf-8 (#133)
+- 🐛 Fix value representation for collections with print-unsafe elements (#132)
+
+
 Version 2.0.dev1 (Sep 1, 2023)
 --------------------------
 Changes:
