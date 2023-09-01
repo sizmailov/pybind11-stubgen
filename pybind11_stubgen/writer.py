@@ -21,7 +21,7 @@ class Writer:
         else:
             module_file = to / f"{module.name}.pyi"
 
-        with open(module_file, "w") as f:
+        with open(module_file, "w", encoding="utf-8") as f:
             f.writelines(line + "\n" for line in printer.print_module(module))
 
         for sub_module in module.sub_modules:
