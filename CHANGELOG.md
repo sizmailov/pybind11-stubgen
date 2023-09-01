@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 1.x (TBA)
+Version 2.0.dev1 (Sep 1, 2023)
 --------------------------
 Changes:
 
