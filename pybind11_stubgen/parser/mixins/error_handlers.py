@@ -12,34 +12,55 @@ from pybind11_stubgen.parser.errors import (
     ParserError,
 )
 from pybind11_stubgen.parser.interface import IParser
-from pybind11_stubgen.structs import Module, QualifiedName
-
-logger = getLogger("pybind11_stubgen")
+from pybind11_stubgen.structs import Class, Module, QualifiedName
 
 
-class LogErrors(IParser):
+class LoggerData(IParser):
     def __init__(self):
         super().__init__()
         self._seen_errors: set[str] = set()
-        self._module: str | None = None
+        self.__current_path: QualifiedName | None = None
 
     def handle_module(
         self, path: QualifiedName, module: types.ModuleType
     ) -> Module | None:
         old_errors = self._seen_errors
-        old_module = self._module
+        old_module = self.__current_path
         self._seen_errors = set()
-        self._module = str(path)
+        self.__current_path = path
         result = super().handle_module(path, module)
         self._seen_errors = old_errors
-        self._module = old_module
+        self.__current_path = old_module
         return result
 
-    def report_error(self, error: ParserError) -> None:
-        error_str = f"In {self._module} : {error}"
-        if error_str not in self._seen_errors:
+    def handle_class(self, path: QualifiedName, class_: type) -> Class | None:
+        old_errors = self._seen_errors
+        old_module = self.__current_path
+        self._seen_errors = set()
+        self.__current_path = path
+        result = super().handle_class(path, class_)
+        self._seen_errors = old_errors
+        self.__current_path = old_module
+        return result
+
+    @property
+    def current_path(self) -> QualifiedName:
+        return self.__current_path
+
+    @property
+    def reported_errors(self) -> set[str]:
+        return self._seen_errors
+
+
+logger = getLogger("pybind11_stubgen")
+
+
+class LogErrors(IParser):
+    def report_error(self: LoggerData, error: ParserError) -> None:
+        error_str = f"In {self.current_path} : {error}"
+        if error_str not in self.reported_errors:
             logger.error(error_str)
-            self._seen_errors.add(error_str)
+            self.reported_errors.add(error_str)
         super().report_error(error)
 
 
