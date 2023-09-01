@@ -210,3 +210,4 @@ cython_debug/
 
 tmp
 *.patch
+*.zip
