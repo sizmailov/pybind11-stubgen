@@ -157,44 +157,6 @@ class ParserDispatchMixin(IParser):
 
 
 class BaseParser(IParser):
-    def is_print_safe(self, value: Any) -> bool:
-        value_type = type(value)
-        # Use exact type match, not `isinstance()` that allows inherited types pass
-        if value is None or value_type in (int, str):
-            return True
-        if value_type in (float, complex):
-            try:
-                # checks for NaN, +inf, -inf
-                eval(repr(value))
-                return True
-            except (SyntaxError, NameError):
-                return False
-        if value_type in (list, tuple, set):
-            assert isinstance(value, (list, tuple, set))
-            for x in value:
-                if not self.is_print_safe(x):
-                    return False
-            return True
-        if value_type is dict:
-            assert isinstance(value, dict)
-            for k, v in value.items():
-                if not self.is_print_safe(k) or not self.is_print_safe(v):
-                    return False
-            return True
-        if inspect.isfunction(value):
-            module_name = getattr(value, "__module__", None)
-            qual_name = getattr(value, "__qualname__", None)
-            if (
-                module_name is not None
-                and "<" not in module_name
-                and qual_name is not None
-                and "<" not in qual_name
-            ):
-                return True
-        if inspect.ismodule(value):
-            return True
-        return False
-
     def handle_alias(self, path: QualifiedName, origin: Any) -> Alias | None:
         full_name = self._get_full_name(path, origin)
         if full_name is None:
@@ -345,10 +307,67 @@ class BaseParser(IParser):
         ]
 
     def handle_value(self, value: Any) -> Value:
-        result = self.parse_value_str(self.value_to_repr(value))
-        if self.is_print_safe(value):
-            result.is_print_safe = True
-        return result
+        value_type = type(value)
+        # Use exact type match, not `isinstance()` that allows inherited types pass
+        if value is None or value_type in (int, str):
+            return Value(repr=repr(value), is_print_safe=True)
+        if value_type in (float, complex):
+            try:
+                # checks for NaN, +inf, -inf
+                repr_str = repr(value)
+                eval(repr_str)
+                return Value(repr=repr_str, is_print_safe=True)
+            except (SyntaxError, NameError):
+                pass
+        if value_type in (list, tuple, set):
+            assert isinstance(value, (list, tuple, set))
+            if len(value) == 0:
+                return Value(repr=f"{value_type.__name__}()", is_print_safe=True)
+            elements: list[Value] = [self.handle_value(el) for el in value]
+            is_print_safe = all(el.is_print_safe for el in elements)
+            left, right = {
+                list: "[]",
+                tuple: "()",
+                set: "{}",
+            }[value_type]
+            return Value(
+                repr="".join([left, ", ".join(el.repr for el in elements), right]),
+                is_print_safe=is_print_safe,
+            )
+        if value_type is dict:
+            assert isinstance(value, dict)
+            parts = []
+            is_print_safe = True
+            for k, v in value.items():
+                k_value = self.handle_value(k)
+                v_value = self.handle_value(v)
+                parts.append(f"{k_value.repr}: {v_value.repr}")
+                is_print_safe = (
+                    is_print_safe and k_value.is_print_safe and v_value.is_print_safe
+                )
+
+            return Value(
+                repr="".join(["{", ", ".join(parts), "}"]), is_print_safe=is_print_safe
+            )
+        if inspect.isroutine(value):
+            module_name = getattr(value, "__module__", None)
+            qual_name = getattr(value, "__qualname__", None)
+            if (
+                module_name is not None
+                and "<" not in module_name
+                and qual_name is not None
+                and "<" not in qual_name
+            ):
+                if module_name == "builtins":
+                    repr_str = qual_name
+                else:
+                    repr_str = f"{module_name}.{qual_name}"
+                return Value(repr=repr_str, is_print_safe=True)
+        if inspect.isclass(value):
+            return Value(repr=str(self.handle_type(value)), is_print_safe=True)
+        if inspect.ismodule(value):
+            return Value(repr=value.__name__, is_print_safe=True)
+        return Value(repr=repr(value), is_print_safe=False)
 
     def handle_type(self, type_: type) -> QualifiedName:
         return QualifiedName(
@@ -363,22 +382,6 @@ class BaseParser(IParser):
 
     def parse_value_str(self, value: str) -> Value:
         return Value(value)
-
-    def value_to_repr(self, value: Any) -> str:
-        if inspect.ismodule(value):
-            return value.__name__
-        if inspect.isroutine(value):
-            parts = []
-            module = getattr(value, "__module__", None)
-            if module is not None:
-                parts.append(module)
-            name = getattr(value, "__qualname__", None)
-            if name is not None:
-                parts.append(name)
-            return ".".join(parts)
-        if value is ...:
-            return "..."
-        return repr(value)
 
     def report_error(self, error: ParserError):
         if isinstance(error, NameResolutionError):

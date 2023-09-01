@@ -20,6 +20,7 @@ from pybind11_stubgen.parser.mixins.filter import (
     FilterClassMembers,
     FilterInvalidIdentifiers,
     FilterPybindInternals,
+    FilterTypingModuleAttributes,
 )
 from pybind11_stubgen.parser.mixins.fix import (
     FixBuiltinTypes,
@@ -183,6 +184,7 @@ def stub_parser_from_args(args) -> IParser:
         FixMissing__all__Attribute,
         FixMissingNoneHashFieldAnnotation,
         FixMissingImports,
+        FilterTypingModuleAttributes,
         FixPEP585CollectionNames,
         FixTypingTypeNames,
         FixTypingExtTypeNames,
