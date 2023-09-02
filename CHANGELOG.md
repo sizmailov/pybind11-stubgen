@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+Version 2.0.1 (Sep 2, 2023)
+--------------------------
+Changes:
+
+- 🐛 Fix: missing subdirectories for top-level submodules (#136)
+
+
 Version 2.0 (Sep 1, 2023)
 --------------------------
 Changes:
@@ -31,11 +39,13 @@ Changes:
 - ✨ Support function-valued default arguments (#119)
 - 🐛 Fix missing properties docstrings (#118)
 
+
 Version 1.1 (Aug 30, 2023)
 --------------------------
 Changes:
 
 - Added `--dry-run` CLI option to skip writing stubs stage (#114 )
+
 
 Version 1.0-dev (Aug 29, 2023)
 ------------------------------
