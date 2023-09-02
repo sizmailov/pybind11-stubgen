@@ -233,13 +233,12 @@ def main():
     parser = stub_parser_from_args(args)
     printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
 
-    out_dir = Path(args.output_dir)
-    out_dir.mkdir(exist_ok=True)
+    out_dir, sub_dir = to_output_and_subdir(
+        output_dir=args.output_dir,
+        module_name=args.module_name,
+        root_suffix=args.root_suffix,
+    )
 
-    if args.root_suffix is None:
-        sub_dir = None
-    else:
-        sub_dir = Path(f"{args.module_name}{args.root_suffix}")
     run(
         parser,
         printer,
@@ -248,6 +247,24 @@ def main():
         sub_dir=sub_dir,
         dry_run=args.dry_run,
     )
+
+
+def to_output_and_subdir(
+    output_dir: Path, module_name: str, root_suffix: str | None
+) -> tuple[Path, Path | None]:
+    out_dir = Path(output_dir)
+
+    module_path = module_name.split(".")
+
+    if root_suffix is None:
+        return out_dir.joinpath(*module_path[:-1]), None
+    else:
+        module_path = [f"{module_path[0]}{root_suffix}", *module_path[1:]]
+        if len(module_path) == 1:
+            sub_dir = Path(module_path[-1])
+        else:
+            sub_dir = None
+        return out_dir.joinpath(*module_path[:-1]), sub_dir
 
 
 def run(
@@ -271,7 +288,7 @@ def run(
 
     writer = Writer()
 
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True, parents=True)
     writer.write_module(module, printer, to=out_dir, sub_dir=sub_dir)
 
 
