@@ -525,6 +525,7 @@ class FixNumpyArrayDimAnnotation(IParser):
             ],
         )
 
+        assert result.parameters is not None
         if (
             scalar_with_dims.parameters is not None
             and len(scalar_with_dims.parameters) >= 0
@@ -590,7 +591,7 @@ class FixNumpyArrayFlags(IParser):
         if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
             if result.parameters is not None:
                 for param in result.parameters:
-                    if param.name in self.__flags:
+                    if isinstance(param, ResolvedType) and param.name in self.__flags:
                         param.name = QualifiedName.from_str(
                             f"numpy.ndarray.{param.name}"
                         )
