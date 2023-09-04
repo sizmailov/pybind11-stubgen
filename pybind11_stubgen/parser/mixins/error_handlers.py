@@ -45,6 +45,7 @@ class LoggerData(IParser):
 
     @property
     def current_path(self) -> QualifiedName:
+        assert self.__current_path is not None
         return self.__current_path
 
     @property
