@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+Version 2.0.2 (Sep 4, 2023)
+--------------------------
+Changes:
+
+- 🐛 Fix: missing `isinstance` check (#138)
+
 Version 2.0.1 (Sep 2, 2023)
 --------------------------
 Changes:
