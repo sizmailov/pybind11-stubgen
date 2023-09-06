@@ -148,6 +148,16 @@ def arg_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--stub-extension",
+        type=str,
+        default="pyi",
+        metavar="EXT",
+        choices=["pyi", "py"],
+        help="The file extension of the generated stubs. "
+        "Must be 'pyi' (default) or 'py'",
+    )
+
+    parser.add_argument(
         "module_name",
         metavar="MODULE_NAME",
         type=str,
@@ -246,6 +256,7 @@ def main():
         out_dir,
         sub_dir=sub_dir,
         dry_run=args.dry_run,
+        writer=Writer(stub_ext=args.stub_extension),
     )
 
 
@@ -274,6 +285,7 @@ def run(
     out_dir: Path,
     sub_dir: Path | None,
     dry_run: bool,
+    writer: Writer,
 ):
     module = parser.handle_module(
         QualifiedName.from_str(module_name), importlib.import_module(module_name)
@@ -285,8 +297,6 @@ def run(
 
     if dry_run:
         return
-
-    writer = Writer()
 
     out_dir.mkdir(exist_ok=True, parents=True)
     writer.write_module(module, printer, to=out_dir, sub_dir=sub_dir)

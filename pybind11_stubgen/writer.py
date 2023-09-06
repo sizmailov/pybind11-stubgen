@@ -7,6 +7,10 @@ from pybind11_stubgen.structs import Module
 
 
 class Writer:
+    def __init__(self, stub_ext: str = "pyi"):
+        # assert stub_extension in ["pyi", "py"]
+        self.stub_ext: str = stub_ext
+
     def write_module(
         self, module: Module, printer: Printer, to: Path, sub_dir: Path | None = None
     ):
@@ -17,10 +21,9 @@ class Writer:
                 sub_dir = Path(module.name)
             module_dir = to / sub_dir
             module_dir.mkdir(exist_ok=True)
-            module_file = module_dir / "__init__.pyi"
+            module_file = module_dir / f"__init__.{self.stub_ext}"
         else:
-            module_file = to / f"{module.name}.pyi"
-
+            module_file = to / f"{module.name}.{self.stub_ext}"
         with open(module_file, "w", encoding="utf-8") as f:
             f.writelines(line + "\n" for line in printer.print_module(module))
 
