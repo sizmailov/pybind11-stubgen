@@ -28,8 +28,10 @@ pybind11-stubgen [-h]
                  [--ignore-invalid-identifiers REGEX]
                  [--ignore-unresolved-names REGEX]
                  [--ignore-all-errors]
-                 [--numpy-array-wrap-with-annotated-fixed-size| --numpy-array-remove-parameters]
+                 [--numpy-array-wrap-with-annotated|
+                  --numpy-array-remove-parameters]
                  [--print-invalid-expressions-as-is]
                  [--exit-code]
+                 [--stub-extension EXT]
                  MODULE_NAME
 ```
