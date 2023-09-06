@@ -2,6 +2,13 @@ Changelog
 =========
 
 
+Version 2.1 (Sep 6, 2023)
+--------------------------
+Changes:
+
+- ✨ Add `--stub-extension` CLI option (#142)
+
+
 Version 2.0.2 (Sep 4, 2023)
 --------------------------
 Changes:
