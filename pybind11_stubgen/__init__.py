@@ -117,6 +117,18 @@ def arg_parser() -> ArgumentParser:
         help="Ignore all errors during module parsing",
     )
 
+    parser.add_argument(
+        "--enum-class-locations",
+        dest="enum_class_locations",
+        metavar="REGEX:LOC",
+        default=[],
+        nargs="*",
+        type=regex_colon_path,
+        help="Locations of enum classes in "
+        "<enum-class-name-regex>:<path-to-class> format. "
+        "Example: `MyEnum:foo.bar.Baz`",
+    )
+
     numpy_array_fix = parser.add_mutually_exclusive_group()
     numpy_array_fix.add_argument(
         "--numpy-array-wrap-with-annotated",
@@ -139,18 +151,6 @@ def arg_parser() -> ArgumentParser:
         default=False,
         action="store_true",
         help="Suppress invalid expression replacement with '...'",
-    )
-
-    parser.add_argument(
-        "--enum-class-locations",
-        dest="enum_class_locations",
-        metavar="REGEX:LOC",
-        default=[],
-        nargs="*",
-        type=regex_colon_path,
-        help="Locations of enum classes in "
-        "<enum-class-name-regex>:<path-to-class> format. "
-        "Example: `MyEnum:foo.bar.Baz`",
     )
 
     parser.add_argument(

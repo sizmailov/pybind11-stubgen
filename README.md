@@ -28,6 +28,7 @@ pybind11-stubgen [-h]
                  [--ignore-invalid-identifiers REGEX]
                  [--ignore-unresolved-names REGEX]
                  [--ignore-all-errors]
+                 [--enum-class-locations [REGEX:LOC ...]]
                  [--numpy-array-wrap-with-annotated|
                   --numpy-array-remove-parameters]
                  [--print-invalid-expressions-as-is]
