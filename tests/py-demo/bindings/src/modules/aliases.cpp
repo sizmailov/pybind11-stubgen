@@ -72,7 +72,7 @@ void bind_aliases_module(py::module_ &&m) {
 
     m.def(
             "foreign_enum_default",
-            [](const py::object & /* color*/) {},
+            [](const py::object & /* color */) {},
             py::arg("color") = demo::sublibA::ConsoleForegroundColor::Blue
     );
 }
