@@ -40,6 +40,7 @@ run_stubgen() {
       --numpy-array-wrap-with-annotated \
       --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)|<demo\._bindings\.flawed_bindings\..*" \
       --ignore-unresolved-names="typing\.Annotated" \
+      --enum-class-locations="ConsoleForegroundColor:demo._bindings.enum" \
       --print-safe-value-reprs="Foo\(\d+\)" \
       --exit-code
 }

@@ -64,6 +64,12 @@ def arg_parser() -> ArgumentParser:
         except re.error as e:
             raise ValueError(f"Invalid REGEX pattern: {e}")
 
+    def regex_colon_path(regex_path: str) -> tuple[re.Pattern, str]:
+        pattern_str, path = regex_path.rsplit(":", maxsplit=1)
+        if any(not part.isidentifier() for part in path.split(".")):
+            raise ValueError(f"Invalid PATH: {path}")
+        return regex(pattern_str), path
+
     parser = ArgumentParser(
         prog="pybind11-stubgen", description="Generates stubs for specified modules"
     )
@@ -133,6 +139,18 @@ def arg_parser() -> ArgumentParser:
         default=False,
         action="store_true",
         help="Suppress invalid expression replacement with '...'",
+    )
+
+    parser.add_argument(
+        "--enum-class-locations",
+        dest="enum_class_locations",
+        metavar="REGEX:LOC",
+        default=[],
+        nargs="*",
+        type=regex_colon_path,
+        help="Locations of enum classes in "
+        "<enum-class-name-regex>:<path-to-class> format. "
+        "Example: `MyEnum:foo.bar.Baz`",
     )
 
     parser.add_argument(
@@ -236,6 +254,8 @@ def stub_parser_from_args(args) -> IParser:
 
     parser = Parser()
 
+    if args.enum_class_locations:
+        parser.set_pybind11_enum_locations(dict(args.enum_class_locations))
     if args.ignore_invalid_identifiers is not None:
         parser.set_ignored_invalid_identifiers(args.ignore_invalid_identifiers)
     if args.ignore_invalid_expressions is not None:
