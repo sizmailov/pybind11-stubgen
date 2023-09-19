@@ -36,6 +36,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixNumpyArrayFlags,
     FixNumpyArrayRemoveParameters,
     FixPEP585CollectionNames,
+    FixPrintSafeValues,
     FixPybind11EnumStrDoc,
     FixRedundantBuiltinsAnnotation,
     FixRedundantMethodsFromBuiltinObject,
@@ -134,6 +135,14 @@ def arg_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--print-safe-value-reprs",
+        metavar="REGEX",
+        default=None,
+        type=regex,
+        help="Override the print-safe check for values matching REGEX",
+    )
+
+    parser.add_argument(
         "--exit-code",
         action="store_true",
         dest="exit_code",
@@ -202,6 +211,7 @@ def stub_parser_from_args(args) -> IParser:
         FixTypingExtTypeNames,
         FixMissingFixedSizeImport,
         FixMissingEnumMembersAnnotation,
+        FixPrintSafeValues,
         *numpy_fixes,  # type: ignore[misc]
         FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
@@ -230,6 +240,8 @@ def stub_parser_from_args(args) -> IParser:
         parser.set_ignored_invalid_expressions(args.ignore_invalid_expressions)
     if args.ignore_unresolved_names is not None:
         parser.set_ignored_unresolved_names(args.ignore_unresolved_names)
+    if args.print_safe_value_reprs is not None:
+        parser.set_print_safe_value_pattern(args.print_safe_value_reprs)
     return parser
 
 

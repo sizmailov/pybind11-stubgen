@@ -39,8 +39,8 @@ run_stubgen() {
       --output-dir=${STUBS_DIR} \
       --numpy-array-wrap-with-annotated \
       --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)|<demo\._bindings\.flawed_bindings\..*" \
-      --ignore-invalid-expressions=\
       --ignore-unresolved-names="typing\.Annotated" \
+      --print-safe-value-reprs="Foo\(\d+\)" \
       --exit-code
 }
 

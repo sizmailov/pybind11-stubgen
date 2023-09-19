@@ -31,6 +31,7 @@ pybind11-stubgen [-h]
                  [--numpy-array-wrap-with-annotated|
                   --numpy-array-remove-parameters]
                  [--print-invalid-expressions-as-is]
+                 [--print-safe-value-reprs REGEX]
                  [--exit-code]
                  [--stub-extension EXT]
                  MODULE_NAME

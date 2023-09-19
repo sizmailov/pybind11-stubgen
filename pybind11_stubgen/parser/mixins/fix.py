@@ -751,3 +751,25 @@ class FixPybind11EnumStrDoc(IParser):
             method.modifier = None
             method.function.doc = None
         return result
+
+
+class FixPrintSafeValues(IParser):
+    _print_safe_values: re.Pattern | None
+
+    def __init__(self):
+        super().__init__()
+        self._print_safe_values = None
+
+    def set_print_safe_value_pattern(self, pattern: re.Pattern):
+        self._print_safe_values = pattern
+
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        result = super().parse_value_str(value)
+        if (
+            self._print_safe_values is not None
+            and isinstance(result, Value)
+            and not result.is_print_safe
+            and self._print_safe_values.match(result.repr) is not None
+        ):
+            result.is_print_safe = True
+        return result
