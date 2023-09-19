@@ -42,8 +42,10 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixTypingExtTypeNames,
     FixTypingTypeNames,
     FixValueReprRandomAddress,
+    OverridePrintSafeValues,
     RemoveSelfAnnotation,
     ReplaceReadWritePropertyWithField,
+    RewritePybind11EnumValueRepr,
 )
 from pybind11_stubgen.parser.mixins.parse import (
     BaseParser,
@@ -61,6 +63,12 @@ def arg_parser() -> ArgumentParser:
             return re.compile(pattern_str)
         except re.error as e:
             raise ValueError(f"Invalid REGEX pattern: {e}")
+
+    def regex_colon_path(regex_path: str) -> tuple[re.Pattern, str]:
+        pattern_str, path = regex_path.rsplit(":", maxsplit=1)
+        if any(not part.isidentifier() for part in path.split(".")):
+            raise ValueError(f"Invalid PATH: {path}")
+        return regex(pattern_str), path
 
     parser = ArgumentParser(
         prog="pybind11-stubgen", description="Generates stubs for specified modules"
@@ -109,6 +117,18 @@ def arg_parser() -> ArgumentParser:
         help="Ignore all errors during module parsing",
     )
 
+    parser.add_argument(
+        "--enum-class-locations",
+        dest="enum_class_locations",
+        metavar="REGEX:LOC",
+        default=[],
+        nargs="*",
+        type=regex_colon_path,
+        help="Locations of enum classes in "
+        "<enum-class-name-regex>:<path-to-class> format. "
+        "Example: `MyEnum:foo.bar.Baz`",
+    )
+
     numpy_array_fix = parser.add_mutually_exclusive_group()
     numpy_array_fix.add_argument(
         "--numpy-array-wrap-with-annotated",
@@ -131,6 +151,14 @@ def arg_parser() -> ArgumentParser:
         default=False,
         action="store_true",
         help="Suppress invalid expression replacement with '...'",
+    )
+
+    parser.add_argument(
+        "--print-safe-value-reprs",
+        metavar="REGEX",
+        default=None,
+        type=regex,
+        help="Override the print-safe check for values matching REGEX",
     )
 
     parser.add_argument(
@@ -202,10 +230,12 @@ def stub_parser_from_args(args) -> IParser:
         FixTypingExtTypeNames,
         FixMissingFixedSizeImport,
         FixMissingEnumMembersAnnotation,
+        OverridePrintSafeValues,
         *numpy_fixes,  # type: ignore[misc]
         FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
         FixBuiltinTypes,
+        RewritePybind11EnumValueRepr,
         FilterClassMembers,
         ReplaceReadWritePropertyWithField,
         FilterInvalidIdentifiers,
@@ -224,12 +254,16 @@ def stub_parser_from_args(args) -> IParser:
 
     parser = Parser()
 
+    if args.enum_class_locations:
+        parser.set_pybind11_enum_locations(dict(args.enum_class_locations))
     if args.ignore_invalid_identifiers is not None:
         parser.set_ignored_invalid_identifiers(args.ignore_invalid_identifiers)
     if args.ignore_invalid_expressions is not None:
         parser.set_ignored_invalid_expressions(args.ignore_invalid_expressions)
     if args.ignore_unresolved_names is not None:
         parser.set_ignored_unresolved_names(args.ignore_unresolved_names)
+    if args.print_safe_value_reprs is not None:
+        parser.set_print_safe_value_pattern(args.print_safe_value_reprs)
     return parser
 
 

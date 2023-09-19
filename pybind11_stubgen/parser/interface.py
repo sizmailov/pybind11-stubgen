@@ -106,7 +106,7 @@ class IParser(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def parse_value_str(self, value: str) -> Value:
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
         ...
 
     @abc.abstractmethod

@@ -5,6 +5,7 @@ import importlib
 import inspect
 import re
 import types
+from logging import getLogger
 from typing import Any
 
 from pybind11_stubgen.parser.errors import NameResolutionError, ParserError
@@ -28,6 +29,8 @@ from pybind11_stubgen.structs import (
     Value,
 )
 from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
+
+logger = getLogger("pybind11_stubgen")
 
 
 class RemoveSelfAnnotation(IParser):
@@ -363,7 +366,7 @@ class FixTypingExtTypeNames(IParser):
     __typing_names: set[Identifier] = set(
         map(
             Identifier,
-            ["buffer"],
+            ["buffer", "Buffer"],
         )
     )
 
@@ -751,3 +754,63 @@ class FixPybind11EnumStrDoc(IParser):
             method.modifier = None
             method.function.doc = None
         return result
+
+
+class OverridePrintSafeValues(IParser):
+    _print_safe_values: re.Pattern | None
+
+    def __init__(self):
+        super().__init__()
+        self._print_safe_values = None
+
+    def set_print_safe_value_pattern(self, pattern: re.Pattern):
+        self._print_safe_values = pattern
+
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        result = super().parse_value_str(value)
+        if (
+            self._print_safe_values is not None
+            and isinstance(result, Value)
+            and not result.is_print_safe
+            and self._print_safe_values.match(result.repr) is not None
+        ):
+            result.is_print_safe = True
+        return result
+
+
+class RewritePybind11EnumValueRepr(IParser):
+    _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>\d+)>")
+    _unknown_enum_classes: set[str] = set()
+
+    def __init__(self):
+        super().__init__()
+        self._pybind11_enum_locations: dict[re.Pattern, str] = {}
+
+    def set_pybind11_enum_locations(self, locations: dict[re.Pattern, str]):
+        self._pybind11_enum_locations = locations
+
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        value = value.strip()
+        match = self._pybind11_enum_pattern.match(value)
+        if match is not None:
+            enum_qual_name = match.group("enum")
+            enum_class_str, entry = enum_qual_name.rsplit(".", maxsplit=1)
+            for pattern, prefix in self._pybind11_enum_locations.items():
+                if pattern.match(enum_class_str) is None:
+                    continue
+                enum_class = self.parse_annotation_str(f"{prefix}.{enum_class_str}")
+                if isinstance(enum_class, ResolvedType):
+                    return Value(repr=f"{enum_class.name}.{entry}", is_print_safe=True)
+            self._unknown_enum_classes.add(enum_class_str)
+        return super().parse_value_str(value)
+
+    def finalize(self):
+        if self._unknown_enum_classes:
+            logger.warning(
+                "Enum-like str representations were found with no "
+                "matching mapping to the enum class location.\n"
+                "Use `--enum-class-locations` to specify "
+                "full path to the following enum(s):\n"
+                + "\n".join(f" - {c}" for c in self._unknown_enum_classes)
+            )
+        super().finalize()

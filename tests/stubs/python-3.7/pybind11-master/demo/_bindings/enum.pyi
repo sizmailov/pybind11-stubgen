@@ -54,7 +54,9 @@ class ConsoleForegroundColor:
     @property
     def value(self) -> int: ...
 
-def accept_defaulted_enum(color: ConsoleForegroundColor = ...) -> None: ...
+def accept_defaulted_enum(
+    color: ConsoleForegroundColor = ConsoleForegroundColor.Blue,
+) -> None: ...
 
 Blue: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Blue: 34>
 Green: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Green: 32>

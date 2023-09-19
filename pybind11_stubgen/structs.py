@@ -97,7 +97,7 @@ class Argument:
     kw_only: bool = field_(default=False)
     variadic: bool = field_(default=False)  # *args
     kw_variadic: bool = field_(default=False)  # **kwargs
-    default: Value | None = field_(default=None)
+    default: Value | InvalidExpression | None = field_(default=None)
     annotation: Annotation | None = field_(default=None)
 
     def __str__(self):
