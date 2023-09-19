@@ -753,7 +753,7 @@ class FixPybind11EnumStrDoc(IParser):
         return result
 
 
-class FixPrintSafeValues(IParser):
+class OverridePrintSafeValues(IParser):
     _print_safe_values: re.Pattern | None
 
     def __init__(self):
@@ -773,3 +773,18 @@ class FixPrintSafeValues(IParser):
         ):
             result.is_print_safe = True
         return result
+
+
+class RewritePybind11EnumValueRepr(IParser):
+    _pybind11_enum_pattern: re.Pattern = re.compile(
+        r"<(?P<enum>\w+(\.\w+)+): (?P<value>\d+)>"
+    )
+
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        match = self._pybind11_enum_pattern.match(value.strip())
+        if match is not None:
+            enum_qual_name = match.group("enum")
+            # Call parse_annotation to trigger auto imports
+            self.parse_annotation_str(enum_qual_name)
+            return Value(repr=enum_qual_name, is_print_safe=True)
+        return super().parse_value_str(value)
