@@ -380,8 +380,8 @@ class BaseParser(IParser):
             )
         )
 
-    def parse_value_str(self, value: str) -> Value:
-        return Value(value)
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        return self._parse_expression_str(value)
 
     def report_error(self, error: ParserError):
         if isinstance(error, NameResolutionError):
@@ -427,6 +427,21 @@ class BaseParser(IParser):
                 self.report_error(InvalidIdentifierError(part, path))
                 return None
         return origin_name
+
+    def _parse_expression_str(self, expr_str: str) -> Value | InvalidExpression:
+        strip_expr = expr_str.strip()
+        try:
+            ast.parse(strip_expr)
+            print_safe = False
+            try:
+                ast.literal_eval(strip_expr)
+                print_safe = True
+            except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+                pass
+            return Value(strip_expr, is_print_safe=print_safe)
+        except SyntaxError:
+            self.report_error(InvalidExpressionError(strip_expr))
+            return InvalidExpression(strip_expr)
 
 
 class ExtractSignaturesFromPybind11Docstrings(IParser):
@@ -571,7 +586,7 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
         annotation_str = annotation_str.strip()
         match = qname_regex.match(annotation_str)
         if match is None:
-            return self._parse_expression_str(annotation_str)
+            return self.parse_value_str(annotation_str)
         qual_name = QualifiedName(
             Identifier(part)
             for part in match.group("qual_name").replace(" ", "").split(".")
@@ -582,24 +597,16 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
             parameters = None
         else:
             if parameters_str[0] != "[" or parameters_str[-1] != "]":
-                return self._parse_expression_str(annotation_str)
+                return self.parse_value_str(annotation_str)
 
             split_parameters = self._split_parameters_str(parameters_str[1:-1])
             if split_parameters is None:
-                return self._parse_expression_str(annotation_str)
+                return self.parse_value_str(annotation_str)
 
             parameters = [
                 self.parse_annotation_str(param_str) for param_str in split_parameters
             ]
         return ResolvedType(name=qual_name, parameters=parameters)
-
-    def _parse_expression_str(self, expr_str: str) -> Value | InvalidExpression:
-        try:
-            ast.parse(expr_str)
-            return self.parse_value_str(expr_str)
-        except SyntaxError:
-            self.report_error(InvalidExpressionError(expr_str))
-            return InvalidExpression(expr_str)
 
     def parse_function_docstring(
         self, func_name: Identifier, doc_lines: list[str]

@@ -61,11 +61,13 @@ class Printer:
         parts.append(f"{arg.name}")
         if arg.annotation is not None:
             parts.append(f": {self.print_annotation(arg.annotation)}")
-        if arg.default is not None:
+        if isinstance(arg.default, Value):
             if arg.default.is_print_safe:
                 parts.append(f" = {self.print_value(arg.default)}")
             else:
                 parts.append(" = ...")
+        elif isinstance(arg.default, InvalidExpression):
+            parts.append(f" = {self.print_invalid_exp(arg.default)}")
 
         return "".join(parts)
 
