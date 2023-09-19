@@ -366,7 +366,7 @@ class FixTypingExtTypeNames(IParser):
     __typing_names: set[Identifier] = set(
         map(
             Identifier,
-            ["buffer"],
+            ["buffer", "Buffer"],
         )
     )
 
