@@ -1,15 +1,21 @@
 #include "modules.h"
 
 #include <demo/Foo.h>
+#include <demo/sublibA/ConsoleColors.h>
 
 namespace {
-class Dummy {};
+    class Dummy {
+    };
 
-struct Color {};
+    struct Color {
+    };
 
-struct Bar1 {};
-struct Bar2 {};
-struct Bar3 {};
+    struct Bar1 {
+    };
+    struct Bar2 {
+    };
+    struct Bar3 {
+    };
 } // namespace
 
 void bind_aliases_module(py::module_ &&m) {
@@ -18,7 +24,7 @@ void bind_aliases_module(py::module_ &&m) {
         auto &&pyDummy = py::class_<Dummy>(m, "Dummy");
 
         pyDummy.def_property_readonly_static(
-            "linalg", [](py::object &) { return py::module::import("numpy.linalg"); });
+                "linalg", [](py::object &) { return py::module::import("numpy.linalg"); });
 
         m.add_object("random", py::module::import("numpy.random"));
     }
@@ -63,4 +69,10 @@ void bind_aliases_module(py::module_ &&m) {
         m.attr("foreign_type_alias") = m.attr("foreign_method_arg").attr("Bar2");
         m.attr("foreign_class_alias") = m.attr("foreign_return").attr("get_foo");
     }
+
+    m.def(
+            "foreign_enum_default",
+            [](const py::object & /* color*/) {},
+            py::arg("color") = demo::sublibA::ConsoleForegroundColor::Blue
+    );
 }
