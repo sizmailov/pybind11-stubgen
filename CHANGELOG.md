@@ -2,6 +2,22 @@ Changelog
 =========
 
 
+Version 2.2 (Sep 20, 2023)
+--------------------------
+Changes:
+
+- 🐛 Fix: Python literals as default arg rendered as `...` (#147)
+- ✨ Add `--print-safe-value-reprs=REGEX` CLI option to override the print-safe flag
+     of Value (for custom default value representations provided via `pybind11::arg_v()`)  (#147)
+- ✨ Add `--enum-class-locations=REGEX:LOC` CLI option to rewrite enum values as valid
+     Python expressions with correct imports. (#147)
+
+⚠️ This release detects more invalid expressions in bindings code.
+  Previously Enum-like representations (e.g. `<MyEnum.Zero: 0>`) were always treated
+  as non-printable values and were rendered as `...`.
+  The invalid expressions should be acknowledged by `--enum-class-locations` or `--ignore-invalid-expressions`.
+
+
 Version 2.1 (Sep 6, 2023)
 --------------------------
 Changes:
