@@ -150,7 +150,8 @@ def arg_parser() -> ArgumentParser:
         "--print-invalid-expressions-as-is",
         default=False,
         action="store_true",
-        help="Suppress invalid expression replacement with '...'",
+        help="Suppress the replacement with '...' of invalid expressions"
+        "found in annotations",
     )
 
     parser.add_argument(
