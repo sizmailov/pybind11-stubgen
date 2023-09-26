@@ -7,6 +7,7 @@ __all__ = [
     "ConsoleForegroundColor",
     "Green",
     "Magenta",
+    "None_",
     "Yellow",
     "accept_defaulted_enum",
 ]
@@ -22,6 +23,8 @@ class ConsoleForegroundColor:
       Blue
 
       Magenta
+
+      None_
     """
 
     Blue: typing.ClassVar[
@@ -33,12 +36,15 @@ class ConsoleForegroundColor:
     Magenta: typing.ClassVar[
         ConsoleForegroundColor
     ]  # value = <ConsoleForegroundColor.Magenta: 35>
+    None_: typing.ClassVar[
+        ConsoleForegroundColor
+    ]  # value = <ConsoleForegroundColor.None_: -1>
     Yellow: typing.ClassVar[
         ConsoleForegroundColor
     ]  # value = <ConsoleForegroundColor.Yellow: 33>
     __members__: typing.ClassVar[
         dict[str, ConsoleForegroundColor]
-    ]  # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>}
+    ]  # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>, 'None_': <ConsoleForegroundColor.None_: -1>}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -55,10 +61,11 @@ class ConsoleForegroundColor:
     def value(self) -> int: ...
 
 def accept_defaulted_enum(
-    color: ConsoleForegroundColor = ConsoleForegroundColor.Blue,
+    color: ConsoleForegroundColor = ConsoleForegroundColor.None_,
 ) -> None: ...
 
 Blue: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Blue: 34>
 Green: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Green: 32>
 Magenta: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Magenta: 35>
+None_: ConsoleForegroundColor  # value = <ConsoleForegroundColor.None_: -1>
 Yellow: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Yellow: 33>

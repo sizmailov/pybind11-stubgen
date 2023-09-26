@@ -779,7 +779,8 @@ class OverridePrintSafeValues(IParser):
 
 
 class RewritePybind11EnumValueRepr(IParser):
-    _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>\d+)>")
+    _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>-?\d+)>")
+    # _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>\d+)>")
     _unknown_enum_classes: set[str] = set()
 
     def __init__(self):

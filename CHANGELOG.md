@@ -1,11 +1,16 @@
 Changelog
 =========
 
+Version 2.2.1 (Sep 23, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Missing `-?` in eum representation regex
+
 
 Version 2.2.1 (Sep 23, 2023)
 --------------------------
 Changes:
-- 📝 Updater `--print-invalid-expressions-as-is` description
+- 📝 Update `--print-invalid-expressions-as-is` description
 
 Version 2.2 (Sep 20, 2023)
 --------------------------
