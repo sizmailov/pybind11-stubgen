@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 2.2.1 (Sep 23, 2023)
+Version 2.2.2 (Sep 26, 2023)
 --------------------------
 Changes:
 - 🐛 fix: Missing `-?` in eum representation regex
