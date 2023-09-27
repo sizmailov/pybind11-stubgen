@@ -121,8 +121,8 @@ def arg_parser() -> ArgumentParser:
         "--enum-class-locations",
         dest="enum_class_locations",
         metavar="REGEX:LOC",
+        action="append",
         default=[],
-        nargs="*",
         type=regex_colon_path,
         help="Locations of enum classes in "
         "<enum-class-name-regex>:<path-to-class> format. "

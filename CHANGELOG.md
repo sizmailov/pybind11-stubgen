@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3 (Sep 27, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Inconsistent `--enum-class-locations` behaviour (#158)
+
+
 Version 2.2.2 (Sep 26, 2023)
 --------------------------
 Changes:
@@ -11,6 +17,7 @@ Version 2.2.1 (Sep 23, 2023)
 --------------------------
 Changes:
 - 📝 Update `--print-invalid-expressions-as-is` description
+
 
 Version 2.2 (Sep 20, 2023)
 --------------------------
