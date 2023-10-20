@@ -502,7 +502,7 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
                 result.doc == result.getter.doc
                 or result.doc
                 == self._strip_empty_lines(
-                    getattr(prop.fget, "__doc__", "").splitlines()
+                    (getattr(prop.fget, "__doc__", "") or "").splitlines()
                 )
             )
         ):
