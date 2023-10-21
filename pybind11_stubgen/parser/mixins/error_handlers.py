@@ -12,45 +12,59 @@ from pybind11_stubgen.parser.errors import (
     ParserError,
 )
 from pybind11_stubgen.parser.interface import IParser
-from pybind11_stubgen.structs import Class, Module, QualifiedName
+from pybind11_stubgen.structs import Class, Function, Method, Module, QualifiedName
+
+
+class LocalErrors:
+    def __init__(self, path: QualifiedName, errors: set[str], stack: list[LocalErrors]):
+        self.path: QualifiedName = path
+        self.errors: set[str] = errors
+        self._stack: list[LocalErrors] = stack
+
+    def __enter__(self) -> LocalErrors:
+        self._stack.append(self)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        top = self._stack.pop()
+        assert top == self
 
 
 class LoggerData(IParser):
     def __init__(self):
         super().__init__()
-        self._seen_errors: set[str] = set()
-        self.__current_path: QualifiedName | None = None
+        self.stack: list[LocalErrors] = []
+
+    def __new_layer(self, path: QualifiedName) -> LocalErrors:
+        return LocalErrors(path, errors=set(), stack=self.stack)
 
     def handle_module(
         self, path: QualifiedName, module: types.ModuleType
     ) -> Module | None:
-        old_errors = self._seen_errors
-        old_module = self.__current_path
-        self._seen_errors = set()
-        self.__current_path = path
-        result = super().handle_module(path, module)
-        self._seen_errors = old_errors
-        self.__current_path = old_module
-        return result
+        with self.__new_layer(path):
+            return super().handle_module(path, module)
 
     def handle_class(self, path: QualifiedName, class_: type) -> Class | None:
-        old_errors = self._seen_errors
-        old_module = self.__current_path
-        self._seen_errors = set()
-        self.__current_path = path
-        result = super().handle_class(path, class_)
-        self._seen_errors = old_errors
-        self.__current_path = old_module
-        return result
+        with self.__new_layer(path):
+            return super().handle_class(path, class_)
+
+    def handle_function(self, path: QualifiedName, class_: type) -> list[Function]:
+        with self.__new_layer(path):
+            return super().handle_function(path, class_)
+
+    def handle_method(self, path: QualifiedName, class_: type) -> list[Method]:
+        with self.__new_layer(path):
+            return super().handle_method(path, class_)
 
     @property
     def current_path(self) -> QualifiedName:
-        assert self.__current_path is not None
-        return self.__current_path
+        assert len(self.stack) != 0
+        return self.stack[-1].path
 
     @property
     def reported_errors(self) -> set[str]:
-        return self._seen_errors
+        assert len(self.stack) != 0
+        return self.stack[-1].errors
 
 
 logger = getLogger("pybind11_stubgen")
