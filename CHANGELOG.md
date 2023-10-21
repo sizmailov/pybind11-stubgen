@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 2.3.1 (Oct 21, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Crash on `None`-valued docstring of property getter (#161)
+
 Version 2.3 (Sep 27, 2023)
 --------------------------
 Changes:
