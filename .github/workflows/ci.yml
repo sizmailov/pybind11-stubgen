@@ -43,6 +43,7 @@ jobs:
             matrix:
                 pybind11-branch: [ "master" ]
                 python:
+                    - "3.12"
                     - "3.11"
                     - "3.10"
                     - "3.9"
