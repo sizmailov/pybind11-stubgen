@@ -86,6 +86,10 @@ jobs:
                     path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
                     retention-days: 30
                     if-no-files-found: ignore
+            -  name: Check error generation
+               shell: bash
+               run: ./tests/check-demo-errors-generation.sh
+
     test-cli-options:
         name: "Runs on 🐍 ${{ matrix.python }} • ${{ matrix.test-package }}"
         runs-on: ubuntu-latest
