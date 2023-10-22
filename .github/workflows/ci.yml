@@ -6,6 +6,8 @@ on:
     push:
         branches:
             - master
+        tags:
+            - 'v*'
 
 jobs:
 
@@ -130,3 +132,31 @@ jobs:
                     pybind11-stubgen "${{ matrix.test-package }}" -o flavour-2 --numpy-array-remove-parameters
                     pybind11-stubgen "${{ matrix.test-package }}" -o flavour-3 --print-invalid-expressions-as-is
                     pybind11-stubgen "${{ matrix.test-package }}" --dry-run
+
+    publish:
+        name: Publish distribution
+        needs : [format, tests, test-cli-options]
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v3
+
+            -   name: Setup Python ${{ matrix.python }}
+                uses: actions/setup-python@v2
+                with:
+                    python-version: "3.10"
+
+            -   name: Build dist
+                run: pipx run build --sdist --wheel
+
+            -   uses: actions/upload-artifact@v2
+                with:
+                    path: |
+                        dist/*.tar.gz
+                        dist/*.whl
+
+            -   uses: pypa/gh-action-pypi-publish@v1.4.2
+                with:
+                    user: __token__
+                    password: ${{ secrets.PYPI_API_TOKEN }}
