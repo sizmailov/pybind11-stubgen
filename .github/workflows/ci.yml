@@ -88,7 +88,6 @@ jobs:
                     if-no-files-found: ignore
 
             -  name: Check error generation
-               if: ${{ !contains(fromJson('["3.7", "3.8"]'), matrix.python) }}
                shell: bash
                run: ./tests/check-demo-errors-generation.sh
 
