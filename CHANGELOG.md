@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3.3 (Oct 22, 2023)
+--------------------------
+Changes:
+- 🐛 fix: The `typing.Annotated` does not exist in python < 3.9, use `typing_extensions` (#168)
+
+
 Version 2.3.2 (Oct 21, 2023)
 --------------------------
 Changes:
