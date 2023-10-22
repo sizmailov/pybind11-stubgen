@@ -4,6 +4,7 @@ import builtins
 import importlib
 import inspect
 import re
+import sys
 import types
 from logging import getLogger
 from typing import Any
@@ -323,26 +324,43 @@ class FixTypingTypeNames(IParser):
             Identifier,
             [
                 "Annotated",
+                "Any",
+                "Buffer",
                 "Callable",
                 "Dict",
-                "Iterator",
                 "ItemsView",
                 "Iterable",
+                "Iterator",
                 "KeysView",
                 "List",
                 "Optional",
-                "Set",
                 "Sequence",
+                "Set",
                 "Tuple",
                 "Union",
                 "ValuesView",
                 # Old pybind11 annotations were not capitalized
-                "iterator",
+                "buffer",
                 "iterable",
+                "iterator",
                 "sequence",
             ],
         )
     )
+    __typing_extensions_names: set[Identifier] = set(
+        map(
+            Identifier,
+            [
+                "Buffer",
+            ],
+        )
+    )
+
+    def __init__(self):
+        super().__init__()
+        py_version = sys.version_info[:2]
+        if py_version < (3, 9):
+            self.__typing_extensions_names.add(Identifier("Annotated"))
 
     def parse_annotation_str(
         self, annotation_str: str
@@ -353,36 +371,17 @@ class FixTypingTypeNames(IParser):
 
         word = result.name[0]
         if word in self.__typing_names:
-            result.name = QualifiedName.from_str(f"typing.{word[0].upper()}{word[1:]}")
+            package = "typing"
+            if word in self.__typing_extensions_names:
+                package = "typing_extensions"
+            result.name = QualifiedName.from_str(
+                f"{package}.{word[0].upper()}{word[1:]}"
+            )
         if word == "function" and result.parameters is None:
             result.name = QualifiedName.from_str("typing.Callable")
         if word in ("object", "handle") and result.parameters is None:
             result.name = QualifiedName.from_str("typing.Any")
 
-        return result
-
-
-class FixTypingExtTypeNames(IParser):
-    __typing_names: set[Identifier] = set(
-        map(
-            Identifier,
-            ["buffer", "Buffer"],
-        )
-    )
-
-    def parse_annotation_str(
-        self, annotation_str: str
-    ) -> ResolvedType | InvalidExpression | Value:
-        result = super().parse_annotation_str(annotation_str)
-        if not isinstance(result, ResolvedType):
-            return result
-        assert len(result.name) > 0
-
-        word = result.name[0]
-        if word in self.__typing_names and result.parameters is None:
-            result.name = QualifiedName.from_str(
-                f"typing_extensions.{word[0].upper()}{word[1:]}"
-            )
         return result
 
 
@@ -469,7 +468,10 @@ class FixNumpyArrayDimAnnotation(IParser):
             for arr in ["array", "matrix"]
         ),
     }
-    __annotated_name = QualifiedName.from_str("typing.Annotated")
+    # NB: Not using full name due to ambiguity `typing.Annotated` vs
+    #     `typing_extension.Annotated` in different python versions
+    #     Rely on later fix by `FixTypingTypeNames`
+    __annotated_name = QualifiedName.from_str("Annotated")
     numpy_primitive_types: set[QualifiedName] = set(
         map(
             lambda name: QualifiedName.from_str(f"numpy.{name}"),
