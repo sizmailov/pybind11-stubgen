@@ -468,7 +468,10 @@ class FixNumpyArrayDimAnnotation(IParser):
             for arr in ["array", "matrix"]
         ),
     }
-    __annotated_name = QualifiedName.from_str("typing.Annotated")
+    # NB: Not using full name due to ambiguity `typing.Annotated` vs
+    #     `typing_extension.Annotated` in different python versions
+    #     Rely on later fix by `FixTypingTypeNames`
+    __annotated_name = QualifiedName.from_str("Annotated")
     numpy_primitive_types: set[QualifiedName] = set(
         map(
             lambda name: QualifiedName.from_str(f"numpy.{name}"),
