@@ -347,15 +347,20 @@ class FixTypingTypeNames(IParser):
             ],
         )
     )
-    __typing_extensions_names: set[Identifier] = set()
+    __typing_extensions_names: set[Identifier] = set(
+        map(
+            Identifier,
+            [
+                "Buffer",
+            ],
+        )
+    )
 
     def __init__(self):
         super().__init__()
         py_version = sys.version_info[:2]
         if py_version < (3, 9):
             self.__typing_extensions_names.add(Identifier("Annotated"))
-        if py_version < (3, 12):
-            self.__typing_extensions_names.add(Identifier("Buffer"))
 
     def parse_annotation_str(
         self, annotation_str: str
