@@ -28,7 +28,7 @@ int WithPropDoc::static_value = 0;
 int WithGetterSetterDoc::static_value = 0;
 int WithPropAndGetterSetterDoc::static_value = 0;
 
-void bind_properties_module(py::module_ &&m) {
+void bind_properties_module(py::module &&m) {
     {
         auto &&pyDummy = py::class_<WithoutDoc>(m, "WithoutDoc", "No user docstring provided");
 

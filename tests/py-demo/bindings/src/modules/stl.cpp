@@ -7,7 +7,7 @@
 #include <map>
 #include <variant>
 
-void bind_stl_module(py::module_ &&m) {
+void bind_stl_module(py::module &&m) {
     m.def("std_map", [] { return std::map<int, std::complex<double>>{}; });
     m.def("std_vector", [] { return std::vector<std::pair<int, double>>{}; });
     m.def("std_array", [](const std::array<int, 3> &a) { return a; });

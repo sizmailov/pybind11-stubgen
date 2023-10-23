@@ -2,7 +2,7 @@
 
 #include <demo/sublibA/ConsoleColors.h>
 
-void bind_enum_module(py::module_&&m) {
+void bind_enum_module(py::module&&m) {
 
     py::enum_<demo::sublibA::ConsoleForegroundColor>(m, "ConsoleForegroundColor")
         .value("Green", demo::sublibA::ConsoleForegroundColor::Green)

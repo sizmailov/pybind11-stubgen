@@ -1,7 +1,10 @@
-#include <pybind11/typing.h>
-#include <pybind11/stl.h>
-
 #include "modules.h"
+
+#if PYBIND11_VERSION_MAJOR == 2 && PYBIND11_VERSION_MINOR >= 11
+#include <pybind11/typing.h>
+#endif
+
+#include <pybind11/stl.h>
 
 #include <demo/sublibA/add.h>
 
@@ -15,7 +18,7 @@ namespace {
     };
 }; // namespace
 
-void bind_functions_module(py::module_ &&m) {
+void bind_functions_module(py::module &&m) {
     m.def("add", demo::sublibA::add);
     {
 
@@ -35,6 +38,7 @@ void bind_functions_module(py::module_ &&m) {
 
     m.def("func_w_anon_args", [](int x, int y, int z) {});
 
+#if PYBIND11_VERSION_AT_LEAST(2, 6)
     m.def(
             "func_w_named_pos_args",
             [](int x, int y, int z) {},
@@ -61,15 +65,19 @@ void bind_functions_module(py::module_ &&m) {
             py::arg("j"),
             py::kw_only(),
             py::arg("k"));
-
+#endif
     m.def("accept_callable", [](py::function &callable) { return callable(); });
     m.def("accept_py_object", [](py::object &object) { return py::str(object); });
     m.def("accept_py_handle", [](py::handle &handle) { return py::str(handle); });
 
+#if PYBIND11_VERSION_AT_LEAST(2, 12)
     m.def("accept_annotated_callable",
           [](py::typing::Callable<int(int, int)> &callable) { return callable(13, 42); });
+#endif
 
+#if PYBIND11_VERSION_AT_LEAST(2, 10)
     m.def("accept_frozenset", [](const py::frozenset &) {});
+#endif
     m.def("accept_set", [](const py::set &) {});
 
     m.def("default_int_arg", [](int n) {}, py::arg("n") = 5);

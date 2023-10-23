@@ -355,6 +355,7 @@ class FixTypingTypeNames(IParser):
         map(
             Identifier,
             [
+                "buffer",
                 "Buffer",
             ],
         )
