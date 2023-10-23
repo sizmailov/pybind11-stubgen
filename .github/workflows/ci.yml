@@ -53,7 +53,7 @@ jobs:
                     - "3.8"
                     - "3.7"
                 include:
-                    - pybind11-branch: "2.9"
+                    - pybind11-branch: "v2.9"
                       python: "3.12"
         steps:
             -   uses: actions/checkout@v3
