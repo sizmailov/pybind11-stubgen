@@ -2,6 +2,8 @@
 
 set -e
 
+PYTHON_EXECUTABLE=$(python -c 'import sys; print(sys.executable)')
+
 function parse_args() {
 
   CLEAR='\033[0m'
@@ -65,7 +67,10 @@ install_eigen() {
 }
 
 install_pybind11() {
-  cmake -S "${EXTERNAL_DIR}/pybind11" -B "${BUILD_ROOT}/pybind11"
+  cmake \
+        -S "${EXTERNAL_DIR}/pybind11" \
+        -B "${BUILD_ROOT}/pybind11"\
+        -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
   cmake --install "${BUILD_ROOT}/pybind11" \
         --prefix "${INSTALL_PREFIX}"
 }
