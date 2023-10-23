@@ -2,7 +2,7 @@
 #include <pybind11/pybind11.h>
 #include "opaque_types.h"
 
-#define PYBIND11_VERSION_AT_LEAST(x,y) (PYBIND11_VERSION_MAJOR>x || ( PYBIND11_VERSION_MAJOR>=x && PYBIND11_VERSION_MINOR>y ))
+#define PYBIND11_VERSION_AT_LEAST(x,y) (PYBIND11_VERSION_MAJOR>x || ( PYBIND11_VERSION_MAJOR>=x && PYBIND11_VERSION_MINOR>=y ))
 
 namespace py = pybind11;
 
