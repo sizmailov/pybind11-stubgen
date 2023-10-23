@@ -43,7 +43,9 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                pybind11-branch: [ "master" ]
+                pybind11-branch:
+                    - "master"
+                    - "v2.0"
                 python:
                     - "3.12"
                     - "3.11"
