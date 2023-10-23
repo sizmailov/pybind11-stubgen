@@ -45,7 +45,6 @@ jobs:
             matrix:
                 pybind11-branch:
                     - "master"
-                    - "v2.0"
                 python:
                     - "3.12"
                     - "3.11"
@@ -76,7 +75,9 @@ jobs:
 
             -   name: Install demo module
                 shell: bash
-                run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}"
+                run: ./tests/install-demo-module.sh \
+                        --pybind11-branch "${{ matrix.pybind11-branch }}" \
+                        --eigen-branch "master"
 
             -   name: Check stubs generation
                 shell: bash
