@@ -8,7 +8,7 @@ enum Enum { ONE = 1, TWO = 2 };
 
 } // namespace
 
-void bind_flawed_bindings_module(py::module_&& m) {
+void bind_flawed_bindings_module(py::module&& m) {
     // This submodule will have C++ signatures in python docstrings to emulate
     // common mistakes in using pybind11
     m.def("get_unbound_type", [] { return Unbound{}; });

@@ -1,6 +1,6 @@
 #include "modules.h"
 
-void bind_issues_module(py::module_ &&m) {
+void bind_issues_module(py::module &&m) {
     {
         // https://github.com/sizmailov/pybind11-stubgen/issues/51
         m.def(

@@ -18,7 +18,7 @@ namespace {
     };
 } // namespace
 
-void bind_aliases_module(py::module_ &&m) {
+void bind_aliases_module(py::module &&m) {
     {
         // python module as value
         auto &&pyDummy = py::class_<Dummy>(m, "Dummy");

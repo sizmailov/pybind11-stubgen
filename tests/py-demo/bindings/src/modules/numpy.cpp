@@ -2,7 +2,7 @@
 
 #include "modules.h"
 
-void bind_numpy_module(py::module_&&m) {
+void bind_numpy_module(py::module&&m) {
     {
         m.def("get_ndarray_int", [] { return py::array_t<int>{}; });
         m.def("get_ndarray_float64", [] { return py::array_t<double>{}; });

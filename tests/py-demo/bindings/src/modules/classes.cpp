@@ -4,7 +4,7 @@
 #include <demo/Inheritance.h>
 #include <demo/NestedClasses.h>
 
-void bind_classes_module(py::module_&&m) {
+void bind_classes_module(py::module&&m) {
 
     {
         auto pyOuter = py::class_<demo::Outer>(m, "Outer");

@@ -5,7 +5,7 @@
 #include <complex>
 #include <map>
 
-void bind_stl_bind_module(py::module_&&m) {
+void bind_stl_bind_module(py::module&&m) {
     py::bind_vector<std::vector<std::pair<std::string, double>>>(m, "VectorPairStringDouble");
     py::bind_map<std::map<std::string, std::complex<double>>>(m, "MapStringComplex");
 

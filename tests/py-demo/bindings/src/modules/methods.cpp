@@ -8,7 +8,7 @@ struct Dummy {
 
 } // namespace
 
-void bind_methods_module(py::module_&& m) {
+void bind_methods_module(py::module&& m) {
     auto &&pyDummy = py::class_<Dummy>(m, "Dummy");
 
     pyDummy.def_static("def_static", &Dummy::static_method);

@@ -3,7 +3,7 @@
 #include <Eigen/Core>
 #include <pybind11/eigen.h>
 
-void bind_eigen_module(py::module_ &&m) {
+void bind_eigen_module(py::module &&m) {
 
     using DenseMatrixR = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
     using DenseMatrixC = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
