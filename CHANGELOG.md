@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3.5 (Oct 23, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Wrong import for lowercase `buffer` (#175), issue (#173)
+
+
 Version 2.3.4 (Oct 23, 2023)
 --------------------------
 Changes:
