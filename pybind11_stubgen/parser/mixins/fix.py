@@ -9,7 +9,11 @@ import types
 from logging import getLogger
 from typing import Any
 
-from pybind11_stubgen.parser.errors import NameResolutionError, ParserError
+from pybind11_stubgen.parser.errors import (
+    InvalidExpressionError,
+    NameResolutionError,
+    ParserError,
+)
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.structs import (
     Alias,
@@ -804,8 +808,16 @@ class RewritePybind11EnumValueRepr(IParser):
                 enum_class = self.parse_annotation_str(f"{prefix}.{enum_class_str}")
                 if isinstance(enum_class, ResolvedType):
                     return Value(repr=f"{enum_class.name}.{entry}", is_print_safe=True)
-            self._unknown_enum_classes.add(enum_class_str)
         return super().parse_value_str(value)
+
+    def report_error(self, error: ParserError) -> None:
+        if isinstance(error, InvalidExpressionError):
+            match = self._pybind11_enum_pattern.match(error.expression)
+            if match is not None:
+                enum_qual_name = match.group("enum")
+                enum_class_str, entry = enum_qual_name.rsplit(".", maxsplit=1)
+                self._unknown_enum_classes.add(enum_class_str)
+        super().report_error(error)
 
     def finalize(self):
         if self._unknown_enum_classes:
