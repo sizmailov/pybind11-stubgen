@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3.4 (Oct 23, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Misleading warning that referred to ignored errors (#171)
+
+
 Version 2.3.3 (Oct 22, 2023)
 --------------------------
 Changes:
