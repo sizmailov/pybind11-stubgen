@@ -586,6 +586,26 @@ class FixNumpyArrayRemoveParameters(IParser):
         return result
 
 
+class FixNumpyDtype(IParser):
+    __numpy_dtype = QualifiedName.from_str("numpy.dtype")
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if (
+            not isinstance(result, ResolvedType)
+            or len(result.name) != 1
+            or result.parameters is not None
+        ):
+            return result
+
+        word = result.name[0]
+        if word != Identifier("dtype"):
+            return result
+        return ResolvedType(name=self.__numpy_dtype)
+
+
 class FixNumpyArrayFlags(IParser):
     __ndarray_name = QualifiedName.from_str("numpy.ndarray")
     __flags: set[QualifiedName] = {

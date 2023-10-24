@@ -8,6 +8,7 @@ __all__ = [
     "accept_ndarray_int",
     "get_ndarray_float64",
     "get_ndarray_int",
+    "return_dtype",
 ]
 
 def accept_ndarray_float64(
@@ -20,3 +21,4 @@ def get_ndarray_float64() -> typing_extensions.Annotated[
     numpy.ndarray, numpy.float64
 ]: ...
 def get_ndarray_int() -> typing_extensions.Annotated[numpy.ndarray, numpy.int32]: ...
+def return_dtype() -> numpy.dtype: ...
