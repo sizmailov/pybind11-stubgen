@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3.6 (Oct 24, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Missing `py::dtype` translation (#179)
+
+
 Version 2.3.5 (Oct 23, 2023)
 --------------------------
 Changes:
