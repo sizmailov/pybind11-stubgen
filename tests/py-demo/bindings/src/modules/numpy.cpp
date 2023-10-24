@@ -9,4 +9,5 @@ void bind_numpy_module(py::module&&m) {
         m.def("accept_ndarray_int", [](py::array_t<int> &) {});
         m.def("accept_ndarray_float64", [](py::array_t<double> &) {});
     }
+    m.def("return_dtype", []() { return py::dtype("<i4"); });
 }
