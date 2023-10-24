@@ -1,6 +1,6 @@
 #include "modules.h"
 
-#if PYBIND11_VERSION_MAJOR == 2 && PYBIND11_VERSION_MINOR >= 11
+#if PYBIND11_VERSION_AT_LEAST(2, 12)
 #include <pybind11/typing.h>
 #endif
 
