@@ -55,6 +55,8 @@ jobs:
                 include:
                     - pybind11-branch: "v2.9"
                       python: "3.12"
+                    - pybind11-branch: "v2.11"
+                      python: "3.12"
         steps:
             -   uses: actions/checkout@v3
 
