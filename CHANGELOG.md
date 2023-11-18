@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.3.7 (Nov 18, 2023)
+--------------------------
+Changes:
+- 🐛 fix: Handle top-level list-like annotations as types (#183)
+
+
 Version 2.3.6 (Oct 24, 2023)
 --------------------------
 Changes:
