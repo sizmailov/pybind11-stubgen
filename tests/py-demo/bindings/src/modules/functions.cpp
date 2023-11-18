@@ -1,10 +1,13 @@
 #include "modules.h"
 
 #if PYBIND11_VERSION_AT_LEAST(2, 12)
+
 #include <pybind11/typing.h>
+
 #endif
 
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 #include <demo/sublibA/add.h>
 
@@ -93,4 +96,5 @@ void bind_functions_module(py::module &&m) {
     py::class_<Foo> pyFoo(m, "Foo");
     pyFoo.def(py::init<int>());
     m.def("default_custom_arg", [](Foo &foo) {}, py::arg_v("foo", Foo(5), "Foo(5)"));
+    m.def("pass_callback", [](std::function<Foo(Foo &)> &callback) { return Foo(12); });
 }
