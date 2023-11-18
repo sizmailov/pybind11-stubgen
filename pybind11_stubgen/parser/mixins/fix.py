@@ -131,17 +131,18 @@ class FixMissingImports(IParser):
         return result
 
     def _add_import(self, name: QualifiedName) -> None:
-        if len(name) > 0:
-            if hasattr(builtins, name[0]):
-                return
-            if self.__current_class is not None and hasattr(
-                self.__current_class, name[0]
-            ):
-                return
-            if self.__current_module is not None and hasattr(
-                self.__current_module, name[0]
-            ):
-                return
+        if len(name) == 0:
+            return
+        if len(name) == 1 and len(name[0]) == 0:
+            return
+        if hasattr(builtins, name[0]):
+            return
+        if self.__current_class is not None and hasattr(self.__current_class, name[0]):
+            return
+        if self.__current_module is not None and hasattr(
+            self.__current_module, name[0]
+        ):
+            return
         module_name = self._get_parent_module(name)
         if module_name is None:
             self.report_error(NameResolutionError(name))
@@ -495,6 +496,8 @@ class FixNumpyArrayDimAnnotation(IParser):
         )
     )
 
+    __DIM_VARS = ["n", "m"]
+
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
@@ -518,12 +521,6 @@ class FixNumpyArrayDimAnnotation(IParser):
         if (
             not isinstance(scalar_with_dims, ResolvedType)
             or scalar_with_dims.name not in self.numpy_primitive_types
-            or (
-                scalar_with_dims.parameters is not None
-                and any(
-                    not isinstance(dim, Value) for dim in scalar_with_dims.parameters
-                )
-            )
         ):
             return result
 
@@ -540,38 +537,57 @@ class FixNumpyArrayDimAnnotation(IParser):
             scalar_with_dims.parameters is not None
             and len(scalar_with_dims.parameters) >= 0
         ):
-            result.parameters += [
-                self.handle_value(
-                    self._cook_dimension_parameters(scalar_with_dims.parameters)
-                )
-            ]
+            dims = self.__to_dims(scalar_with_dims.parameters)
+            if dims is not None and len(dims) > 0:
+                result.parameters += [
+                    self.handle_value(self.__wrap_with_size_helper(dims))
+                ]
 
         result.parameters += flags
 
         return result
 
-    def _cook_dimension_parameters(
-        self, dimensions: list[Value]
-    ) -> FixedSize | DynamicSize:
-        all_ints = True
-        new_params = []
-        for dim_param in dimensions:
-            try:
-                dim = int(dim_param.repr)
-            except ValueError:
-                dim = dim_param.repr
-                all_ints = False
-            new_params.append(dim)
-
-        if all_ints:
+    def __wrap_with_size_helper(self, dims: list[int | str]) -> FixedSize | DynamicSize:
+        if all(isinstance(d, int) for d in dims):
             return_t = FixedSize
         else:
             return_t = DynamicSize
 
         # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
         #        properly added to the list of imports
-        self.handle_type(FixedSize)
-        return return_t(*new_params)
+        self.handle_type(return_t)
+        return return_t(*dims)
+
+    def __to_dims(
+        self, dimensions: list[ResolvedType | Value | InvalidExpression]
+    ) -> list[int | str] | None:
+        result = []
+        for dim_param in dimensions:
+            if isinstance(dim_param, Value):
+                try:
+                    dim = int(dim_param.repr)
+                except ValueError:
+                    return None
+            elif isinstance(dim_param, ResolvedType):
+                dim = str(dim_param)
+                if dim not in self.__DIM_VARS:
+                    return None
+            else:
+                return None
+            result.append(dim)
+        return result
+
+    def report_error(self, error: ParserError) -> None:
+
+        if (
+            isinstance(error, NameResolutionError)
+            and len(error.name) == 1
+            and len(error.name[0]) == 1
+            and error.name[0] in self.__DIM_VARS
+        ):
+            # Ignores all unknown 'm' and 'n' regardless of the context
+            return
+        super().report_error(error)
 
 
 class FixNumpyArrayRemoveParameters(IParser):

@@ -581,7 +581,7 @@ class ExtractSignaturesFromPybind11Docstrings(IParser):
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
         qname_regex = re.compile(
-            r"^\s*(?P<qual_name>[_A-Za-z]\w+(\s*\.\s*[_A-Za-z]\w+)*)"
+            r"^\s*(?P<qual_name>([_A-Za-z]\w*)?(\s*\.\s*[_A-Za-z]\w*)*)"
         )
         annotation_str = annotation_str.strip()
         match = qname_regex.match(annotation_str)

@@ -96,5 +96,5 @@ void bind_functions_module(py::module &&m) {
     py::class_<Foo> pyFoo(m, "Foo");
     pyFoo.def(py::init<int>());
     m.def("default_custom_arg", [](Foo &foo) {}, py::arg_v("foo", Foo(5), "Foo(5)"));
-    m.def("pass_callback", [](std::function<Foo(Foo &)> &callback) { return Foo(12); });
+    m.def("pass_callback", [](std::function<Foo(Foo &)> &callback) { return Foo(13); });
 }
