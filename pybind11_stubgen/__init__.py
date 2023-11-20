@@ -33,6 +33,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixMissingImports,
     FixMissingNoneHashFieldAnnotation,
     FixNumpyArrayDimAnnotation,
+    FixNumpyArrayDimTypeVar,
     FixNumpyArrayFlags,
     FixNumpyArrayRemoveParameters,
     FixNumpyDtype,
@@ -40,6 +41,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixPybind11EnumStrDoc,
     FixRedundantBuiltinsAnnotation,
     FixRedundantMethodsFromBuiltinObject,
+    FixScipyTypeArguments,
     FixTypingTypeNames,
     FixValueReprRandomAddress,
     OverridePrintSafeValues,
@@ -66,6 +68,7 @@ class CLIArgs(Namespace):
     ignore_all_errors: bool
     enum_class_locations: list[tuple[re.Pattern, str]]
     numpy_array_wrap_with_annotated: bool
+    numpy_array_use_type_var: bool
     numpy_array_remove_parameters: bool
     print_invalid_expressions_as_is: bool
     print_safe_value_reprs: re.Pattern | None
@@ -156,6 +159,13 @@ def arg_parser() -> ArgumentParser:
         "'ARRAY_T[TYPE, [*DIMS], *FLAGS]' format with "
         "'Annotated[ARRAY_T, TYPE, FixedSize|DynamicSize(*DIMS), *FLAGS]'",
     )
+    numpy_array_fix.add_argument(
+        "--numpy-array-use-type-var",
+        default=False,
+        action="store_true",
+        help="Replace 'numpy.ndarray[numpy.float32[m, 1]]' with "
+        "'numpy.ndarray[tuple[M, typing.Literal[1]], numpy.dtype[numpy.float32]]'",
+    )
 
     numpy_array_fix.add_argument(
         "--numpy-array-remove-parameters",
@@ -230,6 +240,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
 
     numpy_fixes: list[type] = [
         *([FixNumpyArrayDimAnnotation] if args.numpy_array_wrap_with_annotated else []),
+        *([FixNumpyArrayDimTypeVar] if args.numpy_array_use_type_var else []),
         *(
             [FixNumpyArrayRemoveParameters]
             if args.numpy_array_remove_parameters
@@ -246,6 +257,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FilterTypingModuleAttributes,
         FixPEP585CollectionNames,
         FixTypingTypeNames,
+        FixScipyTypeArguments,
         FixMissingFixedSizeImport,
         FixMissingEnumMembersAnnotation,
         OverridePrintSafeValues,
