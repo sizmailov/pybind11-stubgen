@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from dataclasses import field as field_
 from typing import Tuple, Union
 
-if sys.version_info[:2] >= (3, 8):
+if sys.version_info >= (3, 8):
     from typing import Literal
 
     Modifier = Literal["static", "class", None]

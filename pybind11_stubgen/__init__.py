@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib
 import logging
 import re
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from pybind11_stubgen.parser.interface import IParser
@@ -55,6 +55,24 @@ from pybind11_stubgen.parser.mixins.parse import (
 from pybind11_stubgen.printer import Printer
 from pybind11_stubgen.structs import QualifiedName
 from pybind11_stubgen.writer import Writer
+
+
+class CLIArgs(Namespace):
+    output_dir: str
+    root_suffix: str
+    ignore_invalid_expressions: re.Pattern | None
+    ignore_invalid_identifiers: re.Pattern | None
+    ignore_unresolved_names: re.Pattern | None
+    ignore_all_errors: bool
+    enum_class_locations: list[tuple[re.Pattern, str]]
+    numpy_array_wrap_with_annotated: bool
+    numpy_array_remove_parameters: bool
+    print_invalid_expressions_as_is: bool
+    print_safe_value_reprs: re.Pattern | None
+    exit_code: bool
+    dry_run: bool
+    stub_extension: str
+    module_name: str
 
 
 def arg_parser() -> ArgumentParser:
@@ -196,7 +214,7 @@ def arg_parser() -> ArgumentParser:
     return parser
 
 
-def stub_parser_from_args(args) -> IParser:
+def stub_parser_from_args(args: CLIArgs) -> IParser:
     error_handlers_top: list[type] = [
         LoggerData,
         *([IgnoreAllErrors] if args.ignore_all_errors else []),
@@ -273,7 +291,7 @@ def main():
         level=logging.INFO,
         format="%(name)s - [%(levelname)7s] %(message)s",
     )
-    args = arg_parser().parse_args()
+    args = arg_parser().parse_args(namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
     printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
@@ -296,7 +314,7 @@ def main():
 
 
 def to_output_and_subdir(
-    output_dir: Path, module_name: str, root_suffix: str | None
+    output_dir: str, module_name: str, root_suffix: str | None
 ) -> tuple[Path, Path | None]:
     out_dir = Path(output_dir)
 
