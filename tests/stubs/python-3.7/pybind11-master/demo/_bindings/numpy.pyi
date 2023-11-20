@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 import numpy
 import typing_extensions
 
@@ -21,4 +23,4 @@ def get_ndarray_float64() -> typing_extensions.Annotated[
     numpy.ndarray, numpy.float64
 ]: ...
 def get_ndarray_int() -> typing_extensions.Annotated[numpy.ndarray, numpy.int32]: ...
-def return_dtype() -> numpy.dtype: ...
+def return_dtype() -> numpy.dtype[typing.Any]: ...
