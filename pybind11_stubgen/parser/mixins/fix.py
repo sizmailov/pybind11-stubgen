@@ -7,9 +7,7 @@ import re
 import sys
 import types
 from logging import getLogger
-from typing import Any, Sequence, TypeVar
-
-from typing_extensions import TypeGuard
+from typing import Any, Sequence
 
 from pybind11_stubgen.parser.errors import (
     InvalidExpressionError,
@@ -38,12 +36,6 @@ from pybind11_stubgen.structs import (
 from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 logger = getLogger("pybind11_stubgen")
-
-T = TypeVar("T")
-
-
-def all_isinstance(seq: Sequence[Any], type_: type[T]) -> TypeGuard[Sequence[T]]:
-    return all(isinstance(item, type_) for item in seq)
 
 
 class RemoveSelfAnnotation(IParser):
@@ -549,17 +541,15 @@ class FixNumpyArrayDimAnnotation(IParser):
         return result
 
     def __wrap_with_size_helper(self, dims: list[int | str]) -> FixedSize | DynamicSize:
-        if all_isinstance(dims, int):
+        if all(isinstance(d, int) for d in dims):
             return_t = FixedSize
-            result = return_t(*dims)
         else:
             return_t = DynamicSize
-            result = return_t(*dims)
 
         # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
         #        properly added to the list of imports
         self.handle_type(return_t)
-        return result
+        return return_t(*dims)  # type: ignore[arg-type]
 
     def __to_dims(
         self, dimensions: Sequence[ResolvedType | Value | InvalidExpression]
