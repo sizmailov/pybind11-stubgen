@@ -7,7 +7,9 @@ import re
 import sys
 import types
 from logging import getLogger
-from typing import Any
+from typing import Any, Sequence, TypeVar
+
+from typing_extensions import TypeGuard
 
 from pybind11_stubgen.parser.errors import (
     InvalidExpressionError,
@@ -36,6 +38,12 @@ from pybind11_stubgen.structs import (
 from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 logger = getLogger("pybind11_stubgen")
+
+T = TypeVar("T")
+
+
+def all_isinstance(seq: Sequence[Any], type_: type[T]) -> TypeGuard[Sequence[T]]:
+    return all(isinstance(item, type_) for item in seq)
 
 
 class RemoveSelfAnnotation(IParser):
@@ -112,7 +120,7 @@ class FixMissingImports(IParser):
 
     def handle_type(self, type_: type) -> QualifiedName:
         result = super().handle_type(type_)
-        if not inspect.ismodule(type):
+        if not inspect.ismodule(type_):
             self._add_import(result)
         return result
 
@@ -292,16 +300,14 @@ class FixMissingNoneHashFieldAnnotation(IParser):
 
 class FixPEP585CollectionNames(IParser):
     __typing_collection_names: set[Identifier] = set(
-        map(
-            Identifier,
-            [
-                "Dict",
-                "List",
-                "Set",
-                "Tuple",
-                "FrozenSet",
-                "Type",
-            ],
+        Identifier(name)
+        for name in (
+            "Dict",
+            "List",
+            "Set",
+            "Tuple",
+            "FrozenSet",
+            "Type",
         )
     )
 
@@ -325,47 +331,42 @@ class FixPEP585CollectionNames(IParser):
 
 class FixTypingTypeNames(IParser):
     __typing_names: set[Identifier] = set(
-        map(
-            Identifier,
-            [
-                "Annotated",
-                "Any",
-                "Buffer",
-                "Callable",
-                "Dict",
-                "ItemsView",
-                "Iterable",
-                "Iterator",
-                "KeysView",
-                "List",
-                "Optional",
-                "Sequence",
-                "Set",
-                "Tuple",
-                "Union",
-                "ValuesView",
-                # Old pybind11 annotations were not capitalized
-                "buffer",
-                "iterable",
-                "iterator",
-                "sequence",
-            ],
+        Identifier(name)
+        for name in (
+            "Annotated",
+            "Any",
+            "Buffer",
+            "Callable",
+            "Dict",
+            "ItemsView",
+            "Iterable",
+            "Iterator",
+            "KeysView",
+            "List",
+            "Optional",
+            "Sequence",
+            "Set",
+            "Tuple",
+            "Union",
+            "ValuesView",
+            # Old pybind11 annotations were not capitalized
+            "buffer",
+            "iterable",
+            "iterator",
+            "sequence",
         )
     )
     __typing_extensions_names: set[Identifier] = set(
-        map(
-            Identifier,
-            [
-                "buffer",
-                "Buffer",
-            ],
+        Identifier(name)
+        for name in (
+            "buffer",
+            "Buffer",
         )
     )
 
     def __init__(self):
         super().__init__()
-        py_version = sys.version_info[:2]
-        if py_version < (3, 9):
+        if sys.version_info < (3, 9):
             self.__typing_extensions_names.add(Identifier("Annotated"))
 
     def parse_annotation_str(
@@ -548,18 +549,20 @@ class FixNumpyArrayDimAnnotation(IParser):
         return result
 
     def __wrap_with_size_helper(self, dims: list[int | str]) -> FixedSize | DynamicSize:
-        if all(isinstance(d, int) for d in dims):
+        if all_isinstance(dims, int):
             return_t = FixedSize
+            result = return_t(*dims)
         else:
             return_t = DynamicSize
+            result = return_t(*dims)
 
         # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
         #        properly added to the list of imports
         self.handle_type(return_t)
-        return return_t(*dims)
+        return result
 
     def __to_dims(
-        self, dimensions: list[ResolvedType | Value | InvalidExpression]
+        self, dimensions: Sequence[ResolvedType | Value | InvalidExpression]
     ) -> list[int | str] | None:
         result = []
         for dim_param in dimensions:
@@ -578,7 +581,6 @@ class FixNumpyArrayDimAnnotation(IParser):
         return result
 
     def report_error(self, error: ParserError) -> None:
-
         if (
             isinstance(error, NameResolutionError)
             and len(error.name) == 1
