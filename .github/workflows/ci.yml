@@ -91,7 +91,7 @@ jobs:
 
             -   name: Check stubs generation
                 shell: bash
-                run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}/${{ matrix.numpy-format }} --${{ matrix.numpy-format }}"
+                run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}/${{ matrix.numpy-format }}" --${{ matrix.numpy-format }}
 
             -   name: Archive patch
                 uses: actions/upload-artifact@v3
