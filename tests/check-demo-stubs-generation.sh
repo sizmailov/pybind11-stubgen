@@ -11,19 +11,24 @@ function parse_args() {
     if [ -n "$1" ]; then
       echo -e "${RED}👉 $1${CLEAR}\n";
     fi
-    echo "Usage: $0 --stubs-sub-dir STUBS_SUB_DIR"
-    echo "  --stubs-sub-dir       stubs output dir relative to this script directory"
+    echo "Usage: $0 --stubs-sub-dir STUBS_SUB_DIR [--numpy-array-wrap-with-annotated] [--numpy-array-use-type-var]"
+    echo "  --stubs-sub-dir                         stubs output dir relative to this script directory"
+    echo "  --numpy-array-wrap-with-annotated       use --numpy-array-wrap-with-annotated to generate numpy array stubs"
+    echo "  --numpy-array-use-type-var              use --numpy-array-use-type-var to generate numpy array stubs"
     exit 1
   }
 
   # parse params
   while [[ "$#" > 0 ]]; do case $1 in
     --stubs-sub-dir) STUBS_SUB_DIR="$2";shift;shift;;
+    --numpy-array-use-type-var) NUMPY_FORMAT="$1";shift;;
+    --numpy-array-wrap-with-annotated) NUMPY_FORMAT="$1";shift;;
     *) usage "Unknown parameter passed: $1"; shift; shift;;
   esac; done
 
   # verify params
   if [ -z "$STUBS_SUB_DIR" ]; then usage "STUBS_SUB_DIR is not set"; fi;
+  if [ -z "$NUMPY_FORMAT" ]; then usage "NUMPY_FORMAT is not set"; fi;
 
   TESTS_ROOT="$(readlink -m "$(dirname "$0")")"
   STUBS_DIR=$(readlink -m "${TESTS_ROOT}/${STUBS_SUB_DIR}")
@@ -37,7 +42,7 @@ run_stubgen() {
   pybind11-stubgen \
       demo \
       --output-dir=${STUBS_DIR} \
-      --numpy-array-wrap-with-annotated \
+      ${NUMPY_FORMAT} \
       --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)|<demo\._bindings\.flawed_bindings\..*" \
       --enum-class-locations="ConsoleForegroundColor:demo._bindings.enum" \
       --print-safe-value-reprs="Foo\(\d+\)" \
