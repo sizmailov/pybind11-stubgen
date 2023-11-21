@@ -38,7 +38,7 @@ jobs:
                 if: ${{ failure() ||  success() }}
 
     tests:
-        name: "Test 🐍 ${{ matrix.python }} • pybind-${{ matrix.pybind11-branch }}"
+        name: "Test 🐍 ${{ matrix.python }} • pybind-${{ matrix.pybind11-branch }} • ${{ matrix.numpy-format }}"
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
