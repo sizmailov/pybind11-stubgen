@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 2.4 (Nov 21, 2023)
+--------------------------
+Changes:
+- ✨ Added `--numpy-array-use-type-var` flag which reformats the pybind11-generated `numpy.ndarray[numpy.float32[m, 1]]`
+annotation as `numpy.ndarray[tuple[M, Literal[1]], numpy.dtype[numpy.float32]]` contributed by @ringohoffman (#188)
+
+
 Version 2.3.7 (Nov 18, 2023)
 --------------------------
 Changes:
