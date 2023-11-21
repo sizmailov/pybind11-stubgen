@@ -31,6 +31,7 @@ from pybind11_stubgen.structs import (
     Property,
     QualifiedName,
     ResolvedType,
+    TypeVar_,
     Value,
 )
 
@@ -103,6 +104,8 @@ class ParserDispatchMixin(IParser):
                 result.sub_modules.append(obj)
             elif isinstance(obj, Attribute):
                 result.attributes.append(obj)
+            elif isinstance(obj, TypeVar_):
+                result.type_vars.append(obj)
             elif obj is None:
                 pass
             else:

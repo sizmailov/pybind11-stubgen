@@ -20,6 +20,7 @@ from pybind11_stubgen.structs import (
     Module,
     Property,
     ResolvedType,
+    TypeVar_,
     Value,
 )
 
@@ -80,6 +81,9 @@ class Printer:
             f"class {class_.name}{base_list}:",
             *indent_lines(self.print_class_body(class_)),
         ]
+
+    def print_type_var(self, type_var: TypeVar_) -> list[str]:
+        return [str(type_var)]
 
     def print_class_body(self, class_: Class) -> list[str]:
         result = []
@@ -214,6 +218,9 @@ class Printer:
             if attr.name == "__all__":
                 result.extend(self.print_attribute(attr))
                 break
+
+        for type_var in sorted(module.type_vars, key=lambda t: t.name):
+            result.extend(self.print_type_var(type_var))
 
         for class_ in sorted(module.classes, key=lambda c: c.name):
             result.extend(self.print_class(class_))

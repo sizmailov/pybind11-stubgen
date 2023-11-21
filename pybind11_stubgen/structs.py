@@ -84,6 +84,26 @@ Annotation = Union[ResolvedType, Value, InvalidExpression]
 
 
 @dataclass
+class TypeVar_:
+    name: Identifier
+    constraints: list[Annotation] = field_(default_factory=list)
+    bound: Annotation | None = field_(default=None)
+    covariant: bool = field_(default=False)
+    contravariant: bool = field_(default=False)
+
+    def __str__(self) -> str:
+        return (
+            f'{self.name} = typing.TypeVar("{self.name}"'
+            + (", " if self.constraints else "")
+            + (", ".join(str(c) for c in self.constraints))
+            + (f", bound={str(self.bound)}" if self.bound is not None else "")
+            + (f", covariant={self.covariant}" if self.covariant else "")
+            + (f", contravariant={self.contravariant}" if self.contravariant else "")
+            + ")"
+        )
+
+
+@dataclass
 class Attribute:
     name: Identifier
     value: Value | None
@@ -178,3 +198,4 @@ class Module:
     attributes: list[Attribute] = field_(default_factory=list)
     imports: set[Import] = field_(default_factory=set)
     aliases: list[Alias] = field_(default_factory=list)
+    type_vars: list[TypeVar_] = field_(default_factory=list)
