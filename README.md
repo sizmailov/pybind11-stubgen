@@ -30,6 +30,7 @@ pybind11-stubgen [-h]
                  [--ignore-all-errors]
                  [--enum-class-locations REGEX:LOC]
                  [--numpy-array-wrap-with-annotated|
+                  --numpy-array-use-type-var|
                   --numpy-array-remove-parameters]
                  [--print-invalid-expressions-as-is]
                  [--print-safe-value-reprs REGEX]
