@@ -40,6 +40,10 @@ logger = getLogger("pybind11_stubgen")
 
 
 class RemoveSelfAnnotation(IParser):
+
+    __any_t_name = QualifiedName.from_str("Any")
+    __typing_any_t_name = QualifiedName.from_str("typing.Any")
+
     def handle_method(self, path: QualifiedName, method: Any) -> list[Method]:
         methods = super().handle_method(path, method)
         for method in methods:
@@ -59,16 +63,20 @@ class RemoveSelfAnnotation(IParser):
     def _remove_self_arg_annotation(self, path: QualifiedName, func: Function) -> None:
         if len(func.args) == 0:
             return
-        path = QualifiedName(path[:-1])  # remove method name from path
+        fully_qualified_class_name = QualifiedName(path[:-1])  # remove the method name
         first_arg = func.args[0]
         if (
             first_arg.name == "self"
             and isinstance(first_arg.annotation, ResolvedType)
+            and not first_arg.annotation.parameters
             and (
-                first_arg.annotation.name == QualifiedName.from_str("Any")
-                or first_arg.annotation.name == QualifiedName.from_str("typing.Any")
-                or first_arg.annotation.name == path
-                or first_arg.annotation.name == path[-len(first_arg.annotation.name) :]
+                first_arg.annotation.name
+                in {
+                    self.__any_t_name,
+                    self.__typing_any_t_name,
+                    fully_qualified_class_name,
+                    fully_qualified_class_name[-len(first_arg.annotation.name) :],
+                }
             )
         ):
             first_arg.annotation = None
