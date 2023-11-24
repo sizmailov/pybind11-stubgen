@@ -40,25 +40,46 @@ logger = getLogger("pybind11_stubgen")
 
 
 class RemoveSelfAnnotation(IParser):
+
+    __any_t_name = QualifiedName.from_str("Any")
+    __typing_any_t_name = QualifiedName.from_str("typing.Any")
+
     def handle_method(self, path: QualifiedName, method: Any) -> list[Method]:
         methods = super().handle_method(path, method)
         for method in methods:
-            self._remove_self_arg_annotation(method.function)
+            self._remove_self_arg_annotation(path, method.function)
         return methods
 
     def handle_property(self, path: QualifiedName, prop: Any) -> Property | None:
         prop = super().handle_property(path, prop)
         if prop is not None:
             if prop.getter is not None:
-                self._remove_self_arg_annotation(prop.getter)
+                self._remove_self_arg_annotation(path, prop.getter)
             if prop.setter is not None:
-                self._remove_self_arg_annotation(prop.setter)
+                self._remove_self_arg_annotation(path, prop.setter)
 
         return prop
 
-    def _remove_self_arg_annotation(self, func: Function):
-        if len(func.args) > 0 and func.args[0].name == "self":
-            func.args[0].annotation = None
+    def _remove_self_arg_annotation(self, path: QualifiedName, func: Function) -> None:
+        if len(func.args) == 0:
+            return
+        fully_qualified_class_name = QualifiedName(path[:-1])  # remove the method name
+        first_arg = func.args[0]
+        if (
+            first_arg.name == "self"
+            and isinstance(first_arg.annotation, ResolvedType)
+            and not first_arg.annotation.parameters
+            and (
+                first_arg.annotation.name
+                in {
+                    self.__any_t_name,
+                    self.__typing_any_t_name,
+                    fully_qualified_class_name,
+                    fully_qualified_class_name[-len(first_arg.annotation.name) :],
+                }
+            )
+        ):
+            first_arg.annotation = None
 
 
 class FixMissingImports(IParser):
