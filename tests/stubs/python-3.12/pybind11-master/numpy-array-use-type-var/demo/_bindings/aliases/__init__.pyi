@@ -16,6 +16,7 @@ from . import (
     foreign_method_arg,
     foreign_method_return,
     foreign_return,
+    missing_self_arg,
 )
 
 __all__ = [
@@ -33,6 +34,7 @@ __all__ = [
     "func",
     "local_func_alias",
     "local_type_alias",
+    "missing_self_arg",
     "random",
 ]
 

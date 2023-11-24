@@ -16,6 +16,8 @@ namespace {
     };
     struct Bar3 {
     };
+    struct Bar4 {
+    };
 } // namespace
 
 void bind_aliases_module(py::module &&m) {
@@ -57,12 +59,17 @@ void bind_aliases_module(py::module &&m) {
     {
         auto &&sub = m.def_submodule("foreign_method_arg");
         auto &&pyBar = py::class_<Bar2>(sub, "Bar2");
-        pyBar.def("set_foo", [](const demo::Foo &) { return 13; });
+        pyBar.def("set_foo", [](const Bar2 &, const demo::Foo &) { return 13; });
     }
     {
         auto &&sub = m.def_submodule("foreign_method_return");
         auto &&pyBar = py::class_<Bar3>(sub, "Bar3");
         pyBar.def("get_foo", []() { return demo::Foo(); });
+    }
+    {
+        auto &&sub = m.def_submodule("missing_self_arg");
+        auto &&pyBar = py::class_<Bar4>(sub, "Bar4");
+        pyBar.def("set_foo", [](const demo::Foo &) { return 13; });
     }
 
     {
