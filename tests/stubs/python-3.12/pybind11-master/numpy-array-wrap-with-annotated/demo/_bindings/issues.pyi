@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import typing
 
-import pybind11_stubgen.typing_ext
-
 __all__ = ["issue_51_catastrophic_regex", "issue_73_utf8_doc_chars"]
 
 def issue_51_catastrophic_regex(arg0: int, arg1: int) -> None:
@@ -23,4 +21,4 @@ def issue_73_utf8_doc_chars() -> None:
     values provide more damping in response.
     """
 
-_cleanup: typing.Any = pybind11_stubgen.typing_ext.ValueExpr("<capsule object>")
+_cleanup: typing.Any  # value = <capsule object>

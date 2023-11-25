@@ -45,7 +45,11 @@ class Printer:
             parts.append(f": {self.print_annotation(attr.annotation)}")
 
         if attr.value is not None:
-            parts.append(f" = {self.print_value(attr.value)}")
+            if attr.value.is_print_safe or attr.annotation is None:
+                parts.append(f" = {self.print_value(attr.value)}")
+            else:
+                repr_first_line = attr.value.repr.split("\n", 1)[0]
+                parts.append(f"  # value = {repr_first_line}")
 
         return ["".join(parts)]
 
