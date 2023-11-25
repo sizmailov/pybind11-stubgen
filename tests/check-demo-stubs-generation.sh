@@ -43,8 +43,7 @@ run_stubgen() {
       demo \
       --output-dir=${STUBS_DIR} \
       ${NUMPY_FORMAT} \
-      --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)|<demo\._bindings\.flawed_bindings\..*" \
-      --enum-class-locations="ConsoleForegroundColor:demo._bindings.enum" \
+      --ignore-invalid-expressions="\(anonymous namespace\)::(Enum|Unbound)|<demo\._bindings\.flawed_bindings\..*|<ConsoleForegroundColor\\.Magenta: 35>" \
       --print-safe-value-reprs="Foo\(\d+\)" \
       --exit-code
 }

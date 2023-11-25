@@ -50,7 +50,7 @@ class QualifiedName(Tuple[Identifier, ...]):
         return QualifiedName(self[:-1])
 
 
-@dataclass
+@dataclass(eq=False)
 class Value:
     repr: str
     is_print_safe: bool = False  # `self.repr` is valid python and safe to print as is
@@ -110,7 +110,7 @@ class Attribute:
     annotation: Annotation | None = field_(default=None)
 
 
-@dataclass
+@dataclass(eq=False)
 class Argument:
     name: Identifier | None
     pos_only: bool = field_(default=False)
@@ -191,6 +191,7 @@ class Import:
 @dataclass
 class Module:
     name: Identifier
+    origin: QualifiedName
     doc: Docstring | None = field_(default=None)
     classes: list[Class] = field_(default_factory=list)
     functions: list[Function] = field_(default_factory=list)
