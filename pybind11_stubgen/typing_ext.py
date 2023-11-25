@@ -23,3 +23,15 @@ class DynamicSize:
             f"{self.__class__.__qualname__}"
             f"({', '.join(repr(d) for d in self.dim)})"
         )
+
+
+class InvalidExpr:
+    def __init__(self, expr: str):
+        self.expr = expr
+
+    def __repr__(self):
+        return (
+            f"{self.__module__}."
+            f"{self.__class__.__qualname__}"
+            f"({repr(self.expr)})"
+        )
