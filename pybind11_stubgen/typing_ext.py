@@ -32,3 +32,10 @@ def InvalidExpr(expr: str) -> Any:
         "The method exists only for annotation purposes in stub files. "
         "Should never not be used at runtime"
     )
+
+
+def ValueExpr(expr: str) -> Any:
+    raise RuntimeError(
+        "The method exists only for annotation purposes in stub files. "
+        "Should never not be used at runtime"
+    )

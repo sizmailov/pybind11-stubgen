@@ -249,11 +249,6 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         ),
     ]
 
-    if args.print_invalid_expressions_as_is:
-        wrap_invalid_expressions = []
-    else:
-        wrap_invalid_expressions = [WrapInvalidExpressions]
-
     class Parser(
         *error_handlers_top,  # type: ignore[misc]
         FixMissing__future__AnnotationsImport,
@@ -282,7 +277,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixRedundantMethodsFromBuiltinObject,
         RemoveSelfAnnotation,
         FixPybind11EnumStrDoc,
-        *wrap_invalid_expressions,
+        WrapInvalidExpressions,
         ExtractSignaturesFromPybind11Docstrings,
         ParserDispatchMixin,
         BaseParser,
@@ -313,7 +308,7 @@ def main():
     args = arg_parser().parse_args(namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
-    printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
+    printer = Printer()
 
     out_dir, sub_dir = to_output_and_subdir(
         output_dir=args.output_dir,
