@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+import pybind11_stubgen.typing_ext
+
 __all__ = [
     "Blue",
     "ConsoleForegroundColor",
@@ -29,22 +31,24 @@ class ConsoleForegroundColor:
 
     Blue: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.Blue: 34>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.Blue: 34>")
     Green: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.Green: 32>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.Green: 32>")
     Magenta: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.Magenta: 35>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.Magenta: 35>")
     None_: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.None_: -1>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.None_: -1>")
     Yellow: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.Yellow: 33>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.Yellow: 33>")
     __members__: typing.ClassVar[
         dict[str, ConsoleForegroundColor]
-    ]  # value = {'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>, 'None_': <ConsoleForegroundColor.None_: -1>}
+    ] = pybind11_stubgen.typing_ext.ValueExpr(
+        "{'Green': <ConsoleForegroundColor.Green: 32>, 'Yellow': <ConsoleForegroundColor.Yellow: 33>, 'Blue': <ConsoleForegroundColor.Blue: 34>, 'Magenta': <ConsoleForegroundColor.Magenta: 35>, 'None_': <ConsoleForegroundColor.None_: -1>}"
+    )
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -64,8 +68,18 @@ def accept_defaulted_enum(
     color: ConsoleForegroundColor = ConsoleForegroundColor.None_,
 ) -> None: ...
 
-Blue: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Blue: 34>
-Green: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Green: 32>
-Magenta: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Magenta: 35>
-None_: ConsoleForegroundColor  # value = <ConsoleForegroundColor.None_: -1>
-Yellow: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Yellow: 33>
+Blue: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.Blue: 34>"
+)
+Green: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.Green: 32>"
+)
+Magenta: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.Magenta: 35>"
+)
+None_: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.None_: -1>"
+)
+Yellow: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.Yellow: 33>"
+)

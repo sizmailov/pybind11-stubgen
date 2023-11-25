@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+import pybind11_stubgen.typing_ext
+
 __all__ = ["ConsoleForegroundColor", "Magenta", "accepts_ambiguous_enum"]
 
 class ConsoleForegroundColor:
@@ -13,10 +15,12 @@ class ConsoleForegroundColor:
 
     Magenta: typing.ClassVar[
         ConsoleForegroundColor
-    ]  # value = <ConsoleForegroundColor.Magenta: 35>
+    ] = pybind11_stubgen.typing_ext.ValueExpr("<ConsoleForegroundColor.Magenta: 35>")
     __members__: typing.ClassVar[
         dict[str, ConsoleForegroundColor]
-    ]  # value = {'Magenta': <ConsoleForegroundColor.Magenta: 35>}
+    ] = pybind11_stubgen.typing_ext.ValueExpr(
+        "{'Magenta': <ConsoleForegroundColor.Magenta: 35>}"
+    )
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -32,6 +36,12 @@ class ConsoleForegroundColor:
     @property
     def value(self) -> int: ...
 
-def accepts_ambiguous_enum(color: ConsoleForegroundColor = ...) -> None: ...
+def accepts_ambiguous_enum(
+    color: ConsoleForegroundColor = pybind11_stubgen.typing_ext.InvalidExpr(
+        "<ConsoleForegroundColor.Magenta: 35>"
+    ),
+) -> None: ...
 
-Magenta: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Magenta: 35>
+Magenta: ConsoleForegroundColor = pybind11_stubgen.typing_ext.ValueExpr(
+    "<ConsoleForegroundColor.Magenta: 35>"
+)
