@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import typing
 
-import pybind11_stubgen.typing_ext
-
 __all__ = ["Base", "CppException", "Derived", "Foo", "Outer"]
 
 class Base:
@@ -36,17 +34,11 @@ class Outer:
               TWO
             """
 
-            ONE: typing.ClassVar[
-                Outer.Inner.NestedEnum
-            ] = pybind11_stubgen.typing_ext.ValueExpr("<NestedEnum.ONE: 1>")
-            TWO: typing.ClassVar[
-                Outer.Inner.NestedEnum
-            ] = pybind11_stubgen.typing_ext.ValueExpr("<NestedEnum.TWO: 2>")
+            ONE: typing.ClassVar[Outer.Inner.NestedEnum]  # value = <NestedEnum.ONE: 1>
+            TWO: typing.ClassVar[Outer.Inner.NestedEnum]  # value = <NestedEnum.TWO: 2>
             __members__: typing.ClassVar[
                 dict[str, Outer.Inner.NestedEnum]
-            ] = pybind11_stubgen.typing_ext.ValueExpr(
-                "{'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}"
-            )
+            ]  # value = {'ONE': <NestedEnum.ONE: 1>, 'TWO': <NestedEnum.TWO: 2>}
             def __eq__(self, other: typing.Any) -> bool: ...
             def __getstate__(self) -> int: ...
             def __hash__(self) -> int: ...

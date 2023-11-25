@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 
 import numpy
-import pybind11_stubgen.typing_ext
 from numpy import random
 
 __all__ = [
@@ -28,12 +27,8 @@ class Foo:
 
 def add_day(arg0: datetime.datetime) -> datetime.datetime: ...
 
-foolist: list = pybind11_stubgen.typing_ext.ValueExpr(
-    "[<demo._bindings.values.Foo object>, <demo._bindings.values.Foo object>]"
-)
-foovar: Foo = pybind11_stubgen.typing_ext.ValueExpr(
-    "<demo._bindings.values.Foo object>"
-)
+foolist: list  # value = [<demo._bindings.values.Foo object>, <demo._bindings.values.Foo object>]
+foovar: Foo  # value = <demo._bindings.values.Foo object>
 list_with_none: list = [None, 2, {}]
 none = None
 t_10ms: datetime.timedelta = datetime.timedelta(microseconds=10000)
