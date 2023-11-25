@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+Version 2.4.1 (Nov 25, 2023)
+--------------------------
+Changes:
+- ✨ Automatically replace invalid enum expressions with corresponding valid expression & import (#196)  contributed by @ringohoffman
+- 🐛 Fixed: do not remove `self` parameter annotation when types do not match (#195) contributed by @ringohoffman
+
+
 Version 2.4 (Nov 21, 2023)
 --------------------------
 Changes:
