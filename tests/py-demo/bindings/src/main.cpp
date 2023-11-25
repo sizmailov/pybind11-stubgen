@@ -4,6 +4,7 @@ PYBIND11_MODULE(_bindings, m) {
     bind_classes_module(m.def_submodule("classes"));
     bind_eigen_module(m.def_submodule("eigen"));
     bind_enum_module(m.def_submodule("enum"));
+    bind_duplicate_enum_module(m.def_submodule("duplicate_enum"));
     bind_aliases_module(m.def_submodule("aliases"));
     bind_flawed_bindings_module(m.def_submodule("flawed_bindings"));
     bind_functions_module(m.def_submodule("functions"));

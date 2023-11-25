@@ -50,7 +50,7 @@ class QualifiedName(Tuple[Identifier, ...]):
         return QualifiedName(self[:-1])
 
 
-@dataclass
+@dataclass(eq=False)
 class Value:
     repr: str
     is_print_safe: bool = False  # `self.repr` is valid python and safe to print as is
