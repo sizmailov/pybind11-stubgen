@@ -36,7 +36,7 @@ from pybind11_stubgen.structs import (
     TypeVar_,
     Value,
 )
-from pybind11_stubgen.typing_ext import DynamicSize, FixedSize, InvalidExpr
+from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 logger = getLogger("pybind11_stubgen")
 
@@ -867,7 +867,7 @@ class ReplaceReadWritePropertyWithField(IParser):
         return result
 
 
-class WrapInvalidExpressionInAnnotated(IParser):
+class WrapInvalidExpressions(IParser):
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
@@ -875,16 +875,12 @@ class WrapInvalidExpressionInAnnotated(IParser):
         if not isinstance(result, InvalidExpression):
             return result
 
-        self.handle_type(InvalidExpr)
         substitute_t = ResolvedType(self.handle_type(Any))
         return ResolvedType(
             QualifiedName.from_str("typing.Annotated"),
             parameters=[
                 substitute_t,
-                Value(
-                    repr=repr(InvalidExpr(expr=annotation_str.strip())),
-                    is_print_safe=True,
-                ),
+                result,
             ],
         )
 

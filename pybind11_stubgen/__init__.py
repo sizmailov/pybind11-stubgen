@@ -48,7 +48,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     RemoveSelfAnnotation,
     ReplaceReadWritePropertyWithField,
     RewritePybind11EnumValueRepr,
-    WrapInvalidExpressionInAnnotated,
+    WrapInvalidExpressions,
 )
 from pybind11_stubgen.parser.mixins.parse import (
     BaseParser,
@@ -252,7 +252,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
     if args.print_invalid_expressions_as_is:
         wrap_invalid_expressions = []
     else:
-        wrap_invalid_expressions = [WrapInvalidExpressionInAnnotated]
+        wrap_invalid_expressions = [WrapInvalidExpressions]
 
     class Parser(
         *error_handlers_top,  # type: ignore[misc]
@@ -268,7 +268,6 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixMissingEnumMembersAnnotation,
         OverridePrintSafeValues,
         *numpy_fixes,  # type: ignore[misc]
-        *wrap_invalid_expressions,
         FixNumpyDtype,
         FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
@@ -283,6 +282,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixRedundantMethodsFromBuiltinObject,
         RemoveSelfAnnotation,
         FixPybind11EnumStrDoc,
+        *wrap_invalid_expressions,
         ExtractSignaturesFromPybind11Docstrings,
         ParserDispatchMixin,
         BaseParser,
