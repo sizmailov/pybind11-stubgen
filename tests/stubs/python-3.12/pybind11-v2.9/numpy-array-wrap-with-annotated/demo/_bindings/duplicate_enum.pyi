@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+import pybind11_stubgen.typing_ext
+
 __all__ = ["ConsoleForegroundColor", "Magenta", "accepts_ambiguous_enum"]
 
 class ConsoleForegroundColor:
@@ -32,6 +34,10 @@ class ConsoleForegroundColor:
     @property
     def value(self) -> int: ...
 
-def accepts_ambiguous_enum(color: ConsoleForegroundColor = ...) -> None: ...
+def accepts_ambiguous_enum(
+    color: ConsoleForegroundColor = pybind11_stubgen.typing_ext.InvalidExpr(
+        "<ConsoleForegroundColor.Magenta: 35>"
+    ),
+) -> None: ...
 
 Magenta: ConsoleForegroundColor  # value = <ConsoleForegroundColor.Magenta: 35>

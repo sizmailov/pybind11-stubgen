@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import ast
+import datetime
 import inspect
 import re
 import types
+import typing
 from typing import Any
 
 from pybind11_stubgen.parser.errors import (
@@ -34,6 +36,7 @@ from pybind11_stubgen.structs import (
     TypeVar_,
     Value,
 )
+from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 _generic_args = [
     Argument(name=Identifier("args"), variadic=True),
@@ -250,16 +253,16 @@ class BaseParser(IParser):
                     func_args[arg_name].annotation = self.parse_annotation_str(
                         annotation
                     )
-                elif not isinstance(annotation, type):
-                    func_args[arg_name].annotation = self.handle_value(annotation)
                 elif self._is_generic_alias(annotation):
                     func_args[arg_name].annotation = self.parse_annotation_str(
                         str(annotation)
                     )
-                else:
+                elif isinstance(annotation, type):
                     func_args[arg_name].annotation = ResolvedType(
                         name=self.handle_type(annotation),
                     )
+                else:
+                    func_args[arg_name].annotation = self.handle_value(annotation)
             if "return" in func_args:
                 returns = func_args["return"].annotation
             else:
@@ -291,7 +294,10 @@ class BaseParser(IParser):
         generic_alias_t: type | None = getattr(types, "GenericAlias", None)
         if generic_alias_t is None:
             return False
-        return isinstance(annotation, generic_alias_t)
+        typing_generic_alias_t = type(typing.List[int])
+        return isinstance(annotation, generic_alias_t) or isinstance(
+            annotation, typing_generic_alias_t
+        )
 
     def handle_import(self, path: QualifiedName, origin: Any) -> Import | None:
         full_name = self._get_full_name(path, origin)
@@ -370,6 +376,10 @@ class BaseParser(IParser):
             return Value(repr=str(self.handle_type(value)), is_print_safe=True)
         if inspect.ismodule(value):
             return Value(repr=value.__name__, is_print_safe=True)
+        if isinstance(value, datetime.timedelta):
+            return Value(repr=repr(value), is_print_safe=True)
+        if isinstance(value, (FixedSize, DynamicSize)):
+            return Value(repr=repr(value), is_print_safe=True)
         return Value(repr=repr(value), is_print_safe=False)
 
     def handle_type(self, type_: type) -> QualifiedName:

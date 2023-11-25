@@ -144,6 +144,11 @@ class FixMissingImports(IParser):
         result = super().handle_value(value)
         if inspect.isroutine(value) and result.is_print_safe:
             self._add_import(QualifiedName.from_str(result.repr))
+        else:
+            type_ = type(value)
+            self._add_import(
+                QualifiedName.from_str(f"{type_.__module__}.{type_.__qualname__}")
+            )
         return result
 
     def parse_annotation_str(
@@ -159,7 +164,9 @@ class FixMissingImports(IParser):
             return
         if len(name) == 1 and len(name[0]) == 0:
             return
-        if hasattr(builtins, name[0]):
+        if len(name) == 1 and hasattr(builtins, name[0]):
+            return
+        if len(name) > 0 and name[0] == "builtins":
             return
         if self.__current_class is not None and hasattr(self.__current_class, name[0]):
             return
@@ -170,6 +177,8 @@ class FixMissingImports(IParser):
         module_name = self._get_parent_module(name)
         if module_name is None:
             self.report_error(NameResolutionError(name))
+            return
+        if self.__current_module.__name__ == str(module_name):
             return
         self.__extra_imports.add(Import(name=None, origin=module_name))
 
@@ -496,6 +505,14 @@ class FixValueReprRandomAddress(IParser):
     def handle_value(self, value: Any) -> Value:
         result = super().handle_value(value)
         result.repr = self._pattern.sub(r"<\g<name> object>", result.repr)
+        return result
+
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        result = super().parse_value_str(value)
+        if isinstance(result, Value):
+            result.repr = self._pattern.sub(r"<\g<name> object>", result.repr)
+        else:
+            result.text = self._pattern.sub(r"<\g<name> object>", result.text)
         return result
 
 
@@ -867,6 +884,24 @@ class ReplaceReadWritePropertyWithField(IParser):
         return result
 
 
+class WrapInvalidExpressions(IParser):
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if not isinstance(result, InvalidExpression):
+            return result
+
+        substitute_t = self.parse_annotation_str("typing.Any")
+        return ResolvedType(
+            QualifiedName.from_str("Annotated"),
+            parameters=[
+                substitute_t,
+                result,
+            ],
+        )
+
+
 class FixMissingFixedSizeImport(IParser):
     def parse_annotation_str(
         self, annotation_str: str
@@ -887,8 +922,6 @@ class FixMissingFixedSizeImport(IParser):
             except ValueError:
                 pass
             else:
-                # call `handle_type` to trigger implicit import
-                self.handle_type(FixedSize)
                 return self.handle_value(FixedSize(*dimensions))
         return result
 

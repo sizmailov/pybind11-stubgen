@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 
 class FixedSize:
     def __init__(self, *dim: int):
@@ -23,3 +25,17 @@ class DynamicSize:
             f"{self.__class__.__qualname__}"
             f"({', '.join(repr(d) for d in self.dim)})"
         )
+
+
+def InvalidExpr(expr: str) -> Any:
+    raise RuntimeError(
+        "The method exists only for annotation purposes in stub files. "
+        "Should never not be used at runtime"
+    )
+
+
+def ValueExpr(expr: str) -> Any:
+    raise RuntimeError(
+        "The method exists only for annotation purposes in stub files. "
+        "Should never not be used at runtime"
+    )

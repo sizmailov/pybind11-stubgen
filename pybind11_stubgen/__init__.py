@@ -48,6 +48,7 @@ from pybind11_stubgen.parser.mixins.fix import (
     RemoveSelfAnnotation,
     ReplaceReadWritePropertyWithField,
     RewritePybind11EnumValueRepr,
+    WrapInvalidExpressions,
 )
 from pybind11_stubgen.parser.mixins.parse import (
     BaseParser,
@@ -276,6 +277,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixRedundantMethodsFromBuiltinObject,
         RemoveSelfAnnotation,
         FixPybind11EnumStrDoc,
+        WrapInvalidExpressions,
         ExtractSignaturesFromPybind11Docstrings,
         ParserDispatchMixin,
         BaseParser,
@@ -306,7 +308,7 @@ def main():
     args = arg_parser().parse_args(namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
-    printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
+    printer = Printer()
 
     out_dir, sub_dir = to_output_and_subdir(
         output_dir=args.output_dir,

@@ -19,6 +19,7 @@ from pybind11_stubgen.structs import (
     Modifier,
     Module,
     Property,
+    QualifiedName,
     ResolvedType,
     TypeVar_,
     Value,
@@ -30,8 +31,8 @@ def indent_lines(lines: list[str], by=4) -> list[str]:
 
 
 class Printer:
-    def __init__(self, invalid_expr_as_ellipses: bool):
-        self.invalid_expr_as_ellipses = invalid_expr_as_ellipses
+    def __init__(self):
+        self._need_typing_ext = False
 
     def print_alias(self, alias: Alias) -> list[str]:
         return [f"{alias.name} = {alias.origin}"]
@@ -43,13 +44,12 @@ class Printer:
         if attr.annotation is not None:
             parts.append(f": {self.print_annotation(attr.annotation)}")
 
-        if attr.value is not None and attr.value.is_print_safe:
-            parts.append(f" = {self.print_value(attr.value)}")
-        else:
-            if attr.annotation is None:
-                parts.append(" = ...")
-            if attr.value is not None:
-                parts.append(f"  # value = {self.print_value(attr.value)}")
+        if attr.value is not None:
+            if attr.value.is_print_safe or attr.annotation is None:
+                parts.append(f" = {self.print_value(attr.value)}")
+            else:
+                repr_first_line = attr.value.repr.split("\n", 1)[0]
+                parts.append(f"  # value = {repr_first_line}")
 
         return ["".join(parts)]
 
@@ -202,40 +202,51 @@ class Printer:
         return result
 
     def print_module(self, module: Module) -> list[str]:
-        result = []
-
-        if module.doc is not None:
-            result.extend(self.print_docstring(module.doc))
-
-        for import_ in sorted(module.imports, key=lambda x: x.origin):
-            result.extend(self.print_import(import_))
+        result_bottom = []
+        tmp = self._need_typing_ext
 
         for sub_module in module.sub_modules:
-            result.extend(self.print_submodule_import(sub_module.name))
+            result_bottom.extend(self.print_submodule_import(sub_module.name))
 
         # Place __all__ above everything
         for attr in sorted(module.attributes, key=lambda a: a.name):
             if attr.name == "__all__":
-                result.extend(self.print_attribute(attr))
+                result_bottom.extend(self.print_attribute(attr))
                 break
 
         for type_var in sorted(module.type_vars, key=lambda t: t.name):
-            result.extend(self.print_type_var(type_var))
+            result_bottom.extend(self.print_type_var(type_var))
 
         for class_ in sorted(module.classes, key=lambda c: c.name):
-            result.extend(self.print_class(class_))
+            result_bottom.extend(self.print_class(class_))
 
         for func in sorted(module.functions, key=lambda f: f.name):
-            result.extend(self.print_function(func))
+            result_bottom.extend(self.print_function(func))
 
         for attr in sorted(module.attributes, key=lambda a: a.name):
             if attr.name != "__all__":
-                result.extend(self.print_attribute(attr))
+                result_bottom.extend(self.print_attribute(attr))
 
         for alias in module.aliases:
-            result.extend(self.print_alias(alias))
+            result_bottom.extend(self.print_alias(alias))
 
-        return result
+        if self._need_typing_ext:
+            module.imports.add(
+                Import(
+                    name=None,
+                    origin=QualifiedName.from_str("pybind11_stubgen.typing_ext"),
+                )
+            )
+
+        result_top = []
+        if module.doc is not None:
+            result_top.extend(self.print_docstring(module.doc))
+
+        for import_ in sorted(module.imports, key=lambda x: x.origin):
+            result_top.extend(self.print_import(import_))
+
+        self._need_typing_ext = tmp
+        return result_top + result_bottom
 
     def print_property(self, prop: Property) -> list[str]:
         if not prop.getter:
@@ -276,11 +287,10 @@ class Printer:
         return result
 
     def print_value(self, value: Value) -> str:
-        split = value.repr.split("\n", 1)
-        if len(split) == 1:
-            return split[0]
-        else:
-            return split[0] + "..."
+        if value.is_print_safe:
+            return value.repr
+        self._need_typing_ext = True
+        return f"pybind11_stubgen.typing_ext.ValueExpr({repr(value.repr)})"
 
     def print_type(self, type_: ResolvedType) -> str:
         if (
@@ -312,6 +322,5 @@ class Printer:
             raise AssertionError()
 
     def print_invalid_exp(self, invalid_expr: InvalidExpression) -> str:
-        if self.invalid_expr_as_ellipses:
-            return "..."
-        return invalid_expr.text
+        self._need_typing_ext = True
+        return f"pybind11_stubgen.typing_ext.InvalidExpr({repr(invalid_expr.text)})"

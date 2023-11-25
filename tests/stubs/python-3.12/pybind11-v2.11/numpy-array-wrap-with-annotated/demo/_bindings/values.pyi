@@ -31,6 +31,6 @@ foolist: list  # value = [<demo._bindings.values.Foo object>, <demo._bindings.va
 foovar: Foo  # value = <demo._bindings.values.Foo object>
 list_with_none: list = [None, 2, {}]
 none = None
-t_10ms: datetime.timedelta  # value = datetime.timedelta(microseconds=10000)
-t_20ns: datetime.timedelta  # value = datetime.timedelta(0)
-t_30s: datetime.timedelta  # value = datetime.timedelta(seconds=30)
+t_10ms: datetime.timedelta = datetime.timedelta(microseconds=10000)
+t_20ns: datetime.timedelta = datetime.timedelta(0)
+t_30s: datetime.timedelta = datetime.timedelta(seconds=30)
