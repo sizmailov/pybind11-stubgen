@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import datetime
 import inspect
 import re
 import types
@@ -34,6 +35,7 @@ from pybind11_stubgen.structs import (
     TypeVar_,
     Value,
 )
+from pybind11_stubgen.typing_ext import DynamicSize, FixedSize
 
 _generic_args = [
     Argument(name=Identifier("args"), variadic=True),
@@ -370,6 +372,10 @@ class BaseParser(IParser):
             return Value(repr=str(self.handle_type(value)), is_print_safe=True)
         if inspect.ismodule(value):
             return Value(repr=value.__name__, is_print_safe=True)
+        if isinstance(value, datetime.timedelta):
+            return Value(repr=repr(value), is_print_safe=True)
+        if isinstance(value, (FixedSize, DynamicSize)):
+            return Value(repr=repr(value), is_print_safe=True)
         return Value(repr=repr(value), is_print_safe=False)
 
     def handle_type(self, type_: type) -> QualifiedName:
