@@ -498,6 +498,14 @@ class FixValueReprRandomAddress(IParser):
         result.repr = self._pattern.sub(r"<\g<name> object>", result.repr)
         return result
 
+    def parse_value_str(self, value: str) -> Value | InvalidExpression:
+        result = super().parse_value_str(value)
+        if isinstance(result, Value):
+            result.repr = self._pattern.sub(r"<\g<name> object>", result.repr)
+        else:
+            result.text = self._pattern.sub(r"<\g<name> object>", result.text)
+        return result
+
 
 class FixNumpyArrayDimAnnotation(IParser):
     __array_names: set[QualifiedName] = {
