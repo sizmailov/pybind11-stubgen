@@ -1021,7 +1021,7 @@ class RewritePybind11EnumValueRepr(IParser):
     2. The `InvalidExpression` repr corresponds to multiple enum field definitions. An
     `AmbiguousEnumError` is reported.
     3. The `InvalidExpression` repr corresponds to no enum field definitions. An
-    `InvalidEnumError` is reported.
+    `InvalidExpressionError` is reported.
 
     Attributes:
         _pybind11_enum_pattern: Pattern matching pybind11 enum field reprs.

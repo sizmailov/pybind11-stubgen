@@ -50,6 +50,6 @@ class AmbiguousEnumError(InvalidExpressionError):
         origins = sorted(import_.origin for _, import_ in self.values_and_imports)
         return (
             f"Enum member '{self.expression}' could not be resolved; multiple "
-            "identical definitions found in: "
+            "matching definitions found in: "
             + ", ".join(f"'{origin}'" for origin in origins)
         )

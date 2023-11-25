@@ -9,7 +9,7 @@ pybind11_stubgen - [  ERROR] In demo._bindings.flawed_bindings.accept_unbound_en
 pybind11_stubgen - [  ERROR] In demo._bindings.flawed_bindings.accept_unbound_type : Invalid expression '(anonymous namespace)::Unbound'
 pybind11_stubgen - [  ERROR] In demo._bindings.flawed_bindings.accept_unbound_type_defaulted : Invalid expression '<demo._bindings.flawed_bindings.Unbound object at 0x1234abcd5678>'
 pybind11_stubgen - [  ERROR] In demo._bindings.flawed_bindings.get_unbound_type : Invalid expression '(anonymous namespace)::Unbound'
-pybind11_stubgen - [  ERROR] In finalize : Enum member '<ConsoleForegroundColor.Magenta: 35>' could not be resolved; multiple identical definitions found in: 'demo._bindings.duplicate_enum', 'demo._bindings.enum'
+pybind11_stubgen - [  ERROR] In finalize : Enum member '<ConsoleForegroundColor.Magenta: 35>' could not be resolved; multiple matching definitions found in: 'demo._bindings.duplicate_enum', 'demo._bindings.enum'
 pybind11_stubgen - [WARNING] Raw C++ types/values were found in signatures extracted from docstrings.
 Please check the corresponding sections of pybind11 documentation to avoid common mistakes in binding code:
  - https://pybind11.readthedocs.io/en/latest/advanced/misc.html#avoiding-cpp-types-in-docstrings
