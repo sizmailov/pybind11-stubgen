@@ -1123,7 +1123,6 @@ class RewritePybind11EnumValueRepr(IParser):
             )
 
             if not is_alias and is_source_module:
-                origin = QualifiedName(path[: len(module_path)])
                 value, import_ = self._repr_to_value_and_import[repr_] = (
                     Value(
                         repr=".".join(path),
@@ -1131,7 +1130,7 @@ class RewritePybind11EnumValueRepr(IParser):
                     ),
                     Import(
                         name=None,
-                        origin=origin,
+                        origin=module_path,
                     ),
                 )
 
@@ -1140,7 +1139,7 @@ class RewritePybind11EnumValueRepr(IParser):
                     arg = self._repr_to_invalid_default_arguments[repr_].pop()
                     module = self._invalid_default_argument_to_module.pop(arg)
                     self.set_by_arg_default_by_origin(
-                        arg, module, value, import_, origin
+                        arg, module, value, import_, module_path
                     )
 
         return super().handle_attribute(path, attr)
