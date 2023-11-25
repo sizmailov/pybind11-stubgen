@@ -97,8 +97,8 @@ jobs:
                 uses: actions/upload-artifact@v3
                 if: failure()
                 with:
-                    name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}.patch"
-                    path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
+                    name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}-${{ matrix.numpy-format }}.patch"
+                    path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}/${{ matrix.numpy-format }}.patch"
                     retention-days: 30
                     if-no-files-found: ignore
 
