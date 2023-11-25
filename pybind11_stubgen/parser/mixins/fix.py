@@ -6,6 +6,7 @@ import inspect
 import re
 import sys
 import types
+from collections import defaultdict
 from logging import getLogger
 from typing import Any, Sequence
 
@@ -999,9 +1000,51 @@ class OverridePrintSafeValues(IParser):
 
 
 class RewritePybind11EnumValueRepr(IParser):
+    """Reformat pybind11-generated invalid enum value reprs.
+
+    For example, pybind11 may generate a `__doc__` like this:
+        >>> "set_color(self, color: <ConsoleForegroundColor.Blue: 34>) -> None:\n"
+
+    Which is invalid python syntax. This parser will rewrite the generated stub to:
+        >>> from demo._bindings.enum import ConsoleForegroundColor
+        >>> def set_color(self, color: ConsoleForegroundColor.Blue) -> None:
+        >>>     ...
+
+    Since `pybind11_stubgen` encounters the values corresponding to these reprs as it
+    parses the modules, it can automatically replace these invalid expressions with the
+    corresponding `Value` and `Import` as it encounters them. There are 3 cases for an
+    `Argument` whose `default` is an enum `InvalidExpression`:
+
+    1. The `InvalidExpression` is seen before the enum definition. These are saved to be
+    fixed when the enum definition is seen.
+    2. The `InvalidExpression` is seen after the enum definition. These are fixed as
+    soon as they are seen.
+    3. Any enum `InvalidExpression` is not fixed by the time `finalize()` is called.
+    These are reported as `InvalidExpressionError`.
+
+    Attributes:
+        _pybind11_enum_pattern: Pattern matching pybind11 enum field reprs.
+        _unknown_enum_classes: Set of the str names of enum classes whose reprs were not
+            seen.
+        _invalid_default_arguments: Per module invalid arguments. Used to know which
+            enum imports to add to the current module.
+        _repr_to_value_and_import: Saved safe print values of enum field reprs and the
+            import to add to a module when when that repr is seen.
+        _repr_to_invalid_default_arguments: Groups of arguments whose default values are
+            `InvalidExpression`s. This is only used until the first time each repr is
+            seen. Left over groups will raise an error, which may be fixed using
+            `--enum-class-locations` or suppressed using `--ignore-invalid-expressions`.
+        _invalid_default_argument_to_module: Maps individual invalid default arguments
+            to the module containing them. Used to know which enum imports to add to
+            which module.
+    """
+
     _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>-?\d+)>")
-    # _pybind11_enum_pattern = re.compile(r"<(?P<enum>\w+(\.\w+)+): (?P<value>\d+)>")
     _unknown_enum_classes: set[str] = set()
+    _invalid_default_arguments: list[Argument] = []
+    _repr_to_value_and_import: dict[str, tuple[Value, Import]] = {}
+    _repr_to_invalid_default_arguments: dict[str, set[Argument]] = defaultdict(set)
+    _invalid_default_argument_to_module: dict[Argument, Module] = {}
 
     def __init__(self):
         super().__init__()
@@ -1024,17 +1067,101 @@ class RewritePybind11EnumValueRepr(IParser):
                     return Value(repr=f"{enum_class.name}.{entry}", is_print_safe=True)
         return super().parse_value_str(value)
 
+    def handle_module(
+        self, path: QualifiedName, module: types.ModuleType
+    ) -> Module | None:
+        # we may be handling a module within a module, so save the parent's invalid
+        # arguments on the stack as we handle this module
+        parent_module_invalid_arguments = self._invalid_default_arguments
+        self._invalid_default_arguments = []
+        result = super().handle_module(path, module)
+
+        if result is None:
+            self._invalid_default_arguments = parent_module_invalid_arguments
+            return None
+
+        while self._invalid_default_arguments:
+            arg = self._invalid_default_arguments.pop()
+            assert isinstance(arg.default, InvalidExpression)
+            repr_ = arg.default.text
+
+            if repr_ in self._repr_to_value_and_import:
+                # this argument has already been registered to the current module
+                arg.default, _ = self._repr_to_value_and_import[repr_]
+            else:
+                # this argument is not yet registered; register it to the current module
+                self._repr_to_invalid_default_arguments[repr_].add(arg)
+                self._invalid_default_argument_to_module[arg] = result
+
+        self._invalid_default_arguments = parent_module_invalid_arguments
+        return result
+
+    def handle_function(self, path: QualifiedName, func: Any) -> list[Function]:
+        result = super().handle_function(path, func)
+
+        for f in result:
+            for arg in f.args:
+                if isinstance(arg.default, InvalidExpression):
+                    # this argument will be registered to the current module
+                    self._invalid_default_arguments.append(arg)
+
+        return result
+
+    def handle_attribute(self, path: QualifiedName, attr: Any) -> Attribute | None:
+        module = inspect.getmodule(attr)
+        repr_ = repr(attr)
+
+        if module is not None and repr_ not in self._repr_to_value_and_import:
+            module_path = QualifiedName.from_str(module.__name__)
+            is_source_module = path[: len(module_path)] == module_path
+            is_alias = (  # could be an `.export_values()` alias, which we want to avoid
+                is_source_module
+                and not inspect.isclass(getattr(module, path[len(module_path)]))
+            )
+
+            if not is_alias and is_source_module:
+                attr_name = path[len(module_path) :]  # remove the module prefix
+                value, import_ = self._repr_to_value_and_import[repr_] = (
+                    Value(
+                        repr=".".join(attr_name),
+                        is_print_safe=True,
+                    ),
+                    Import(
+                        name=attr_name[0],
+                        origin=QualifiedName(path[: len(module_path) + 1]),
+                    ),
+                )
+
+                # fix invalid default arguments seen before we saw the enum field's repr
+                while self._repr_to_invalid_default_arguments[repr_]:
+                    arg = self._repr_to_invalid_default_arguments[repr_].pop()
+                    arg.default = value
+                    module = self._invalid_default_argument_to_module.pop(arg)
+                    module.imports.add(import_)
+
+        return super().handle_attribute(path, attr)
+
     def report_error(self, error: ParserError) -> None:
         if isinstance(error, InvalidExpressionError):
             match = self._pybind11_enum_pattern.match(error.expression)
             if match is not None:
-                enum_qual_name = match.group("enum")
-                enum_class_str, entry = enum_qual_name.rsplit(".", maxsplit=1)
-                self._unknown_enum_classes.add(enum_class_str)
+                # defer reporting invalid enum expressions until we have seen all
+                # pybind11-defined enum fields
+                return
         super().report_error(error)
 
     def finalize(self):
+        for repr_, invalid_args in self._repr_to_invalid_default_arguments.items():
+            if invalid_args:
+                match = self._pybind11_enum_pattern.match(repr_)
+                if match is not None:
+                    enum_qual_name = match.group("enum")
+                    enum_class_str, _ = enum_qual_name.rsplit(".", maxsplit=1)
+                    self._unknown_enum_classes.add(enum_class_str)
+                    self.report_error(InvalidExpressionError(repr_))
         if self._unknown_enum_classes:
+            # TODO: does this case still exist in practice? How would pybind11 display
+            # a repr for an enum field whose definition we did not see while parsing?
             logger.warning(
                 "Enum-like str representations were found with no "
                 "matching mapping to the enum class location.\n"

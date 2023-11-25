@@ -110,7 +110,7 @@ class Attribute:
     annotation: Annotation | None = field_(default=None)
 
 
-@dataclass
+@dataclass(eq=False)
 class Argument:
     name: Identifier | None
     pos_only: bool = field_(default=False)

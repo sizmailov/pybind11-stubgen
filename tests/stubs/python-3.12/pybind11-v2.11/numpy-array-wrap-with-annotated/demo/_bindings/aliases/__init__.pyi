@@ -5,9 +5,9 @@ import typing
 import numpy
 from numpy import random
 
-import demo._bindings.enum
 from demo._bindings.aliases.foreign_method_arg import Bar2 as foreign_type_alias
 from demo._bindings.aliases.foreign_return import get_foo as foreign_class_alias
+from demo._bindings.enum import ConsoleForegroundColor
 
 from . import (
     foreign_arg,
@@ -44,9 +44,7 @@ class Color:
 class Dummy:
     linalg = numpy.linalg
 
-def foreign_enum_default(
-    color: typing.Any = demo._bindings.enum.ConsoleForegroundColor.Blue,
-) -> None: ...
+def foreign_enum_default(color: typing.Any = ConsoleForegroundColor.Blue) -> None: ...
 def func(arg0: int) -> int: ...
 
 local_func_alias = func
