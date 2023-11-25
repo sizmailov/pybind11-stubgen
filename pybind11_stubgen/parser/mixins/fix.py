@@ -1087,7 +1087,10 @@ class RewritePybind11EnumValueRepr(IParser):
 
             if repr_ in self._repr_to_value_and_import:
                 # this argument has already been registered to the current module
-                arg.default, _ = self._repr_to_value_and_import[repr_]
+                value, import_ = self._repr_to_value_and_import[repr_]
+                self.set_by_arg_default_by_origin(
+                    arg, result, value, import_, result.origin
+                )
             else:
                 # this argument is not yet registered; register it to the current module
                 self._repr_to_invalid_default_arguments[repr_].add(arg)
@@ -1120,26 +1123,44 @@ class RewritePybind11EnumValueRepr(IParser):
             )
 
             if not is_alias and is_source_module:
-                attr_name = path[len(module_path) :]  # remove the module prefix
+                origin = QualifiedName(path[: len(module_path)])
                 value, import_ = self._repr_to_value_and_import[repr_] = (
                     Value(
-                        repr=".".join(attr_name),
+                        repr=".".join(path),
                         is_print_safe=True,
                     ),
                     Import(
-                        name=attr_name[0],
-                        origin=QualifiedName(path[: len(module_path) + 1]),
+                        name=None,
+                        origin=origin,
                     ),
                 )
 
                 # fix invalid default arguments seen before we saw the enum field's repr
                 while self._repr_to_invalid_default_arguments[repr_]:
                     arg = self._repr_to_invalid_default_arguments[repr_].pop()
-                    arg.default = value
                     module = self._invalid_default_argument_to_module.pop(arg)
-                    module.imports.add(import_)
+                    self.set_by_arg_default_by_origin(
+                        arg, module, value, import_, origin
+                    )
 
         return super().handle_attribute(path, attr)
+
+    def set_by_arg_default_by_origin(
+        self,
+        arg: Argument,
+        module: Module,
+        value: Value,
+        import_: Import,
+        origin: QualifiedName,
+    ) -> None:
+        if module.origin == origin:
+            arg.default = Value(
+                repr=value.repr[len(str(origin)) + 1 :],
+                is_print_safe=True,
+            )
+        else:
+            arg.default = value
+            module.imports.add(import_)
 
     def report_error(self, error: ParserError) -> None:
         if isinstance(error, InvalidExpressionError):

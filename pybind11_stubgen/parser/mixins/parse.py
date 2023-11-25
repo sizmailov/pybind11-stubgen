@@ -85,7 +85,7 @@ class ParserDispatchMixin(IParser):
     def handle_module(
         self, path: QualifiedName, module: types.ModuleType
     ) -> Module | None:
-        result = Module(name=path[-1])
+        result = Module(name=path[-1], origin=QualifiedName.from_str(module.__name__))
         for name, member in inspect.getmembers(module):
             obj = self.handle_module_member(
                 QualifiedName([*path, Identifier(name)]), module, member

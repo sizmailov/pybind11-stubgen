@@ -191,6 +191,7 @@ class Import:
 @dataclass
 class Module:
     name: Identifier
+    origin: QualifiedName
     doc: Docstring | None = field_(default=None)
     classes: list[Class] = field_(default_factory=list)
     functions: list[Function] = field_(default_factory=list)
