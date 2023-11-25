@@ -249,6 +249,11 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         ),
     ]
 
+    if args.print_invalid_expressions_as_is:
+        wrap_invalid_expressions = []
+    else:
+        wrap_invalid_expressions = [WrapInvalidExpressionInAnnotated]
+
     class Parser(
         *error_handlers_top,  # type: ignore[misc]
         FixMissing__future__AnnotationsImport,
@@ -263,7 +268,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixMissingEnumMembersAnnotation,
         OverridePrintSafeValues,
         *numpy_fixes,  # type: ignore[misc]
-        WrapInvalidExpressionInAnnotated,
+        *wrap_invalid_expressions,
         FixNumpyDtype,
         FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
