@@ -877,7 +877,7 @@ class WrapInvalidExpressions(IParser):
 
         substitute_t = self.parse_annotation_str("typing.Any")
         return ResolvedType(
-            QualifiedName.from_str("typing.Annotated"),
+            QualifiedName.from_str("Annotated"),
             parameters=[
                 substitute_t,
                 result,
