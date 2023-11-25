@@ -46,9 +46,10 @@ class AmbiguousEnumError(InvalidExpressionError):
                 f"{len(self.values_and_imports)}"
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
+        origins = sorted(import_.origin for _, import_ in self.values_and_imports)
         return (
             f"Enum member '{self.expression}' could not be resolved; multiple "
             "identical definitions found in: "
-            + ", ".join(f"'{import_.origin}'" for _, import_ in self.values_and_imports)
+            + ", ".join(f"'{origin}'" for origin in origins)
         )
