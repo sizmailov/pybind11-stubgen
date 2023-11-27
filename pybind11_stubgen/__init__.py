@@ -76,6 +76,7 @@ class CLIArgs(Namespace):
     dry_run: bool
     stub_extension: str
     module_name: str
+    module_path: Path
 
 
 def arg_parser() -> ArgumentParser:
@@ -215,6 +216,10 @@ def arg_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--module-path", type=Path, help="Explicit path to compiled pybind11 .so"
+    )
+
+    parser.add_argument(
         "module_name",
         metavar="MODULE_NAME",
         type=str,
@@ -318,6 +323,7 @@ def main():
         parser,
         printer,
         args.module_name,
+        args.module_path,
         out_dir,
         sub_dir=sub_dir,
         dry_run=args.dry_run,
@@ -334,27 +340,33 @@ def to_output_and_subdir(
 
     if root_suffix is None:
         return out_dir.joinpath(*module_path[:-1]), None
+
+    module_path = [f"{module_path[0]}{root_suffix}", *module_path[1:]]
+    if len(module_path) == 1:
+        sub_dir = Path(module_path[-1])
     else:
-        module_path = [f"{module_path[0]}{root_suffix}", *module_path[1:]]
-        if len(module_path) == 1:
-            sub_dir = Path(module_path[-1])
-        else:
-            sub_dir = None
-        return out_dir.joinpath(*module_path[:-1]), sub_dir
+        sub_dir = None
+    return out_dir.joinpath(*module_path[:-1]), sub_dir
 
 
 def run(
     parser: IParser,
     printer: Printer,
     module_name: str,
+    module_path: Path | None,
     out_dir: Path,
     sub_dir: Path | None,
     dry_run: bool,
     writer: Writer,
 ):
-    module = parser.handle_module(
-        QualifiedName.from_str(module_name), importlib.import_module(module_name)
-    )
+    if module_path is not None:
+        py_module = importlib.util.module_from_spec(
+            importlib.util.spec_from_file_location(module_name, module_path)
+        )
+    else:
+        py_module = importlib.import_module(module_name)
+
+    module = parser.handle_module(QualifiedName.from_str(module_name), py_module)
     parser.finalize()
 
     if module is None:
