@@ -56,10 +56,6 @@ class LoggerData(IParser):
         with self.__new_layer(path):
             return super().handle_method(path, class_)
 
-    def finalize(self) -> None:
-        with self.__new_layer(QualifiedName.from_str("finalize")):
-            return super().finalize()
-
     @property
     def current_path(self) -> QualifiedName:
         assert len(self.stack) != 0

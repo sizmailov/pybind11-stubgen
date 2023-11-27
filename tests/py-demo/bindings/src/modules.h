@@ -10,7 +10,6 @@ void bind_aliases_module(py::module&& m);
 void bind_classes_module(py::module&& m);
 void bind_eigen_module(py::module&& m);
 void bind_enum_module(py::module&& m);
-void bind_duplicate_enum_module(py::module&& m);
 void bind_flawed_bindings_module(py::module&& m);
 void bind_functions_module(py::module&& m);
 void bind_issues_module(py::module&& m);

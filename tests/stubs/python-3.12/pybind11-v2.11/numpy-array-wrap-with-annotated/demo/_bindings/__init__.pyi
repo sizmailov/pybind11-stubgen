@@ -3,7 +3,6 @@ from __future__ import annotations
 from . import (
     aliases,
     classes,
-    duplicate_enum,
     eigen,
     enum,
     flawed_bindings,
@@ -21,7 +20,6 @@ from . import (
 __all__ = [
     "aliases",
     "classes",
-    "duplicate_enum",
     "eigen",
     "enum",
     "flawed_bindings",
