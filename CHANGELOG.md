@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+Version 2.4.2 (Nov 27, 2023)
+--------------------------
+Changes:
+- 🔁 Revert #196 due to poor review
+
+
 Version 2.4.1 (Nov 25, 2023)
 --------------------------
 Changes:
