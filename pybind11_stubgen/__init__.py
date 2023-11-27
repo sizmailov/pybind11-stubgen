@@ -4,6 +4,7 @@ import importlib
 import logging
 import re
 from argparse import ArgumentParser, Namespace
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 from pybind11_stubgen.parser.interface import IParser
@@ -360,9 +361,7 @@ def run(
     writer: Writer,
 ):
     if module_path is not None:
-        py_module = importlib.util.module_from_spec(
-            importlib.util.spec_from_file_location(module_name, module_path)
-        )
+        py_module = module_from_spec(spec_from_file_location(module_name, module_path))
     else:
         py_module = importlib.import_module(module_name)
 
