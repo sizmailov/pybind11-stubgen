@@ -122,7 +122,10 @@ class Printer:
     def print_docstring(self, doc: Docstring) -> list[str]:
         return [
             '"""',
-            *(line.replace('"""', r"\"\"\"") for line in doc.splitlines()),
+            *(
+                line.replace("\\", r"\\").replace('"""', r"\"\"\"")
+                for line in doc.splitlines()
+            ),
             '"""',
         ]
 

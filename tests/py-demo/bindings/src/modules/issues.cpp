@@ -23,6 +23,15 @@ void bind_issues_module(py::module &&m) {
                     "values provide more damping in response."));
     }
     {
+        m.def("backslashes_should_be_escaped", [] {}, R"docstring(
+            \brief A brief description of this function.
+
+            A detailed description of this function.
+
+            Here's some reStructuredText: :math:`x = [x, y, \theta]^T`
+        )docstring");
+    }
+    {
         // https://github.com/sizmailov/pybind11-stubgen/issues/86
         auto cleanup_callback = []() { /* ... */ };
         m.attr("_cleanup") = py::capsule(cleanup_callback);
