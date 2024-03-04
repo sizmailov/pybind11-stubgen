@@ -16,11 +16,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Setup Python
-                uses: actions/setup-python@v4
+                uses: actions/setup-python@v5
                 with:
                     python-version: '3.11'
             -   name: Checkout
-                uses: actions/checkout@v3
+                uses: actions/checkout@v4
             -   name: Install requirements
                 run: pip install -r requirements-dev.txt
             -   name: Run isort
@@ -65,15 +65,15 @@ jobs:
                       pybind11-branch: "master"
                       numpy-format: "numpy-array-use-type-var"
         steps:
-            -   uses: actions/checkout@v3
+            -   uses: actions/checkout@v4
 
             -   name: Setup Python ${{ matrix.python }}
-                uses: actions/setup-python@v4
+                uses: actions/setup-python@v5
                 with:
                     python-version: ${{ matrix.python }}
 
             -   name: Update CMake
-                uses: jwlawson/actions-setup-cmake@v1.13
+                uses: jwlawson/actions-setup-cmake@v1.14
 
             -   name: Setup annotations on Linux
                 if: runner.os == 'Linux'
@@ -94,11 +94,11 @@ jobs:
                 run: ./tests/check-demo-stubs-generation.sh --stubs-sub-dir "stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}/${{ matrix.numpy-format }}" --${{ matrix.numpy-format }}
 
             -   name: Archive patch
-                uses: actions/upload-artifact@v3
+                uses: actions/upload-artifact@v4
                 if: failure()
                 with:
-                    name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}.patch"
-                    path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}.patch"
+                    name: "python-${{ matrix.python }}-pybind-${{ matrix.pybind11-branch }}-${{ matrix.numpy-format }}.patch"
+                    path: "./tests/stubs/python-${{ matrix.python }}/pybind11-${{ matrix.pybind11-branch }}/${{ matrix.numpy-format }}.patch"
                     retention-days: 30
                     if-no-files-found: ignore
 
@@ -120,10 +120,10 @@ jobs:
                     - "3.8"
                     - "3.7"
         steps:
-            -   uses: actions/checkout@v3
+            -   uses: actions/checkout@v4
 
             -   name: Setup Python ${{ matrix.python }}
-                uses: actions/setup-python@v4
+                uses: actions/setup-python@v5
                 with:
                     python-version: ${{ matrix.python }}
 
@@ -154,7 +154,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            -   uses: actions/checkout@v3
+            -   uses: actions/checkout@v4
 
             -   name: Setup Python ${{ matrix.python }}
                 uses: actions/setup-python@v2

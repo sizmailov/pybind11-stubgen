@@ -125,3 +125,22 @@ class FilterInvalidIdentifiers(IParser):
             self.report_error(InvalidIdentifierError(path[-1], path.parent))
             return None
         return super().handle_class_member(path, class_, obj)
+
+
+class FilterPybind11ViewClasses(IParser):
+    def handle_module_member(
+        self, path: QualifiedName, module: types.ModuleType, obj: Any
+    ) -> (
+        Docstring | Import | Alias | Class | list[Function] | Attribute | Module | None
+    ):
+        result = super().handle_module_member(path, module, obj)
+
+        if isinstance(result, Class) and str(result.name) in [
+            "ItemsView",
+            "KeysView",
+            "ValuesView",
+        ]:
+            # TODO: check obj is a subclass of pybind11_object
+            return None
+
+        return result
