@@ -20,6 +20,7 @@ from pybind11_stubgen.parser.mixins.error_handlers import (
 from pybind11_stubgen.parser.mixins.filter import (
     FilterClassMembers,
     FilterInvalidIdentifiers,
+    FilterPybind11ViewClasses,
     FilterPybindInternals,
     FilterTypingModuleAttributes,
 )
@@ -273,6 +274,7 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         FixValueReprRandomAddress,
         FixRedundantBuiltinsAnnotation,
         FilterPybindInternals,
+        FilterPybind11ViewClasses,
         FixRedundantMethodsFromBuiltinObject,
         RemoveSelfAnnotation,
         FixPybind11EnumStrDoc,
