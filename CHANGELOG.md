@@ -2,6 +2,13 @@ Changelog
 =========
 
 
+Version 2.5 (Mar 3, 2024)
+--------------------------
+Changes:
+- 🐛 Fixed: Don't render pybind11 `KeysView`, `ValuesView`, `ItemsView` class definitions (#211)
+- 🐛 Fixed: Escape backslashes in stub output (#208)
+
+
 Version 2.4.2 (Nov 27, 2023)
 --------------------------
 Changes:
