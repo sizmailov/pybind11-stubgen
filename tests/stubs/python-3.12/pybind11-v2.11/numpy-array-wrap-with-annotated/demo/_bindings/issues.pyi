@@ -2,7 +2,20 @@ from __future__ import annotations
 
 import typing
 
-__all__ = ["issue_51_catastrophic_regex", "issue_73_utf8_doc_chars"]
+__all__ = [
+    "backslashes_should_be_escaped",
+    "issue_51_catastrophic_regex",
+    "issue_73_utf8_doc_chars",
+]
+
+def backslashes_should_be_escaped() -> None:
+    """
+    \\brief A brief description of this function.
+
+    A detailed description of this function.
+
+    Here's some reStructuredText: :math:`x = [x, y, \\theta]^T`
+    """
 
 def issue_51_catastrophic_regex(arg0: int, arg1: int) -> None:
     """
