@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+Version 2.5.1 (Mar 26, 2024)
+--------------------------
+Changes:
+- 🐛 Fixed: Missed numpy unsigned int types (#219) by @Yc7521
+
+
 Version 2.5 (Mar 3, 2024)
 --------------------------
 Changes:
