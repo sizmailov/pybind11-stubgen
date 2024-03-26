@@ -514,9 +514,13 @@ class FixNumpyArrayDimAnnotation(IParser):
         map(
             lambda name: QualifiedName.from_str(f"numpy.{name}"),
             (
+                "uint8",
                 "int8",
+                "uint16",
                 "int16",
+                "uint32",
                 "int32",
+                "uint64",
                 "int64",
                 "float16",
                 "float32",
