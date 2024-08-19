@@ -512,22 +512,28 @@ class FixNumpyArrayDimAnnotation(IParser):
     __annotated_name = QualifiedName.from_str("Annotated")
     numpy_primitive_types: set[QualifiedName] = set(
         map(
-            lambda name: QualifiedName.from_str(f"numpy.{name}"),
+            QualifiedName.from_str,
             (
-                "uint8",
-                "int8",
-                "uint16",
-                "int16",
-                "uint32",
-                "int32",
-                "uint64",
-                "int64",
-                "float16",
-                "float32",
-                "float64",
-                "complex32",
-                "complex64",
-                "longcomplex",
+                "bool",
+                *map(
+                    lambda name: f"numpy.{name}",
+                    (
+                        "uint8",
+                        "int8",
+                        "uint16",
+                        "int16",
+                        "uint32",
+                        "int32",
+                        "uint64",
+                        "int64",
+                        "float16",
+                        "float32",
+                        "float64",
+                        "complex32",
+                        "complex64",
+                        "longcomplex",
+                    ),
+                ),
             ),
         )
     )
@@ -696,9 +702,15 @@ class FixNumpyArrayDimTypeVar(IParser):
         ):
             return result
 
+        name = scalar_with_dims.name
+        # Pybind annotates a bool Python type, which cannot be used with
+        # numpy.dtype because it does not inherit from numpy.generic.
+        # Only numpy.bool_ works reliably with both NumPy 1.x and 2.x.
+        if str(name) == "bool":
+            name = QualifiedName.from_str("numpy.bool_")
         dtype = ResolvedType(
             name=QualifiedName.from_str("numpy.dtype"),
-            parameters=[ResolvedType(name=scalar_with_dims.name)],
+            parameters=[ResolvedType(name=name)],
         )
 
         shape = self.parse_annotation_str("Any")
