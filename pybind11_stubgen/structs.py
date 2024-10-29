@@ -199,3 +199,4 @@ class Module:
     imports: set[Import] = field_(default_factory=set)
     aliases: list[Alias] = field_(default_factory=list)
     type_vars: list[TypeVar_] = field_(default_factory=list)
+    is_package: bool = field_(default=False)
