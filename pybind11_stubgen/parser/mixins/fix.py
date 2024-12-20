@@ -307,7 +307,7 @@ class FixMissingNoneHashFieldAnnotation(IParser):
             return None
         if field is None and path[-1] == "__hash__":
             result.attribute.annotation = self.parse_annotation_str(
-                "typing.ClassVar[None]"
+                "typing.ClassVar[typing.Any]"
             )
         return result
 

@@ -33,7 +33,7 @@ class MapStringComplex:
     def values(self) -> typing.ValuesView[MapStringComplex]: ...
 
 class VectorPairStringDouble:
-    __hash__: typing.ClassVar[None] = None
+    __hash__: typing.ClassVar[typing.Any] = None
     def __bool__(self) -> bool:
         """
         Check whether the list is nonempty
