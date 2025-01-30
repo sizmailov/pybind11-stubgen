@@ -87,7 +87,7 @@ jobs:
 
             -   name: Install demo module
                 shell: bash
-                run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}" --eigen-branch "master"
+                run: ./tests/install-demo-module.sh --pybind11-branch "${{ matrix.pybind11-branch }}" --eigen-branch "3.2.10"
 
             -   name: Check stubs generation
                 shell: bash
