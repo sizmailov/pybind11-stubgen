@@ -49,6 +49,7 @@ clone_pybind11() {
 }
 
 install_pybind11() {
+  export CMAKE_PREFIX_PATH="$(cmeel cmake)"
   cmake \
         -S "${EXTERNAL_DIR}/pybind11" \
         -B "${BUILD_ROOT}/pybind11"\
@@ -66,7 +67,7 @@ install_demo() {
 
 install_pydemo() {
   (
-    export CMAKE_PREFIX_PATH="$(readlink -m "${INSTALL_PREFIX}")";
+    export CMAKE_PREFIX_PATH="$(readlink -m "${INSTALL_PREFIX}"):$(cmeel cmake)";
     export CMAKE_ARGS="-DCMAKE_CXX_STANDARD=17";
     pip install --force-reinstall "${TESTS_ROOT}/py-demo"
   )
