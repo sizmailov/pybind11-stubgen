@@ -104,6 +104,8 @@ class FilterPybindInternals(IParser):
             return None
         if name.startswith("__pybind11_module"):
             return None
+        if name.startswith("_pybind11_conduit_v1_"):
+            return None
         return super().handle_class_member(path, class_, member)
 
 
