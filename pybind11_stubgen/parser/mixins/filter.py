@@ -40,11 +40,13 @@ class FilterClassMembers(IParser):
                 "__builtins__",
                 "__cached__",
                 "__file__",
+                "__firstlineno__",
                 "__loader__",
                 "__name__",
                 "__package__",
                 "__path__",
                 "__spec__",
+                "__static_attributes__",
             ),
         )
     }
