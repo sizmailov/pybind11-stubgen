@@ -40,11 +40,13 @@ class FilterClassMembers(IParser):
                 "__builtins__",
                 "__cached__",
                 "__file__",
+                "__firstlineno__",
                 "__loader__",
                 "__name__",
                 "__package__",
                 "__path__",
                 "__spec__",
+                "__static_attributes__",
             ),
         )
     }
@@ -103,6 +105,8 @@ class FilterPybindInternals(IParser):
         if name in self.__class_blacklist:
             return None
         if name.startswith("__pybind11_module"):
+            return None
+        if name.startswith("_pybind11_conduit_v1_"):
             return None
         return super().handle_class_member(path, class_, member)
 
