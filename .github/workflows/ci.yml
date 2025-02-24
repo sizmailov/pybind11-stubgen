@@ -9,22 +9,16 @@ on:
         tags:
             - 'v*'
 
-env:
-    # Latest pybind11 stable release branch
-    LATEST_PYBIND11: "v2.13"
-    # Latest released python
-    LATEST_PYTHON: "v3.13"
-
 jobs:
 
     format:
         name: Format code
         runs-on: ubuntu-latest
         steps:
-            -   name: Setup Python ${{ env.LATEST_PYTHON }}
+            -   name: Setup Python 3.13
                 uses: actions/setup-python@v5
                 with:
-                    python-version: ${{ env.LATEST_PYTHON }}
+                    python-version: "3.13"
             -   name: Checkout
                 uses: actions/checkout@v4
             -   name: Install requirements
@@ -50,7 +44,7 @@ jobs:
             fail-fast: false
             matrix:
                 pybind11-branch:
-                    - "${{ env.LATEST_PYBIND11 }}"
+                    - "v2.13"
                 python:
                     - "3.13"
                     - "3.12"
@@ -61,20 +55,20 @@ jobs:
                 numpy-format:
                     - "numpy-array-wrap-with-annotated"
                 include:
-                    - python: ${{ env.LATEST_PYTHON }}
+                    - python: "3.13"
                       pybind11-branch: "v2.9"
                       numpy-format: "numpy-array-wrap-with-annotated"
-                    - python: ${{ env.LATEST_PYTHON }}
+                    - python: "3.13"
                       pybind11-branch: "v2.11"
                       numpy-format: "numpy-array-wrap-with-annotated"
-                    - python: ${{ env.LATEST_PYTHON }}
+                    - python: "3.13"
                       pybind11-branch: "v2.12"
                       numpy-format: "numpy-array-wrap-with-annotated"
-                    - python: ${{ env.LATEST_PYTHON }}
-                      pybind11-branch: ${{ env.LATEST_PYBIND11 }}
+                    - python: "3.13"
+                      pybind11-branch: "v2.13"
                       numpy-format: "numpy-array-use-type-var"
 #                    # TODO: uncomment
-#                    - python: ${{ env.LATEST_PYTHON }}
+#                    - python: "3.13"
 #                      pybind11-branch: "master"
         steps:
             -   uses: actions/checkout@v4
@@ -169,10 +163,10 @@ jobs:
         steps:
             -   uses: actions/checkout@v4
 
-            -   name: Setup Python ${{ env.LATEST_PYTHON }}
+            -   name: Setup Python 3.13
                 uses: actions/setup-python@v2
                 with:
-                    python-version: ${{ env.LATEST_PYTHON }}
+                    python-version: "3.13"
 
             -   name: Build dist
                 run: pipx run build --sdist --wheel
