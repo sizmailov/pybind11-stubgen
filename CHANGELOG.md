@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2.5.2 (Feb 24, 2025)
+--------------------------
+Changes:
+- ✨ Ignore technical dunder Python 3.13 fields (`__static_attributes__` and `__firstlineno__`): (#243) by @nim65s
+- 🔧 CI: Drop Python 3.7, add Python 3.13 (#243) by @nim65s
+
 
 Version 2.5.1 (Mar 26, 2024)
 --------------------------
