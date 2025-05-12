@@ -301,12 +301,12 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
     return parser
 
 
-def main(args: Sequence[str] | None = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(name)s - [%(levelname)7s] %(message)s",
     )
-    args = arg_parser().parse_args(args, namespace=CLIArgs())
+    args = arg_parser().parse_args(argv, namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
     printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
