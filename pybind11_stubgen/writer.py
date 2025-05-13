@@ -16,7 +16,7 @@ class Writer:
     ):
         assert to.exists()
         assert to.is_dir()
-        if module.sub_modules or sub_dir is not None:
+        if module.sub_modules or module.is_package or sub_dir is not None:
             if sub_dir is None:
                 sub_dir = Path(module.name)
             module_dir = to / sub_dir
