@@ -4,6 +4,7 @@ import importlib
 import logging
 import re
 from argparse import ArgumentParser, Namespace
+from collections.abc import Sequence
 from pathlib import Path
 
 from pybind11_stubgen.parser.interface import IParser
@@ -300,12 +301,12 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
     return parser
 
 
-def main():
+def main(argv: Sequence[str] | None = None) -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(name)s - [%(levelname)7s] %(message)s",
     )
-    args = arg_parser().parse_args(namespace=CLIArgs())
+    args = arg_parser().parse_args(argv, namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
     printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
