@@ -4,8 +4,8 @@ import importlib
 import logging
 import re
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from collections.abc import Sequence
+from pathlib import Path
 
 from pybind11_stubgen.parser.interface import IParser
 from pybind11_stubgen.parser.mixins.error_handlers import (
