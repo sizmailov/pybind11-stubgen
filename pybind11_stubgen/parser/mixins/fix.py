@@ -150,6 +150,12 @@ class FixMissingImports(IParser):
         result = super().parse_annotation_str(annotation_str)
         if isinstance(result, ResolvedType):
             self._add_import(result.name)
+            # Handle DLPack-related types
+            if len(result.name) == 1:
+                if result.name[0] in ["capsule"]:
+                    return ResolvedType(name=self._any_type)
+                if result.name[0] in ["DLDeviceType"]:
+                    return ResolvedType(name=QualifiedName.from_str("int"))
         return result
 
     def _add_import(self, name: QualifiedName) -> None:
@@ -285,7 +291,7 @@ class FixBuiltinTypes(IParser):
 
     def report_error(self, error: ParserError):
         if isinstance(error, NameResolutionError):
-            if error.name[0] in ["PyCapsule"]:
+            if error.name[0] in ["PyCapsule", "capsule", "DLDeviceType"]:
                 return
         super().report_error(error)
 
