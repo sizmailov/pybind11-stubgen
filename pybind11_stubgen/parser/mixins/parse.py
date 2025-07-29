@@ -421,9 +421,12 @@ class BaseParser(IParser):
             # Note: __qualname__ prefix is an artefact of pybind11
             # `PyCapsule.` in pybind11 2
             # pybind11_detail_function_record_* in 3
-            match = re.match(r"(PyCapsule|pybind11_detail_function_record_[_a-zA-Z0-9]+)\.", qual_name)
+            match = re.match(
+                r"(PyCapsule|pybind11_detail_function_record_[_a-zA-Z0-9]+)\.",
+                qual_name,
+            )
             if match:
-                qual_name = qual_name[match.end():]
+                qual_name = qual_name[match.end() :]
             origin_full_name = f"{module_name}.{qual_name}"
 
         origin_name = QualifiedName.from_str(origin_full_name)
