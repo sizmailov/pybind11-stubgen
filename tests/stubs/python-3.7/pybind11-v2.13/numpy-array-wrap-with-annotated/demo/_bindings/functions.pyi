@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-__all__ = [
+__all__: list[str] = [
     "Foo",
     "accept_annotated_callable",
     "accept_callable",

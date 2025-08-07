@@ -4,7 +4,7 @@ import typing
 
 import numpy
 
-__all__ = [
+__all__: list[str] = [
     "accept_ndarray_float64",
     "accept_ndarray_int",
     "get_ndarray_float64",

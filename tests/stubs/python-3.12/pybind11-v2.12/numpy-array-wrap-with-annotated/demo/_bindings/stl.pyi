@@ -4,7 +4,13 @@ import typing
 
 import pybind11_stubgen.typing_ext
 
-__all__ = ["std_array", "std_map", "std_optional", "std_variant", "std_vector"]
+__all__: list[str] = [
+    "std_array",
+    "std_map",
+    "std_optional",
+    "std_variant",
+    "std_vector",
+]
 
 def std_array(
     arg0: typing.Annotated[list[int], pybind11_stubgen.typing_ext.FixedSize(3)]

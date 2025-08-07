@@ -19,7 +19,7 @@ from . import (
     missing_self_arg,
 )
 
-__all__ = [
+__all__: list[str] = [
     "Color",
     "Dummy",
     "foreign_arg",

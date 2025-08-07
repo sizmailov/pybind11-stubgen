@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["Dummy"]
+__all__: list[str] = ["Dummy"]
 
 class Dummy:
     @staticmethod

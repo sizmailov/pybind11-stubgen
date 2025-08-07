@@ -19,7 +19,7 @@ from demo._bindings import (
 
 from . import _bindings, core, pure_python
 
-__all__ = [
+__all__: list[str] = [
     "aliases",
     "classes",
     "core",

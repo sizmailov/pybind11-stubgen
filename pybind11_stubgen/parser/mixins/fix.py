@@ -256,7 +256,7 @@ class FixMissing__all__Attribute(IParser):
             Attribute(
                 name=Identifier("__all__"),
                 value=self.handle_value(all_names),
-                # annotation=ResolvedType(name=QualifiedName.from_str("list")),
+                annotation=ResolvedType(name=QualifiedName.from_str("list[str]")),
             )
         )
 

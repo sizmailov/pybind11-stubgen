@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = [
+__all__: list[str] = [
     "Enum",
     "Unbound",
     "accept_unbound_enum",

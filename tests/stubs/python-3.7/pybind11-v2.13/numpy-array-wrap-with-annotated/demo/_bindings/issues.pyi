@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-__all__ = [
+__all__: list[str] = [
     "backslashes_should_be_escaped",
     "issue_51_catastrophic_regex",
     "issue_73_utf8_doc_chars",

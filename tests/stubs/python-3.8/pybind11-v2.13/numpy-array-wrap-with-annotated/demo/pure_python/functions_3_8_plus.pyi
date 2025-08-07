@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as typing
 
-__all__ = ["args_mix", "typing"]
+__all__: list[str] = ["args_mix", "typing"]
 
 def args_mix(
     a: int,

@@ -6,7 +6,7 @@ import typing as typing
 from demo.pure_python.functions_3_8_plus import args_mix
 from demo.pure_python.functions_3_9_plus import generic_alias_annotation
 
-__all__ = [
+__all__: list[str] = [
     "accept_frozenset",
     "args_mix",
     "builtin_function_as_default_arg",
