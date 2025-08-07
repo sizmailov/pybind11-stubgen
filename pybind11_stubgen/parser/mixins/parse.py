@@ -418,10 +418,15 @@ class BaseParser(IParser):
             if qual_name is None:
                 self.report_error(NameResolutionError(path))
                 return None
-            # Note: `PyCapsule.` prefix in __qualname__ is an artefact of pybind11
-            _PyCapsule = "PyCapsule."
-            if qual_name.startswith(_PyCapsule):
-                qual_name = qual_name[len(_PyCapsule) :]
+            # Note: __qualname__ prefix is an artefact of pybind11
+            # `PyCapsule.` in pybind11 2
+            # pybind11_detail_function_record_* in 3
+            match = re.match(
+                r"(PyCapsule|pybind11_detail_function_record_[_a-zA-Z0-9]+)\.",
+                qual_name,
+            )
+            if match:
+                qual_name = qual_name[match.end() :]
             origin_full_name = f"{module_name}.{qual_name}"
 
         origin_name = QualifiedName.from_str(origin_full_name)
