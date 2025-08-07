@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-__all__ = ["Base", "CppException", "Derived", "Foo", "Outer"]
+__all__: list[str] = ["Base", "CppException", "Derived", "Foo", "Outer"]
 
 class Base:
     class Inner:

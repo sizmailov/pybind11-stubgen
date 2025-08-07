@@ -17,7 +17,7 @@ from . import (
     values,
 )
 
-__all__ = [
+__all__: list[str] = [
     "aliases",
     "classes",
     "eigen",

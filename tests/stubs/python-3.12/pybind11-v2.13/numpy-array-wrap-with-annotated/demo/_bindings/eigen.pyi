@@ -6,7 +6,7 @@ import numpy
 import pybind11_stubgen.typing_ext
 import scipy.sparse
 
-__all__ = [
+__all__: list[str] = [
     "accept_matrix_int",
     "accept_vector_float64",
     "dense_matrix_c",

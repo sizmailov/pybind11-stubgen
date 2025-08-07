@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["A", "B", "C", "X"]
+__all__: list[str] = ["A", "B", "C", "X"]
 
 class A:
     """

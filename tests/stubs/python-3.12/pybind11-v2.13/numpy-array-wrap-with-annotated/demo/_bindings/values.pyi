@@ -5,7 +5,7 @@ import datetime
 import numpy
 from numpy import random
 
-__all__ = [
+__all__: list[str] = [
     "Dummy",
     "Foo",
     "add_day",

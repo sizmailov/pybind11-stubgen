@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys as sys
 import typing as typing
 
-__all__ = [
+__all__: list[str] = [
     "accept_frozenset",
     "builtin_function_as_default_arg",
     "function_as_default_arg",
