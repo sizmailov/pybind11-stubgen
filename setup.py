@@ -6,7 +6,7 @@ setup(
     maintainer_email="sergei.a.izmailov@gmail.com",
     description="PEP 561 type stubs generator for pybind11 modules",
     url="https://github.com/sizmailov/pybind11-stubgen",
-    version="2.5.4",
+    version="2.5.5",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     license="BSD",
