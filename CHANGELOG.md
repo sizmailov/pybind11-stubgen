@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 2.5.5 (Aug 10, 2025)
+--------------------------
+Changes:
+- 🐛 Fix the type annotation for `__all__` (#261) by @sarlinpe
+- 🐛 Handle boolean numpy arrays (#260) by @sarlinpe
+- 🐛 Fix `qualname` prefix in pybind11 3.0.0 (#259) by @gentlegiantJGC
+
 Version 2.5.4 (May 14, 2025)
 --------------------------
 Changes:
