@@ -17,7 +17,9 @@ def backslashes_should_be_escaped() -> None:
     Here's some reStructuredText: :math:`x = [x, y, \\theta]^T`
     """
 
-def issue_51_catastrophic_regex(arg0: int, arg1: int) -> None:
+def issue_51_catastrophic_regex(
+    arg0: typing.SupportsInt, arg1: typing.SupportsInt
+) -> None:
     """
     Use-case:
         issue_51(os.get_handle_inheritable, os.set_handle_inheritable)

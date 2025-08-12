@@ -4,7 +4,7 @@
 
 #include <chrono>
 
-namespace {
+namespace myvalues {
 class Dummy {};
 class Foo {};
 } // namespace
@@ -12,7 +12,7 @@ class Foo {};
 void bind_values_module(py::module &&m) {
     {
         // python module as value
-        auto &&pyDummy = py::class_<Dummy>(m, "Dummy");
+        auto &&pyDummy = py::class_<myvalues::Dummy>(m, "Dummy");
 
         pyDummy.def_property_readonly_static(
             "linalg", [](py::object &) { return py::module::import("numpy.linalg"); });
@@ -27,12 +27,12 @@ void bind_values_module(py::module &&m) {
         m.attr("list_with_none") = li;
     }
     {
-        auto pyFoo = py::class_<Foo>(m, "Foo");
-        m.attr("foovar") = Foo();
+        auto pyFoo = py::class_<myvalues::Foo>(m, "Foo");
+        m.attr("foovar") = myvalues::Foo();
 
         py::list foolist;
-        foolist.append(Foo());
-        foolist.append(Foo());
+        foolist.append(myvalues::Foo());
+        foolist.append(myvalues::Foo());
 
         m.attr("foolist") = foolist;
         m.attr("none") = py::none();

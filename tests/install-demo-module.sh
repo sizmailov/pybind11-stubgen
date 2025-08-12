@@ -27,7 +27,7 @@ function parse_args() {
   # verify params
   if [ -z "$PYBIND11_BRANCH" ]; then usage "PYBIND11_BRANCH is not set"; fi;
 
-  TESTS_ROOT="$(readlink -m "$(dirname "$0")")"
+  TESTS_ROOT="$(greadlink -m "$(dirname "$0")")"
   PROJECT_ROOT="${TESTS_ROOT}/.."
   TEMP_DIR="${PROJECT_ROOT}/tmp/pybind11-${PYBIND11_BRANCH}"
   INSTALL_PREFIX="${TEMP_DIR}/install"
@@ -67,7 +67,7 @@ install_demo() {
 
 install_pydemo() {
   (
-    export CMAKE_PREFIX_PATH="$(readlink -m "${INSTALL_PREFIX}"):$(cmeel cmake)";
+    export CMAKE_PREFIX_PATH="$(greadlink -m "${INSTALL_PREFIX}"):$(cmeel cmake)";
     export CMAKE_ARGS="-DCMAKE_CXX_STANDARD=17";
     pip install --force-reinstall "${TESTS_ROOT}/py-demo"
   )
