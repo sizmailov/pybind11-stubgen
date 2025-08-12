@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 function parse_args() {
 
@@ -30,8 +30,8 @@ function parse_args() {
   if [ -z "$STUBS_SUB_DIR" ]; then usage "STUBS_SUB_DIR is not set"; fi;
   if [ -z "$NUMPY_FORMAT" ]; then usage "NUMPY_FORMAT is not set"; fi;
 
-  TESTS_ROOT="$(readlink -m "$(dirname "$0")")"
-  STUBS_DIR=$(readlink -m "${TESTS_ROOT}/${STUBS_SUB_DIR}")
+  TESTS_ROOT="$(greadlink -m "$(dirname "$0")")"
+  STUBS_DIR=$(greadlink -m "${TESTS_ROOT}/${STUBS_SUB_DIR}")
 }
 
 remove_stubs() {

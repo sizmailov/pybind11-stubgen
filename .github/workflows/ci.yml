@@ -67,6 +67,12 @@ jobs:
                     - python: "3.13"
                       pybind11-branch: "v2.13"
                       numpy-format: "numpy-array-use-type-var"
+                    - python: "3.13"
+                      pybind11-branch: "v3.0.0"
+                      numpy-format: "numpy-array-wrap-with-annotated"
+                    - python: "3.13"
+                      pybind11-branch: "v3.0.0"
+                      numpy-format: "numpy-array-use-type-var"
 #                    # TODO: uncomment
 #                    - python: "3.13"
 #                      pybind11-branch: "master"
