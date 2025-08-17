@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 
 import numpy
+import numpy.typing
 
 __all__: list[str] = [
     "accept_ndarray_float64",
