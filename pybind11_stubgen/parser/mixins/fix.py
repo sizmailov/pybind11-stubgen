@@ -543,8 +543,13 @@ class _NumpyArrayAnnotation:
             ),
         )
     )
-    __DIM_VARS = ["n", "m"]
-    __DIM_STRING_PATTERN = re.compile(r'"\[(.*?)\]"')
+    numpy_flags: set[QualifiedName] = {
+        QualifiedName.from_str("flags.writeable"),
+        QualifiedName.from_str("flags.c_contiguous"),
+        QualifiedName.from_str("flags.f_contiguous"),
+    }
+    dim_vars: set[str] = {"n", "m"}
+    __dim_string_pattern = re.compile(r'"\[(.*?)\]"')
 
     def __init__(
         self,
@@ -696,7 +701,7 @@ class _NumpyArrayAnnotation:
         if dims_and_flags:
             dims_str_param = dims_and_flags[0]
             if isinstance(dims_str_param, Value):
-                match = cls.__DIM_STRING_PATTERN.search(dims_str_param.repr)
+                match = cls.__dim_string_pattern.search(dims_str_param.repr)
                 if match:
                     dims_str_content = match.group(1)
                     dims_list = [
@@ -721,22 +726,17 @@ class _NumpyArrayAnnotation:
                     return None
             elif isinstance(dim_param, ResolvedType):
                 dim = str(dim_param)
-                if len(dim) > 1 and dim not in cls.__DIM_VARS:
+                if len(dim) > 1 and dim not in cls.dim_vars:
                     return None
             else:
                 return None
             result.append(dim)
         return result
 
-    @staticmethod
-    def _fix_flags(flags: list[ResolvedType | Value | InvalidExpression]):
-        __flags: set[QualifiedName] = {
-            QualifiedName.from_str("flags.writeable"),
-            QualifiedName.from_str("flags.c_contiguous"),
-            QualifiedName.from_str("flags.f_contiguous"),
-        }
+    @classmethod
+    def _fix_flags(cls, flags: list[ResolvedType | Value | InvalidExpression]):
         for flag in flags:
-            if isinstance(flag, ResolvedType) and flag.name in __flags:
+            if isinstance(flag, ResolvedType) and flag.name in cls.numpy_flags:
                 flag.name = QualifiedName.from_str(f"numpy.ndarray.{flag.name}")
 
     @staticmethod
@@ -756,7 +756,6 @@ class FixNumpyArrayDimAnnotation(IParser):
     #     `typing_extension.Annotated` in different python versions
     #     Rely on later fix by `FixTypingTypeNames`
     __annotated_name = QualifiedName.from_str("Annotated")
-    __DIM_VARS = _NumpyArrayAnnotation._NumpyArrayAnnotation__DIM_VARS
 
     def parse_annotation_str(
         self, annotation_str: str
@@ -825,20 +824,18 @@ class FixNumpyArrayDimAnnotation(IParser):
         return return_t(*dims)  # type: ignore[arg-type]
 
     def report_error(self, error: ParserError) -> None:
-        __flags: set[QualifiedName] = {
-            QualifiedName.from_str("flags.writeable"),
-            QualifiedName.from_str("flags.c_contiguous"),
-            QualifiedName.from_str("flags.f_contiguous"),
-        }
         if (
             isinstance(error, NameResolutionError)
             and len(error.name) == 1
             and len(error.name[0]) == 1
-            and error.name[0] in self.__DIM_VARS
+            and error.name[0] in _NumpyArrayAnnotation.dim_vars
         ):
             # Ignores all unknown 'm' and 'n' regardless of the context
             return
-        if isinstance(error, NameResolutionError) and error.name in __flags:
+        if (
+            isinstance(error, NameResolutionError)
+            and error.name in _NumpyArrayAnnotation.numpy_flags
+        ):
             return
         super().report_error(error)
 
@@ -903,11 +900,6 @@ class FixNumpyArrayDimTypeVar(IParser):
         )
 
     def report_error(self, error: ParserError) -> None:
-        __flags: set[QualifiedName] = {
-            QualifiedName.from_str("flags.writeable"),
-            QualifiedName.from_str("flags.c_contiguous"),
-            QualifiedName.from_str("flags.f_contiguous"),
-        }
         if (
             isinstance(error, NameResolutionError)
             and len(error.name) == 1
@@ -915,7 +907,10 @@ class FixNumpyArrayDimTypeVar(IParser):
         ):
             # allow type variables, which are manually resolved in `handle_module`
             return
-        if isinstance(error, NameResolutionError) and error.name in __flags:
+        if (
+            isinstance(error, NameResolutionError)
+            and error.name in _NumpyArrayAnnotation.numpy_flags
+        ):
             return
         super().report_error(error)
 
