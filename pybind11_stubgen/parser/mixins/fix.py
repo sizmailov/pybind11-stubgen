@@ -7,7 +7,7 @@ import re
 import sys
 import types
 from logging import getLogger
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 
 from pybind11_stubgen.parser.errors import (
     InvalidExpressionError,
@@ -501,19 +501,21 @@ class FixValueReprRandomAddress(IParser):
         return result
 
 
-class FixNumpyArrayDimAnnotation(IParser):
+class _NumpyArrayAnnotation:
     __array_names: set[QualifiedName] = {
         QualifiedName.from_str("numpy.ndarray"),
+        QualifiedName.from_str("numpy.typing.ArrayLike"),
+        QualifiedName.from_str("numpy.typing.NDArray"),
         *(
             QualifiedName.from_str(f"scipy.sparse.{storage}_{arr}")
             for storage in ["bsr", "coo", "csr", "csc", "dia", "dok", "lil"]
             for arr in ["array", "matrix"]
         ),
     }
-    # NB: Not using full name due to ambiguity `typing.Annotated` vs
-    #     `typing_extension.Annotated` in different python versions
-    #     Rely on later fix by `FixTypingTypeNames`
-    __annotated_name = QualifiedName.from_str("Annotated")
+    __typing_annotated_names = {
+        QualifiedName.from_str("typing.Annotated"),
+        QualifiedName.from_str("typing_extensions.Annotated"),
+    }
     numpy_primitive_types: set[QualifiedName] = set(
         map(
             QualifiedName.from_str,
@@ -541,71 +543,172 @@ class FixNumpyArrayDimAnnotation(IParser):
             ),
         )
     )
-
     __DIM_VARS = ["n", "m"]
-
-    def parse_annotation_str(
-        self, annotation_str: str
-    ) -> ResolvedType | InvalidExpression | Value:
-        # Affects types of the following pattern:
-        #       ARRAY_T[PRIMITIVE_TYPE[*DIMS], *FLAGS]
-        # Replace with:
-        #       Annotated[ARRAY_T, PRIMITIVE_TYPE, FixedSize/DynamicSize[*DIMS], *FLAGS]
-
-        result = super().parse_annotation_str(annotation_str)
-        if (
-            not isinstance(result, ResolvedType)
-            or result.name not in self.__array_names
-            or result.parameters is None
-            or len(result.parameters) == 0
-        ):
-            return result
-
-        scalar_with_dims = result.parameters[0]  # e.g. numpy.float64[32, 32]
-        flags = result.parameters[1:]
-
+    __DIM_STRING_PATTERN = re.compile(r'"\[(.*?)\]"')
+ 
+    def __init__(
+        self,
+        array_type: ResolvedType,
+        scalar_type: ResolvedType,
+        dimensions: Optional[list[str | int]],
+        flags: list[ResolvedType | Value | InvalidExpression],
+    ):
+        self.array_type = array_type
+        self.scalar_type = scalar_type
+        self.dimensions = dimensions
+        self.flags = flags
+ 
+    def to_type_hint(
+        self, parser: IParser, on_dynamic_dim: Optional[callable[[str], None]] = None
+    ) -> tuple[ResolvedType, ResolvedType]:
+        scalar_type_name = self.scalar_type.name
+        # Pybind annotates a bool Python type, which cannot be used with
+        # numpy.dtype because it does not inherit from numpy.generic.
+        # Only numpy.bool_ works reliably with both NumPy 1.x and 2.x.
+        if str(scalar_type_name) == "bool":
+            scalar_type_name = QualifiedName.from_str("numpy.bool_")
+        dtype = ResolvedType(
+            name=QualifiedName.from_str("numpy.dtype"),
+            parameters=[ResolvedType(name=scalar_type_name)],
+        )
+ 
+        shape = parser.parse_annotation_str("Any")
+        if self.dimensions:
+            shape = parser.parse_annotation_str("Tuple")
+            assert isinstance(shape, ResolvedType)
+            shape.parameters = []
+            for dim in self.dimensions:
+                if isinstance(dim, int):
+                    literal_dim = parser.parse_annotation_str("Literal")
+                    assert isinstance(literal_dim, ResolvedType)
+                    literal_dim.parameters = [Value(repr=str(dim))]
+                    shape.parameters.append(literal_dim)
+                else:
+                    if on_dynamic_dim:
+                        on_dynamic_dim(dim)
+                    shape.parameters.append(
+                        ResolvedType(name=QualifiedName.from_str(dim.upper()))
+                    )
+        return shape, dtype
+ 
+    @classmethod
+    def from_annotation(
+        cls, resolved_type: ResolvedType
+    ) -> Optional[_NumpyArrayAnnotation]:
+        if resolved_type.name in cls.__typing_annotated_names:
+            return cls._from_new_style(resolved_type)
+        elif resolved_type.name in cls.__array_names:
+            return cls._from_old_style(resolved_type)
+        else:
+            return None
+ 
+    @classmethod
+    def _from_old_style(
+        cls, resolved_type: ResolvedType
+    ) -> Optional[_NumpyArrayAnnotation]:
+        if resolved_type.parameters is None or len(resolved_type.parameters) == 0:
+            return None
+ 
+        scalar_with_dims = resolved_type.parameters[0]
+        flags = resolved_type.parameters[1:]
+ 
         if (
             not isinstance(scalar_with_dims, ResolvedType)
-            or scalar_with_dims.name not in self.numpy_primitive_types
+            or scalar_with_dims.name not in cls.numpy_primitive_types
         ):
-            return result
-
-        result = ResolvedType(
-            name=self.__annotated_name,
-            parameters=[
-                self.parse_annotation_str(str(result.name)),
-                ResolvedType(scalar_with_dims.name),
-            ],
-        )
-
-        assert result.parameters is not None
+            return None
+ 
+        array_type = ResolvedType(name=resolved_type.name)
+        scalar_type = ResolvedType(name=scalar_with_dims.name)
+        dimensions: Optional[list[str | int]] = None
         if (
             scalar_with_dims.parameters is not None
-            and len(scalar_with_dims.parameters) >= 0
+            and len(scalar_with_dims.parameters) > 0
         ):
-            dims = self.__to_dims(scalar_with_dims.parameters)
-            if dims is not None and len(dims) > 0:
-                result.parameters += [
-                    self.handle_value(self.__wrap_with_size_helper(dims))
-                ]
+            dimensions = cls._to_dims(scalar_with_dims.parameters)
+ 
+        return _NumpyArrayAnnotation(array_type, scalar_type, dimensions, flags)
+ 
+    @classmethod
+    def _from_new_style(
+        cls, resolved_type: ResolvedType
+    ) -> Optional[_NumpyArrayAnnotation]:
+        if resolved_type.parameters is None or len(resolved_type.parameters) == 0:
+            return None
 
-        result.parameters += flags
-
-        return result
-
-    def __wrap_with_size_helper(self, dims: list[int | str]) -> FixedSize | DynamicSize:
-        if all(isinstance(d, int) for d in dims):
-            return_t = FixedSize
+        # Handle nested Annotated: Annotated[Annotated[NDArray[...]], "[m, n]"]
+        if (
+            len(resolved_type.parameters) > 1
+            and isinstance(resolved_type.parameters[0], ResolvedType)
+            and resolved_type.parameters[0].name in cls.__typing_annotated_names
+        ):
+            inner_annotated = resolved_type.parameters[0]
+            if inner_annotated.parameters is None:
+                return None
+            array_type_param = inner_annotated.parameters[0]
+            other_params = resolved_type.parameters[1:]
         else:
-            return_t = DynamicSize
+            array_type_param, *other_params = resolved_type.parameters
 
-        # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
-        #        properly added to the list of imports
-        self.handle_type(return_t)
-        return return_t(*dims)  # type: ignore[arg-type]
+        if not isinstance(array_type_param, ResolvedType):
+            return None
 
-    def __to_dims(
-        self, dimensions: Sequence[ResolvedType | Value | InvalidExpression]
+        if array_type_param.name not in cls.__array_names:
+            return None
+
+        array_type = ResolvedType(name=array_type_param.name)
+        scalar_type: Optional[ResolvedType] = None
+        dims_and_flags: list[ResolvedType | Value | InvalidExpression] = []
+
+        if array_type.name == QualifiedName.from_str("numpy.typing.ArrayLike"):
+            if not other_params:
+                return None
+            scalar_type_param, *dims_and_flags = other_params
+            if isinstance(scalar_type_param, ResolvedType):
+                scalar_type = scalar_type_param
+        elif array_type.name == QualifiedName.from_str("numpy.typing.NDArray"):
+            array_type = ResolvedType(name=QualifiedName.from_str("numpy.ndarray"))
+            if array_type_param.parameters:
+                scalar_type_param = array_type_param.parameters[0]
+                if isinstance(scalar_type_param, ResolvedType):
+                    scalar_type = scalar_type_param
+            dims_and_flags = other_params
+        elif array_type.name == QualifiedName.from_str("numpy.ndarray"):
+            if array_type_param.parameters and len(array_type_param.parameters) == 2:
+                _, dtype_param = array_type_param.parameters
+                if (
+                    isinstance(dtype_param, ResolvedType)
+                    and dtype_param.name == QualifiedName.from_str("numpy.dtype")
+                    and dtype_param.parameters
+                ):
+                    scalar_type = dtype_param.parameters[0]
+            dims_and_flags = other_params
+        else:
+            return None
+
+        if scalar_type is None or scalar_type.name not in cls.numpy_primitive_types:
+            return None
+
+        dims: list[int | str] | None = None
+        flags: list[ResolvedType | Value | InvalidExpression] = []
+        if dims_and_flags:
+            dims_str_param = dims_and_flags[0]
+            if isinstance(dims_str_param, Value):
+                match = cls.__DIM_STRING_PATTERN.search(dims_str_param.repr)
+                if match:
+                    dims_str_content = match.group(1)
+                    dims_list = [
+                        d.strip() for d in dims_str_content.split(",") if d.strip()
+                    ]
+                    if dims_list:
+                        dims = cls._to_dims_from_strings(dims_list)
+                    flags = dims_and_flags[1:]
+
+        return _NumpyArrayAnnotation(array_type, scalar_type, dims, flags)
+ 
+    @classmethod
+    def _to_dims(
+        cls, dimensions: Sequence[ResolvedType | Value | InvalidExpression]
     ) -> list[int | str] | None:
         result = []
         for dim_param in dimensions:
@@ -616,13 +719,98 @@ class FixNumpyArrayDimAnnotation(IParser):
                     return None
             elif isinstance(dim_param, ResolvedType):
                 dim = str(dim_param)
-                if dim not in self.__DIM_VARS:
+                if dim not in cls.__DIM_VARS:
                     return None
             else:
                 return None
             result.append(dim)
         return result
+ 
+    @staticmethod
+    def _to_dims_from_strings(dimensions: Sequence[str]) -> list[int | str] | None:
+        result: list[int | str] = []
+        for dim_str in dimensions:
+            try:
+                dim = int(dim_str)
+            except ValueError:
+                dim = dim_str
+            result.append(dim)
+        return result
+ 
+ 
+class FixNumpyArrayDimAnnotation(IParser):
+    # NB: Not using full name due to ambiguity `typing.Annotated` vs
+    #     `typing_extension.Annotated` in different python versions
+    #     Rely on later fix by `FixTypingTypeNames`
+    __annotated_name = QualifiedName.from_str("Annotated")
+    __DIM_VARS = _NumpyArrayAnnotation._NumpyArrayAnnotation__DIM_VARS
+ 
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        # Affects types of the following pattern:
+        #       ARRAY_T[PRIMITIVE_TYPE[*DIMS], *FLAGS]
+        # Replace with:
+        #       Annotated[ARRAY_T, PRIMITIVE_TYPE, FixedSize/DynamicSize[*DIMS], *FLAGS]
+ 
+        result = super().parse_annotation_str(annotation_str)
+        # if 'scipy.sparse' in str(result):
+        #     __import__('ipdb').set_trace()
+        if not isinstance(result, ResolvedType):
+            return result
+ 
+        numpy_array = _NumpyArrayAnnotation.from_annotation(result)
+        if numpy_array is None:
+            return result
 
+        params = []
+        if numpy_array.array_type.name == QualifiedName.from_str(
+            "numpy.ndarray"
+        ) or numpy_array.array_type.name[:2] == ("scipy", "sparse"):
+            params.append(self.parse_annotation_str(str(numpy_array.array_type)))
+            params.append(self.parse_annotation_str(str(numpy_array.scalar_type)))
+        elif numpy_array.array_type.name == QualifiedName.from_str(
+            "numpy.typing.ArrayLike"
+        ):
+            params.append(self.parse_annotation_str(str(numpy_array.array_type)))
+            params.append(self.parse_annotation_str(str(numpy_array.scalar_type)))
+        else:
+            return result  # Should not happen
+
+        if numpy_array.dimensions:
+            params.append(
+                self.handle_value(self.__wrap_with_size_helper(numpy_array.dimensions))
+            )
+
+        for flag in numpy_array.flags:
+            if isinstance(flag, Value):
+                flag_str = flag.repr.strip('"')
+                if flag_str in (
+                    "flags.writeable",
+                    "flags.c_contiguous",
+                    "flags.f_contiguous",
+                ):
+                    params.append(
+                        ResolvedType(name=QualifiedName.from_str(f"numpy.ndarray.{flag_str}"))
+                    )
+                else:
+                    params.append(flag)
+            else:
+                params.append(flag)
+
+        return ResolvedType(name=self.__annotated_name, parameters=params)
+
+    def __wrap_with_size_helper(self, dims: list[int | str]) -> FixedSize | DynamicSize:
+        if all(isinstance(d, int) for d in dims):
+            return_t = FixedSize
+        else:
+            return_t = DynamicSize
+ 
+        # TRICK: Use `self.handle_type` to make `FixedSize`/`DynamicSize`
+        #        properly added to the list of imports
+        self.handle_type(return_t)
+        return return_t(*dims)  # type: ignore[arg-type]
+ 
     def report_error(self, error: ParserError) -> None:
         if (
             isinstance(error, NameResolutionError)
@@ -636,33 +824,21 @@ class FixNumpyArrayDimAnnotation(IParser):
 
 
 class FixNumpyArrayDimTypeVar(IParser):
-    __array_names: set[QualifiedName] = {
-        QualifiedName.from_str("numpy.ndarray"),
-        QualifiedName.from_str("numpy.typing.ArrayLike"),
-        QualifiedName.from_str("numpy.typing.NDArray"),
-    }
-    __typing_annotated_names = {
-        QualifiedName.from_str("typing.Annotated"),
-        QualifiedName.from_str("typing_extensions.Annotated"),
-    }
-    numpy_primitive_types = FixNumpyArrayDimAnnotation.numpy_primitive_types
-
     __DIM_VARS: set[str] = set()
-    __DIM_STRING_PATTERN = re.compile(r'"\[(.*?)\]"')
-
+ 
     def handle_module(
         self, path: QualifiedName, module: types.ModuleType
     ) -> Module | None:
         result = super().handle_module(path, module)
         if result is None:
             return None
-
+ 
         if self.__DIM_VARS:
             # the TypeVar_'s generated code will reference `typing`
             result.imports.add(
                 Import(name=None, origin=QualifiedName.from_str("typing"))
             )
-
+ 
             for name in self.__DIM_VARS:
                 result.type_vars.append(
                     TypeVar_(
@@ -670,10 +846,10 @@ class FixNumpyArrayDimTypeVar(IParser):
                         bound=self.parse_annotation_str("int"),
                     ),
                 )
-
+ 
         self.__DIM_VARS.clear()
         return result
-
+ 
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
@@ -687,172 +863,25 @@ class FixNumpyArrayDimTypeVar(IParser):
             self.__DIM_VARS.add(result.name[0])
             return result
 
-        if result.name == QualifiedName.from_str("numpy.ndarray"):
-            parameters = self._handle_old_style_numpy_array(result.parameters)
-        elif result.name in self.__array_names:
-            parameters = self._handle_new_style_numpy_array([result])
-        elif result.name in self.__typing_annotated_names:
-            parameters = self._handle_new_style_numpy_array(result.parameters)
-        else:
-            parameters = None
-        if parameters is None:  # Failure.
+        numpy_array = _NumpyArrayAnnotation.from_annotation(result)
+        if numpy_array is None:
             return result
+        # __import__('ipdb').set_trace()
+ 
+        # scipy.sparse arrays/matrices are not currently generic and do not accept type
+        # arguments
+        if numpy_array.array_type.name[:2] == ("scipy", "sparse"):
+            return result
+ 
+        def on_dynamic_dim(dim: str) -> None:
+            if len(dim) == 1:  # Assuming single letter dims are type vars
+                self.__DIM_VARS.add(dim.upper())
+ 
+        shape, dtype = numpy_array.to_type_hint(self, on_dynamic_dim)
         return ResolvedType(
-            name=QualifiedName.from_str("numpy.ndarray"), parameters=parameters
+            name=QualifiedName.from_str("numpy.ndarray"), parameters=[shape, dtype]
         )
-
-    def _process_numpy_array_type(
-        self, scalar_type_name: QualifiedName, dimensions: list[int | str] | None
-    ) -> tuple[ResolvedType, ResolvedType]:
-        # Pybind annotates a bool Python type, which cannot be used with
-        # numpy.dtype because it does not inherit from numpy.generic.
-        # Only numpy.bool_ works reliably with both NumPy 1.x and 2.x.
-        if str(scalar_type_name) == "bool":
-            scalar_type_name = QualifiedName.from_str("numpy.bool_")
-        dtype = ResolvedType(
-            name=QualifiedName.from_str("numpy.dtype"),
-            parameters=[ResolvedType(name=scalar_type_name)],
-        )
-
-        shape = self.parse_annotation_str("Any")
-        if dimensions is not None and len(dimensions) > 0:
-            shape = self.parse_annotation_str("Tuple")
-            assert isinstance(shape, ResolvedType)
-            shape.parameters = []
-            for dim in dimensions:
-                if isinstance(dim, int):
-                    literal_dim = self.parse_annotation_str("Literal")
-                    assert isinstance(literal_dim, ResolvedType)
-                    literal_dim.parameters = [Value(repr=str(dim))]
-                    shape.parameters.append(literal_dim)
-                else:
-                    shape.parameters.append(
-                        ResolvedType(name=QualifiedName.from_str(dim.upper()))
-                    )
-        return shape, dtype
-
-    def _handle_new_style_numpy_array(
-        self, parameters: list[ResolvedType | Value | InvalidExpression] | None
-    ) -> list[ResolvedType] | None:
-        # Annotated[numpy.typing.ArrayLike, numpy.float32, "[m, n]"]
-        # Annotated[numpy.typing.NDArray[numpy.float32], "[m, n]"]
-        # Annotated[numpy.typing.NDArray[numpy.float32], "[m, n]", "flags.writeable" , "flags.c_contiguous"]  # noqa: E501
-        if parameters is None or len(parameters) == 0:
-            return
-
-        array_type, *parameters = parameters
-        if (
-            not isinstance(array_type, ResolvedType)
-            or array_type.name not in self.__array_names
-        ):
-            return
-
-        dims_and_flags: Sequence[ResolvedType | Value | InvalidExpression]
-        if array_type.name == QualifiedName.from_str("numpy.typing.ArrayLike"):
-            if not parameters:
-                return
-            scalar_type, *dims_and_flags = parameters
-        elif array_type.name == QualifiedName.from_str("numpy.typing.NDArray"):
-            if array_type.parameters is None or len(array_type.parameters) == 0:
-                return
-            [scalar_type] = array_type.parameters
-            dims_and_flags = parameters
-        elif array_type.name == QualifiedName.from_str("numpy.ndarray"):
-            _, dtype_param = array_type.parameters
-            if not (
-                isinstance(dtype_param, ResolvedType)
-                and dtype_param.name == QualifiedName.from_str("numpy.dtype")
-                and dtype_param.parameters
-            ):
-                return
-            [scalar_type] = dtype_param.parameters
-            dims_and_flags = parameters
-        else:
-            return
-        scalar_type_name = scalar_type.name
-        if scalar_type_name not in self.numpy_primitive_types:
-            return
-
-        dims: list[int | str] | None = None
-        if dims_and_flags:
-            dims_str, *flags = dims_and_flags
-            del flags  # Unused.
-            if isinstance(dims_str, Value):
-                match = self.__DIM_STRING_PATTERN.search(dims_str.repr)
-                if match:
-                    dims_str_content = match.group(1)
-                    dims_list = [
-                        d.strip() for d in dims_str_content.split(",") if d.strip()
-                    ]
-                    if dims_list:
-                        dims = self.__to_dims_from_strings(dims_list)
-
-        return self._process_numpy_array_type(scalar_type_name, dims)
-
-    def _handle_old_style_numpy_array(
-        self, parameters: list[ResolvedType | Value | InvalidExpression] | None
-    ) -> list[ResolvedType] | None:
-        # Affects types of the following pattern:
-        #       numpy.ndarray[PRIMITIVE_TYPE[*DIMS], *FLAGS]
-        # Replace with:
-        #       numpy.ndarray[tuple[M, Literal[1]], numpy.dtype[numpy.float32]]
-
-        # ndarray is generic and should have 2 type arguments
-        if parameters is None or len(parameters) == 0:
-            return [
-                self.parse_annotation_str("Any"),
-                ResolvedType(
-                    name=QualifiedName.from_str("numpy.dtype"),
-                    parameters=[self.parse_annotation_str("Any")],
-                ),
-            ]
-
-        scalar_with_dims = parameters[0]  # e.g. numpy.float64[32, 32]
-        if (
-            not isinstance(scalar_with_dims, ResolvedType)
-            or scalar_with_dims.name not in self.numpy_primitive_types
-        ):
-            return
-
-        dims: list[int | str] | None = None
-        if (
-            scalar_with_dims.parameters is not None
-            and len(scalar_with_dims.parameters) > 0
-        ):
-            dims = self.__to_dims(scalar_with_dims.parameters)
-        return self._process_numpy_array_type(scalar_with_dims.name, dims)
-
-    def __to_dims(
-        self, dimensions: Sequence[ResolvedType | Value | InvalidExpression]
-    ) -> list[int | str] | None:
-        result: list[int | str] = []
-        for dim_param in dimensions:
-            if isinstance(dim_param, Value):
-                try:
-                    dim = int(dim_param.repr)
-                except ValueError:
-                    return None
-            elif isinstance(dim_param, ResolvedType):
-                dim = str(dim_param)
-            else:
-                return None
-            result.append(dim)
-        return result
-
-    def __to_dims_from_strings(
-        self, dimensions: Sequence[str]
-    ) -> list[int | str] | None:
-        result: list[int | str] = []
-        for dim_str in dimensions:
-            try:
-                dim = int(dim_str)
-            except ValueError:
-                dim = dim_str
-                if len(dim) == 1:  # Assuming single letter dims are type vars
-                    self.__DIM_VARS.add(dim.upper())  # Add uppercase to TypeVar set
-            result.append(dim)
-        return result
-
+ 
     def report_error(self, error: ParserError) -> None:
         if (
             isinstance(error, NameResolutionError)
@@ -862,17 +891,18 @@ class FixNumpyArrayDimTypeVar(IParser):
             # allow type variables, which are manually resolved in `handle_module`
             return
         super().report_error(error)
-
-
+ 
+ 
 class FixNumpyArrayRemoveParameters(IParser):
-    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
-
     def parse_annotation_str(
         self, annotation_str: str
     ) -> ResolvedType | InvalidExpression | Value:
         result = super().parse_annotation_str(annotation_str)
-        if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
-            result.parameters = None
+        if isinstance(result, ResolvedType):
+            numpy_array = _NumpyArrayAnnotation.from_annotation(result)
+            if numpy_array is not None:
+                numpy_array.array_type.parameters = None
+                return numpy_array.array_type
         return result
 
 
@@ -910,34 +940,6 @@ class FixNumpyDtype(IParser):
             result.parameters = [self.parse_annotation_str("Any")]
 
         return result
-
-
-class FixNumpyArrayFlags(IParser):
-    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
-    __flags: set[QualifiedName] = {
-        QualifiedName.from_str("flags.writeable"),
-        QualifiedName.from_str("flags.c_contiguous"),
-        QualifiedName.from_str("flags.f_contiguous"),
-    }
-
-    def parse_annotation_str(
-        self, annotation_str: str
-    ) -> ResolvedType | InvalidExpression | Value:
-        result = super().parse_annotation_str(annotation_str)
-        if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
-            if result.parameters is not None:
-                for param in result.parameters:
-                    if isinstance(param, ResolvedType) and param.name in self.__flags:
-                        param.name = QualifiedName.from_str(
-                            f"numpy.ndarray.{param.name}"
-                        )
-
-        return result
-
-    def report_error(self, error: ParserError) -> None:
-        if isinstance(error, NameResolutionError) and error.name in self.__flags:
-            return
-        super().report_error(error)
 
 
 class FixRedundantMethodsFromBuiltinObject(IParser):

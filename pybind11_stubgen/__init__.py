@@ -36,7 +36,6 @@ from pybind11_stubgen.parser.mixins.fix import (
     FixMissingNoneHashFieldAnnotation,
     FixNumpyArrayDimAnnotation,
     FixNumpyArrayDimTypeVar,
-    FixNumpyArrayFlags,
     FixNumpyArrayRemoveParameters,
     FixNumpyDtype,
     FixPEP585CollectionNames,
@@ -265,7 +264,6 @@ def stub_parser_from_args(args: CLIArgs) -> IParser:
         OverridePrintSafeValues,
         *numpy_fixes,  # type: ignore[misc]
         FixNumpyDtype,
-        FixNumpyArrayFlags,
         FixCurrentModulePrefixInTypeNames,
         FixBuiltinTypes,
         RewritePybind11EnumValueRepr,
