@@ -736,7 +736,7 @@ class FixNumpyArrayDimTypeVar(IParser):
     ) -> list[ResolvedType] | None:
         # Annotated[numpy.typing.ArrayLike, numpy.float32, "[m, n]"]
         # Annotated[numpy.typing.NDArray[numpy.float32], "[m, n]"]
-        # Annotated[numpy.typing.NDArray[numpy.float32], "[m, n]", "flags.writeable", "flags.c_contiguous"]
+        # Annotated[numpy.typing.NDArray[numpy.float32], "[m, n]", "flags.writeable" , "flags.c_contiguous"]  # noqa: E501
         if parameters is None or len(parameters) == 0:
             return
 
