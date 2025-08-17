@@ -627,7 +627,7 @@ class _NumpyArrayAnnotation:
         ):
             dimensions = cls._to_dims(scalar_with_dims.parameters)
  
-        return _NumpyArrayAnnotation(array_type, scalar_type, dimensions, flags)
+        return cls(array_type, scalar_type, dimensions, flags)
  
     @classmethod
     def _from_new_style(
@@ -704,7 +704,7 @@ class _NumpyArrayAnnotation:
                         dims = cls._to_dims_from_strings(dims_list)
                     flags = dims_and_flags[1:]
 
-        return _NumpyArrayAnnotation(array_type, scalar_type, dims, flags)
+        return cls(array_type, scalar_type, dims, flags)
  
     @classmethod
     def _to_dims(
