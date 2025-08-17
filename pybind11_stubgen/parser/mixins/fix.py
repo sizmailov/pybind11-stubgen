@@ -543,11 +543,6 @@ class _NumpyArrayAnnotation:
             ),
         )
     )
-    numpy_flags: set[QualifiedName] = {
-        QualifiedName.from_str("flags.writeable"),
-        QualifiedName.from_str("flags.c_contiguous"),
-        QualifiedName.from_str("flags.f_contiguous"),
-    }
     dim_vars: set[str] = {"n", "m"}
     __dim_string_pattern = re.compile(r'"\[(.*?)\]"')
 
@@ -632,8 +627,6 @@ class _NumpyArrayAnnotation:
         ):
             dimensions = cls._to_dims(scalar_with_dims.parameters)
 
-        cls._fix_flags(flags)
-
         return _NumpyArrayAnnotation(array_type, scalar_type, dimensions, flags)
 
     @classmethod
@@ -711,6 +704,14 @@ class _NumpyArrayAnnotation:
                         dims = cls._to_dims_from_strings(dims_list)
                     flags = dims_and_flags[1:]
 
+        for i, flag in enumerate(flags):
+            if isinstance(flag, Value):
+                flag_str = flag.repr.strip('"')
+                if flag_str.startswith("flags."):
+                    flags[i] = ResolvedType(
+                        name=QualifiedName.from_str(f"numpy.ndarray.{flag_str}")
+                    )
+
         return cls(array_type, scalar_type, dims, flags)
 
     @classmethod
@@ -732,12 +733,6 @@ class _NumpyArrayAnnotation:
                 return None
             result.append(dim)
         return result
-
-    @classmethod
-    def _fix_flags(cls, flags: list[ResolvedType | Value | InvalidExpression]):
-        for flag in flags:
-            if isinstance(flag, ResolvedType) and flag.name in cls.numpy_flags:
-                flag.name = QualifiedName.from_str(f"numpy.ndarray.{flag.name}")
 
     @staticmethod
     def _to_dims_from_strings(dimensions: Sequence[str]) -> list[int | str] | None:
@@ -791,24 +786,7 @@ class FixNumpyArrayDimAnnotation(IParser):
             params.append(
                 self.handle_value(self.__wrap_with_size_helper(numpy_array.dimensions))
             )
-
-        for flag in numpy_array.flags:
-            if isinstance(flag, Value):
-                flag_str = flag.repr.strip('"')
-                if flag_str in (
-                    "flags.writeable",
-                    "flags.c_contiguous",
-                    "flags.f_contiguous",
-                ):
-                    params.append(
-                        ResolvedType(
-                            name=QualifiedName.from_str(f"numpy.ndarray.{flag_str}")
-                        )
-                    )
-                else:
-                    params.append(flag)
-            else:
-                params.append(flag)
+        params.extend(numpy_array.flags)
 
         return ResolvedType(name=self.__annotated_name, parameters=params)
 
@@ -831,11 +809,6 @@ class FixNumpyArrayDimAnnotation(IParser):
             and error.name[0] in _NumpyArrayAnnotation.dim_vars
         ):
             # Ignores all unknown 'm' and 'n' regardless of the context
-            return
-        if (
-            isinstance(error, NameResolutionError)
-            and error.name in _NumpyArrayAnnotation.numpy_flags
-        ):
             return
         super().report_error(error)
 
@@ -883,7 +856,6 @@ class FixNumpyArrayDimTypeVar(IParser):
         numpy_array = _NumpyArrayAnnotation.from_annotation(result)
         if numpy_array is None:
             return result
-        # __import__('ipdb').set_trace()
 
         # scipy.sparse arrays/matrices are not currently generic and do not accept type
         # arguments
@@ -906,11 +878,6 @@ class FixNumpyArrayDimTypeVar(IParser):
             and error.name[0] in self.__DIM_VARS
         ):
             # allow type variables, which are manually resolved in `handle_module`
-            return
-        if (
-            isinstance(error, NameResolutionError)
-            and error.name in _NumpyArrayAnnotation.numpy_flags
-        ):
             return
         super().report_error(error)
 
@@ -962,6 +929,34 @@ class FixNumpyDtype(IParser):
             result.parameters = [self.parse_annotation_str("Any")]
 
         return result
+
+
+class FixNumpyArrayFlags(IParser):
+    __ndarray_name = QualifiedName.from_str("numpy.ndarray")
+    __flags: set[QualifiedName] = {
+        QualifiedName.from_str("flags.writeable"),
+        QualifiedName.from_str("flags.c_contiguous"),
+        QualifiedName.from_str("flags.f_contiguous"),
+    }
+
+    def parse_annotation_str(
+        self, annotation_str: str
+    ) -> ResolvedType | InvalidExpression | Value:
+        result = super().parse_annotation_str(annotation_str)
+        if isinstance(result, ResolvedType) and result.name == self.__ndarray_name:
+            if result.parameters is not None:
+                for param in result.parameters:
+                    if isinstance(param, ResolvedType) and param.name in self.__flags:
+                        param.name = QualifiedName.from_str(
+                            f"numpy.ndarray.{param.name}"
+                        )
+
+        return result
+
+    def report_error(self, error: ParserError) -> None:
+        if isinstance(error, NameResolutionError) and error.name in self.__flags:
+            return
+        super().report_error(error)
 
 
 class FixRedundantMethodsFromBuiltinObject(IParser):
