@@ -168,6 +168,11 @@ class FixMissingImports(IParser):
         if module_name is None:
             self.report_error(NameResolutionError(name))
             return
+        # Corner case: we know that annotations in numpy.typing.* are accessible from
+        # numpy and we want to avoid unnecessary imports once these annotations are
+        # replaced by subsequent numpy fixers.
+        if module_name == ("numpy", "typing"):
+            module_name = module_name.parent
         self.__extra_imports.add(Import(name=None, origin=module_name))
 
     def _get_parent_module(self, name: QualifiedName) -> QualifiedName | None:

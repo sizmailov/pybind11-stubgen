@@ -3,7 +3,6 @@ from __future__ import annotations
 import typing
 
 import numpy
-import numpy.typing
 import scipy.sparse
 
 __all__: list[str] = [
