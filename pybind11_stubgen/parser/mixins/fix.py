@@ -538,6 +538,8 @@ class _NumpyArrayAnnotation:
                         "complex32",
                         "complex64",
                         "longcomplex",
+                        "bool",
+                        "bool_",
                     ),
                 ),
             ),
@@ -565,7 +567,7 @@ class _NumpyArrayAnnotation:
         # Pybind annotates a bool Python type, which cannot be used with
         # numpy.dtype because it does not inherit from numpy.generic.
         # Only numpy.bool_ works reliably with both NumPy 1.x and 2.x.
-        if str(scalar_type_name) == "bool":
+        if str(scalar_type_name) in {"bool", "numpy.bool"}:
             scalar_type_name = QualifiedName.from_str("numpy.bool_")
         dtype = ResolvedType(
             name=QualifiedName.from_str("numpy.dtype"),
