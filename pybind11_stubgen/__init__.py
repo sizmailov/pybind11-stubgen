@@ -74,6 +74,7 @@ class CLIArgs(Namespace):
     numpy_array_remove_parameters: bool
     print_invalid_expressions_as_is: bool
     print_safe_value_reprs: re.Pattern | None
+    print_disable_value_comments: bool
     exit_code: bool
     dry_run: bool
     stub_extension: str
@@ -190,6 +191,12 @@ def arg_parser() -> ArgumentParser:
         default=None,
         type=regex,
         help="Override the print-safe check for values matching REGEX",
+    )
+    parser.add_argument(
+        "--print-disable-value-comments",
+        default=False,
+        action="store_true",
+        help="Disable printing attribute value comments, i.e., '# value = <value>'",
     )
 
     parser.add_argument(
@@ -309,7 +316,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = arg_parser().parse_args(argv, namespace=CLIArgs())
 
     parser = stub_parser_from_args(args)
-    printer = Printer(invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is)
+    printer = Printer(
+        invalid_expr_as_ellipses=not args.print_invalid_expressions_as_is,
+        print_disable_value_comments=args.print_disable_value_comments,
+    )
 
     out_dir, sub_dir = to_output_and_subdir(
         output_dir=args.output_dir,
